@@ -1,0 +1,24 @@
+Changes
+MANIFEST
+Makefile.PL
+README
+Stats.pm
+Basic/stats_basic.pp
+Basic/Makefile.PL
+Distr/distr.pp
+Distr/Makefile.PL
+Distr/t/stats_distr.t
+GLM/glm.pp
+GLM/Makefile.PL
+GSL/gsl_cdf.pd
+GSL/Makefile.PL
+GSL/t/cdf.t
+Kmeans/kmeans.pp
+Kmeans/Makefile.PL
+t/stats_basic.t
+t/stats_glm.t
+t/stats_kmeans.t
+t/stats_ts.t
+TS/ts.pp
+TS/Makefile.PL
+META.yml                                 Module meta-data (added by MakeMaker)
