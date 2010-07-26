@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'ols', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_scree');
+pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_scree');
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
@@ -1676,6 +1676,46 @@ sub PDL::effect_code_w {
   }
 
   return wantarray? ($var_e, $map_ref) : $var_e;
+}
+
+=head2 interaction_code
+
+Returns the coded interaction term for effect-coded variables.
+
+=for usage
+
+    perldl> $a = sequence(6) > 2      
+    perldl> p $a = $a->effect_code
+    [
+     [ 1  1  1 -1 -1 -1]
+    ]
+    
+    perldl> $b = pdl( qw( 0 1 2 0 1 2 ) )            
+    perldl> p $b = $b->effect_code
+    [
+     [ 1  0 -1  1  0 -1]
+     [ 0  1 -1  0  1 -1]
+    ]
+    
+    perldl> p $ab = interaction_code( $a, $b )
+    [
+     [ 1  0 -1 -1 -0  1]
+     [ 0  1 -1 -0 -1  1]
+    ]
+
+=cut
+
+*interaction_code = \&PDL::interaction_code;
+sub PDL::interaction_code {
+  my @vars = @_;
+
+  my $i = ones( $vars[0]->dim(0), 1 );
+  for (@vars) {
+    $i = $i * $_->dummy(1);
+    $i = $i->clump(1,2);
+  }
+
+  return $i;
 }
 
 =head2 ols
