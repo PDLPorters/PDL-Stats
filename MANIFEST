@@ -17,6 +17,7 @@ Kmeans/kmeans.pp
 Kmeans/Makefile.PL
 t/stats_basic.t
 t/stats_glm.t
+t/stats_ols_rptd.t
 t/stats_kmeans.t
 t/stats_ts.t
 TS/ts.pp

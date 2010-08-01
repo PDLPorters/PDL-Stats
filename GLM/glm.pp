@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_scree');
+pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'ols_rptd', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_scree');
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
@@ -807,7 +807,7 @@ sub PDL::ols_t {
 
 =for ref
 
-Significance test for the incremental change in R2 when new variable(s) are added to an ols regression model. Returns the change stats as well as stats for both models. Base on B<ols_t>. (One way to make up for the lack of significance tests for coeffs in ols_t).
+Significance test for the incremental change in R2 when new variable(s) are added to an ols regression model. Returns the change stats as well as stats for both models. Based on B<ols_t>. (One way to make up for the lack of significance tests for coeffs in ols_t).
 
 =for options
 
@@ -1582,12 +1582,15 @@ Dummy coding of nominal variable (perl @ ref or 1d pdl) for use in regression.
 
 =cut
 
-sub dummy_code {
+*dummy_code = \&PDL::dummy_code;
+sub PDL::dummy_code {
   my ($var_ref) = @_;
 
   my $var_e = effect_code( $var_ref );
 
-  return $var_e->where( $var_e == -1 ) .= 0;
+  $var_e->where( $var_e == -1 ) .= 0;
+
+  return $var_e;
 }
 
 =head2 effect_code
@@ -1863,6 +1866,113 @@ sub PDL::ols {
 
   return %ret;
 }
+
+
+=head2 ols_rptd
+
+=for ref
+
+Repeated measures linear regression (Lorch & Myers, 1990; Van den Noortgate & Onghena, 2006). Handles purely within-subject design for now. See t/stats_ols_rptd.t for an example using the Lorch and Myers data.
+
+=for usage
+
+Usage:
+
+    # $subj can be 1D pdl or @ ref.
+    # each element in @ivs is treated as a separate IV
+    # pdl element is left as is
+    # 1D @ ref is effect_coded internally into pdl
+    # so please make sure to pass continuous IV as pdl
+
+    my %r = $y->ols_rptd( $subj, @ivs );
+
+    print "$_\t$r{$_}\n" for (sort keys %r);
+
+=cut
+
+*ols_rptd = \&PDL::ols_rptd;
+sub PDL::ols_rptd {
+  my ($y, $subj, @ivs_raw) = @_;
+
+  $y = $y->squeeze;
+  $y->getndims > 1 and
+    croak "ols_rptd does not support threading";
+
+  my @ivs = map {  (ref $_ eq 'PDL' and $_->ndims > 1)?  $_
+                  : ref $_ eq 'PDL' ?                    $_->dummy(1)
+                  :                   scalar effect_code($_)
+                  ;
+                } @ivs_raw;
+
+  my %r;
+
+  $r{'(ss_total)'} = $y->ss;
+
+  # STEP 1: subj
+
+  my $s = effect_code $subj;     # gives same results as dummy_code
+  my $b_s = $y->ols_t($s);
+  my $pred = sumover($b_s(0:-2) * $s->transpose) + $b_s(-1);
+  $r{'(ss_subject)'} = $r{'(ss_total)'} - $y->sse( $pred );
+
+  # STEP 2: add predictor variables
+
+  my $iv_p = $s->glue(1, @ivs);
+  my $b_p = $y->ols_t($iv_p);
+
+    # only care about coeff for predictor vars. no subj or const coeff
+  $r{coeff} = $b_p(-(@ivs+1) : -2)->sever;
+
+    # get total sse for this step
+  $pred = sumover($b_p(0:-2) * $iv_p->transpose) + $b_p(-1);
+  my $ss_pe  = $y->sse( $pred );
+
+    # get predictor ss by successively reducing the model
+  $r{ss} = zeroes scalar(@ivs);
+  for my $i (0 .. $#ivs) {
+    my @i_rest = grep { $_ != $i } 0 .. $#ivs;
+    my $iv = $s->glue(1, @ivs[ @i_rest ]);
+    my $b  = $y->ols_t($iv);
+    $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
+    $r{ss}->($i) .= $y->sse($pred) - $ss_pe;
+  }
+
+  # STEP 3: get precitor x subj interaction as error term
+
+  my $iv_e = PDL::glue 1, map { interaction_code( $s, $_ ) } @ivs;
+
+    # get total sse for this step. full model now.
+  my $b_f = $y->ols_t( $iv_p->glue(1,$iv_e) );
+  $pred = sumover($b_f(0:-2) * $iv_p->glue(1,$iv_e)->transpose) + $b_f(-1);
+  $r{'(ss_residual)'}  = $y->sse( $pred );
+
+    # get predictor x subj ss by successively reducing the error term
+  $r{ss_err} = zeroes scalar(@ivs);
+  for my $i (0 .. $#ivs) {
+    my @i_rest = grep { $_ != $i } 0 .. $#ivs;
+    my $e_rest = PDL::glue 1, map { interaction_code( $s, $_ ) } @ivs[@i_rest];
+    my $iv = $iv_p->glue(1, $e_rest);
+    my $b  = $y->ols_t($iv);
+    my $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
+    $r{ss_err}->($i) .= $y->sse($pred) - $r{'(ss_residual)'};
+  }
+
+  # Finally, get MS, F, etc
+
+  $r{df} = pdl( map { $_->squeeze->ndims } @ivs );
+  $r{ms} = $r{ss} / $r{df};
+
+  $r{df_err} = $s->dim(1) * $r{df};
+  $r{ms_err} = $r{ss_err} / $r{df_err};
+
+  $r{F} = $r{ms} / $r{ms_err};
+
+  $r{F_p} = 1 - $r{F}->gsl_cdf_fdist_P( $r{df}, $r{df_err} )
+    if $CDF;
+
+  return %r;
+}
+
 
 =head2 logistic
 
@@ -2414,11 +2524,15 @@ Cohen, J., Cohen, P., West, S.G., & Aiken, L.S. (2003). Applied Multiple Regress
 
 Hosmer, D.W., & Lemeshow, S. (2000). Applied Logistic Regression (2nd ed.). New York, NY: Wiley-Interscience. 
 
+Lorch, R.F., & Myers, J.L. (1990). Regression analyses of repeated measures data in cognitive research. Journal of Experimental Psychology: Learning, Memory, & Cognition, 16, 149-157.
+
 Osgood C.E., Suci, G.J., & Tannenbaum, P.H. (1957). The Measurement of Meaning. Champaign, IL: University of Illinois Press.
 
 Rutherford, A. (2001). Introducing Anova and Ancova: A GLM Approach (1st ed.). Thousand Oaks, CA: Sage Publications.
 
 The GLM procedure: unbalanced ANOVA for two-way design with interaction. (2008). SAS/STAT(R) 9.2 User's Guide. Retrieved June 18, 2009 from http://support.sas.com/
+
+Van den Noortgatea, W., & Onghenaa, P. (2006). Analysing repeated measures data in cognitive research: A comment on regression coefficient analyses. European Journal of Cognitive Psychology, 18, 937-952.
 
 =head1 AUTHOR
 
