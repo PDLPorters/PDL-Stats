@@ -4,6 +4,7 @@ Revision history for PDL-Stats
 	Updated tests to use __DATA__ instead of separate test data files.
 	GLM added interaction_code; bug fix for dummy_code.
 	GLM added ols_rptd!
+	GLM eval wrapped optional modules; replaced perl reverse sort with slice (-1:0).
 
 0.4.3	04/08/2010
 	Distr::plot_distr() bug fix.

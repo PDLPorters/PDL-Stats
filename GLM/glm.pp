@@ -16,24 +16,17 @@ use PDL::Stats::Kmeans;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
-my $CDF;
-if ( grep { -e "$_/PDL/GSL/CDF.pm"  } @INC ) {
-  require PDL::GSL::CDF;
-  $CDF = 1;
-}
+eval { require PDL::GSL::CDF; };
+my $CDF = 1 if !$@;
 
-my $SLATEC;
-if ( grep { -e "$_/PDL/Slatec.pm"  } @INC ) {
-  require PDL::Slatec;
-  $SLATEC = 1;
-}
+eval { require PDL::Slatec; };
+my $SLATEC = 1 if !$@;
 
-my $PGPLOT;
-if ( grep { -e "$_/PGPLOT.pm"  } @INC ) {
+eval {
   require PDL::Graphics::PGPLOT::Window;
   PDL::Graphics::PGPLOT::Window->import( 'pgwin' );
-  $PGPLOT = 1;
-}
+};
+my $PGPLOT = 1 if !$@;
 
 =head1 NAME
 
@@ -2195,7 +2188,7 @@ Usage:
 =cut
 
 *pca = \&PDL::pca;
-sub PDL::pca {
+sub PDL::pca { 
   my ($self, $opt) = @_;
 
   my %opt = (
@@ -2216,9 +2209,9 @@ sub PDL::pca {
     $score = $score->inplace->transpose->sever;
   }
 
-  my $ind_sorted = pdl reverse list qsorti $value;
-  $score = $score->inplace->dice_axis(1, $ind_sorted)->sever;
-  $value = $value->inplace->dice($ind_sorted)->sever;
+  my $ind_sorted = $value->qsorti->(-1:0);
+  $score = $score->inplace->dice_axis(1, $ind_sorted)->sever;  # not threadable yet
+  $value = $value->dummy(1)->index($ind_sorted)->sever;        # allows threading
 
     # var x axis
   my $loading = $score * sqrt( $value->transpose );
@@ -2293,9 +2286,7 @@ sub PDL::pca_sorti {
     # sort within comp
   my $ic = $icomp($ivar_sort)->iv_cluster;
   for my $comp (0 .. $ic->dim(1)-1) {
-    my $i = $self(which($ic( ,$comp)), $comp)->qsorti;
-      # descending sort by size
-    $i = pdl(reverse list $i);
+    my $i = $self(which($ic( ,$comp)), $comp)->qsorti->(-1:0);
     $ivar_sort(which $ic( ,$comp))
       .= $ivar_sort(which $ic( ,$comp))->($i)->sever;
   }
@@ -2372,7 +2363,7 @@ sub PDL::plot_means {
   $self = $self->reshape(@dims)->sever;
   $se = $se->reshape(@dims)->sever
     if defined $se;
-  @iD = reverse list qsorti pdl @dims
+  @iD = reverse sort { $a<=>$b } @dims
     if $opt{AUTO};
 
     # $iD[0] on x axis
