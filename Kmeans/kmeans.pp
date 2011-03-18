@@ -523,7 +523,7 @@ will produce 4 clusters of people with each cluster favoring a different one of 
 
 If clustering has to be done from predefined clusters of seeds, simply calculate the centroid using the B<centroid> function and feed it to kmeans,
 
-  my $centroid = $rating($iseeds, )->centroid( $seeds_cluster );
+  my ($centroid, $ss) = $rating($iseeds, )->centroid( $seeds_cluster );
 
   my %k = $rating->kmeans( { CNTRD=>$centroid } );
 
