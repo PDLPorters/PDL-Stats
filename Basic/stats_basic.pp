@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-pp_add_exported('', 'rtable', 'get_data', 'which_id', 
+pp_add_exported('', 'binomial_test', 'rtable', 'get_data', 'which_id', 
 );
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -10,6 +10,9 @@ use PDL::NiceSlice;
 use Carp;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
+
+eval { require PDL::GSL::CDF; };
+my $CDF = 1 if !$@;
 
 =head1 NAME
 
@@ -1135,6 +1138,34 @@ Paired sample t-test.
 );
 
 pp_addpm(<<'EOD');
+
+=head2 binomial_test
+
+=for Sig
+
+  Signature: (x(); n(); p_expected(); [o]p())
+
+=for ref
+
+Binomial test. One-tailed significance test for two-outcome distribution. Given the number of success, the number of trials, and the expected probability of success, returns the probability of getting this many or more successes.
+
+=for usage
+
+Usage:
+
+  my $p = binomial_test( $x, $n, $p_expected );
+
+=cut
+
+*binomial_test = \&PDL::binomial_test;
+sub PDL::binomial_test {
+  my ($x, $n, $P) = @_;
+  return 1 - PDL::GSL::CDF::gsl_cdf_binomial_P( $x, $P, $n )
+    if $CDF;
+
+  carp 'Please install PDL::GSL::CDF.';
+}
+
 
 =head1 METHODS
 

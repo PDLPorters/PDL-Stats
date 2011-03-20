@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 47;
+    plan tests => 48;
 }
 
 use PDL::LiteF;
@@ -119,6 +119,19 @@ is( tapprox( $df, 3 ), 1 );
   $a( ,1) .= 0;
   $a = $a->setvaltobad(0);
   is( $a->stdv->nbad, 1 );
+}
+
+  # 48
+SKIP: {
+  eval { require PDL::GSL::CDF; };
+  skip 'no PDL::GSL::CDF', 1 if $@;
+  my $x = pdl(2, 8);
+  my $n = pdl(10, 20);
+  my $p = .5;
+
+  my $a = pdl qw[ 0.9453125 0.74827766];
+
+  is (tapprox( sum(abs(binomial_test( $x,$n,$p ) - $a)) ,0), 1, 'binomial_test');
 }
 
 __DATA__
