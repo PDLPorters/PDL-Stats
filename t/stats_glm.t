@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 40;
+    plan tests => 41;
       # 1-2
     use_ok( 'PDL::Stats::Basic' );
     use_ok( 'PDL::Stats::GLM' );
@@ -376,6 +376,22 @@ sub t_anova_rptd_mixed_4w {
         + ($m{'| age ~ aa ~ beer ~ wings | F'} - $ans_4w_F)
   ;
 }
+
+{
+  # 41
+  my $a = effect_code( sequence(12) > 5 );
+  my $b = effect_code([ map {(0, 1)} (1..6) ]);
+  my $c = effect_code([ map {(0,0,1,1,2,2)} (1..2) ]);
+
+  my $ans = pdl [
+   [qw( 1 -1  0 -0 -1  1 -1  1 -0  0  1 -1 )],
+   [qw( 0 -0  1 -1 -1  1 -0  0 -1  1  1 -1 )]
+  ];
+  my $inter = interaction_code( $a, $b, $c);
+
+  is(sum(abs($inter - $ans)), 0, 'interaction_code');
+}
+
 
 __DATA__
 subj	age	Apple-android	beer	wings	recall
