@@ -30,24 +30,18 @@ Implement a basic k-means procedure,
 
     my ($data, $idv, $ido) = rtable( $file );
 
-    my ($cluster, $centroid, $ss_this, $ss_last, $ss_centroid);
+    my ($cluster, $centroid, $ss_centroid, $cluster_last);
 
       # start out with 8 random clusters
     $cluster = random_cluster( $data->dim(0), 8 );
-
-    ($centroid, $ss_centroid) = $data->centroid( $cluster );
-    $ss_this = $ss_centroid->sum;
-
       # iterate to minimize total ss
-      # stop when change in ss is less than $crit amount 
+      # stop when no more changes in cluster membership 
     do {
-      $ss_last = $ss_this;
-      $cluster = $data->assign( $centroid );
-
+      $cluster_last = $cluster;
       ($centroid, $ss_centroid) = $data->centroid( $cluster );
-      $ss_this = $ss_centroid->sum;
+      $cluster = $data->assign( $centroid );
     }
-    while ( $ss_last - $ss_this > $crit );
+    while ( sum(abs($cluster - $cluster_last)) > 0 );
 
 or, use the B<kmeans> function provided here,
 
