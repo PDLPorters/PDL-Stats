@@ -246,7 +246,7 @@ Integration. Opposite of differencing. IX(t) = X(t) + X(t-1), IX(0) = X(0). Can 
 );
 
 
-pp_def('dsea',
+pp_def('dseason',
   Pars  => 'x(t); int d(); [o]xd(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
@@ -446,7 +446,7 @@ loop(t) %{
   Doc   => undef,
 );
 
-pp_def('filt_exp',
+pp_def('filter_exp',
   Pars  => 'x(t); a(); [o]xf(t)',
   GenericTypes => [F,D],
   Code  => '
@@ -475,7 +475,7 @@ Filter, exponential smoothing. xf(t) = a * x(t) + (1-a) * xf(t-1)
   ',
 );
 
-pp_def('filt_ma',
+pp_def('filter_ma',
   Pars  => 'x(t); int q(); [o]xf(t)',
   GenericTypes => [F,D],
   Code  => '
@@ -807,9 +807,9 @@ Default options (case insensitive):
 
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
-    PLOT  => 1,
-    WIN   => undef,
-    DEV   => "/xs",
+    PLOT  => 0,              # boolean
+    WIN   => undef,          # pass pgwin object for more plotting control
+    DEV   => "/xs",          # see PDL::Graphics::PGPLOT for more info
     COLOR => 1,
 
 See PDL::Graphics::PGPLOT for detailed graphing options.
@@ -827,11 +827,15 @@ sub PDL::season_m {
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
     PLOT  => 1,
-    WIN   => undef,
-    DEV   => "/xs",
+    WIN   => undef,          # pass pgwin object for more plotting control
+    DEV   => "/xs",          # see PDL::Graphics::PGPLOT for more info
     COLOR => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt{PLOT} and !$PGPLOT) {
+    carp "No PDL::Graphics::PGPLOT, no plot :(";
+    $opt{PLOT} = 0;
+  }
 
   my $n_season = ($self->dim(0) + $opt{START_POSITION}) / $d;
   $n_season = pdl($n_season)->ceil->sum;
@@ -851,34 +855,29 @@ sub PDL::season_m {
   my ($m, $ms) = $data->centroid( $s );
 
   if ($opt{PLOT}) {
-    if ($PGPLOT) {
-      my $w = $opt{WIN};
-      if (!$w) {
-        $w = pgwin( Dev=>$opt{DEV} );
-        $w->env( 0, $d-1, $m->minmax,
-                {XTitle=>'period', YTitle=>'mean'} );
-      }
-      $w->points( sequence($d), $m, {COLOR=>$opt{COLOR}, PLOTLINE=>1} );
-  
-      if ($m->squeeze->ndims < 2) {
-        $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
-                 {COLOR=>$opt{COLOR}} );
-      }
-      else {
-        carp "errb does not support multi dim pdl";
-      }
-      $w->close
-        unless $opt{WIN};
+    my $w = $opt{WIN};
+    if (!$w) {
+      $w = pgwin( Dev=>$opt{DEV} );
+      $w->env( 0, $d-1, $m->minmax,
+              {XTitle=>'period', YTitle=>'mean'} );
+    }
+    $w->points( sequence($d), $m, {COLOR=>$opt{COLOR}, PLOTLINE=>1} );
+
+    if ($m->squeeze->ndims < 2) {
+      $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
+               {COLOR=>$opt{COLOR}} );
     }
     else {
-      carp "Please install PDL::Graphics::PGPLOT::Window for plotting";
+      carp "errb does not support multi dim pdl";
     }
+    $w->close
+      unless $opt{WIN};
   }
 
   return wantarray? ($m, $ms) : $m;
 }
 
-=head2 plot_dsea
+=head2 plot_dseason
 
 =for ref
 
@@ -896,8 +895,8 @@ See PDL::Graphics::PGPLOT for detailed graphing options.
 
 =cut
 
-*plot_dsea = \&PDL::plot_dsea;
-sub PDL::plot_dsea {
+*plot_dseason = \&PDL::plot_dseason;
+sub PDL::plot_dseason {
   my ($self, $d, $opt) = @_;
   !defined($d) and croak "please set season period length";
   $self = $self->squeeze;
@@ -934,10 +933,31 @@ sub PDL::plot_dsea {
   return $dsea; 
 }
 
+*filt_exp = \&PDL::filt_exp;
+sub PDL::filt_exp {
+  print STDERR "filt_exp() deprecated since version 0.5.0. Please use filter_exp() instead\n";
+  return filter_exp( @_ );
+}
+
+*filt_ma = \&PDL::filt_ma;
+sub PDL::filt_ma {
+  print STDERR "filt_ma() deprecated since version 0.5.0. Please use filter_ma() instead\n";
+  return filter_ma( @_ );
+}
+
+*dsea = \&PDL::dsea;
+sub PDL::dsea {
+  print STDERR "dsea() deprecated since version 0.5.0. Please use dseason() instead\n";
+  return dseason( @_ );
+}
+
 *plot_season = \&PDL::plot_season;
 sub PDL::plot_season {
-  carp "plot_season() updated as season_m().\n";
-  return season_m( @_ );
+  print STDERR "plot_season() deprecated since version 0.5.0. Please use season_m() instead\n";
+  my ($self, $d, $opt) = @_;
+  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  $opt->{PLOT} = 1;
+  return $self->season_m( $d, $opt );
 }
 
 =head1 METHODS
