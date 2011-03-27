@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 21;
+    plan tests => 23;
     use_ok( 'PDL::Stats::TS' );
 }
 
@@ -64,7 +64,7 @@ sub tapprox {
   is( tapprox( sum( $a->diff->inte - $a ), 0 ), 1 );
 }
 
-{
+{   # 18-19
   my $x = sequence 2;
   my $b = pdl(.8, -.2, .3);
   my $xp = $x->pred_ar($b, 7);
@@ -74,10 +74,32 @@ sub tapprox {
   is( tapprox(sum($xp - $xp2),0), 1 );
 }
 
-{
+{   # 20-21
   my $a = sequence 10;
   my $b = pdl( qw(0 1 1 1 3 6 7 7 9 10) );
   is( tapprox($a->wmape($b) - 0.177777777777778, 0), 1 );
   $a = $a->setbadat(4);
   is( tapprox($a->wmape($b) - 0.170731707317073, 0), 1 );
+}
+
+{  # 22-23
+  my $a = sequence(5)->dummy(1,3)->flat->sever;
+  $a(1) .= 3;
+  $a = $a->dummy(1,2)->sever;
+  $a(4,1) .= 0;
+
+  my $ans_m = pdl(
+ [         4,         0, 1.6666667,         2,         3],
+ [ 2.6666667,         0, 1.6666667,         2,         3],
+  );
+
+  my $ans_ms = pdl(
+ [         0,         0,0.88888889,         0,         0],
+ [ 3.5555556,         0,0.88888889,         0,         0],
+  );
+
+  my ($m, $ms) = $a->season_m( 5, {start_position=>1, plot=>0} );
+
+  is( tapprox(sum(abs($m - $ans_m)), 0), 1, 'season_m m' );
+  is( tapprox(sum(abs($ms - $ans_ms)), 0), 1, 'season_m ms' );
 }

@@ -797,6 +797,87 @@ loop (t) %{
 
 pp_addpm(<<'EOD');
 
+=head2 season_m
+
+Given length of season, returns seasonal mean and var for each period (returns seasonal mean only in scalar context).
+
+=for options
+
+Default options (case insensitive):
+
+    START_POSITION => 0,     # series starts at this position in season
+    MISSING        => -999,  # internal mark for missing points in season
+    PLOT  => 1,
+    WIN   => undef,
+    DEV   => "/xs",
+    COLOR => 1,
+
+See PDL::Graphics::PGPLOT for detailed graphing options.
+
+=for usage
+
+    my ($m, $ms) = $data->season_m( 24, { START_POSITION=>2 } );
+
+=cut
+
+*season_m = \&PDL::season_m;
+sub PDL::season_m {
+  my ($self, $d, $opt) = @_;
+  my %opt = (
+    START_POSITION => 0,     # series starts at this position in season
+    MISSING        => -999,  # internal mark for missing points in season
+    PLOT  => 1,
+    WIN   => undef,
+    DEV   => "/xs",
+    COLOR => 1,
+  );
+  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+
+  my $n_season = ($self->dim(0) + $opt{START_POSITION}) / $d;
+  $n_season = pdl($n_season)->ceil->sum;
+
+  my @dims = $self->dims;
+  $dims[0] = $n_season * $d;
+  my $data = zeroes( @dims ) + $opt{MISSING};
+
+  $data($opt{START_POSITION} : $opt{START_POSITION} + $self->dim(0)-1, ) .= $self;
+  $data->badflag(1);
+  $data->inplace->setvaltobad( $opt{MISSING} );
+
+  my $s = sequence $d;
+  $s = $s->dummy(1, $n_season)->flat;
+  $s = $s->iv_cluster();
+
+  my ($m, $ms) = $data->centroid( $s );
+
+  if ($opt{PLOT}) {
+    if ($PGPLOT) {
+      my $w = $opt{WIN};
+      if (!$w) {
+        $w = pgwin( Dev=>$opt{DEV} );
+        $w->env( 0, $d-1, $m->minmax,
+                {XTitle=>'period', YTitle=>'mean'} );
+      }
+      $w->points( sequence($d), $m, {COLOR=>$opt{COLOR}, PLOTLINE=>1} );
+  
+      if ($m->squeeze->ndims < 2) {
+        $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
+                 {COLOR=>$opt{COLOR}} );
+      }
+      else {
+        carp "errb does not support multi dim pdl";
+      }
+      $w->close
+        unless $opt{WIN};
+    }
+    else {
+      carp "Please install PDL::Graphics::PGPLOT::Window for plotting";
+    }
+  }
+
+  return wantarray? ($m, $ms) : $m;
+}
+
 =head2 plot_dsea
 
 =for ref
@@ -853,76 +934,10 @@ sub PDL::plot_dsea {
   return $dsea; 
 }
 
-=head2 plot_season
-
-Seasonal subseries plot. Given length of season, plots mean and returns sample mean and sample var for each period.
-
-$data should be pdl dim (period) or (period x series). $data must start from period 0. If actual data starts later into the season, set previous periods to bad.
-
-=for options
-
-Default options (case insensitive):
-
-    WIN   => undef,
-    DEV   => "/xs",
-    COLOR => 1,
-
-See PDL::Graphics::PGPLOT for detailed graphing options.
-
-=for usage
-
-    $data->plot_season( 24, { DEV=>'/png' } );
-
-=cut
-
 *plot_season = \&PDL::plot_season;
 sub PDL::plot_season {
-  my ($self, $d, $opt) = @_;
-  $self = $self->squeeze;
-   
-  my ($m, $ms);
- 
-  if ($PGPLOT) {
-    my %opt = (
-        WIN   => undef,
-        DEV   => "/xs",
-        COLOR => 1,
-    );
-    $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
-    my $s = sequence $d;
-    $s = $s->dummy(1, $self->dim(0) / $d)->flat;
-    $s = $s->iv_cluster();
-
-    ($m, $ms) = $self->centroid( $s );
-
-    !$self->badflag and $ms /= $self->dim(0);
-
-    my $w;
-    if (!$opt{WIN}) {
-      $w = pgwin( Dev=>$opt{DEV} );
-      $w->env( 0, $d-1, $m->minmax,
-              {XTitle=>'period', YTitle=>'mean'} );
-    }
-    else {
-      $w = $opt{WIN};
-    }
-    $w->line( sequence($d), $m, {COLOR=>$opt{COLOR}} );
-    if ($m->squeeze->ndims < 2) {
-      $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
-               {COLOR=>$opt{COLOR}} );
-    }
-    else {
-      carp "errb does not support multi dim pdl";
-    }
-    $w->close
-      unless $opt{WIN};
-  }
-  else {
-    carp "Please install PDL::Graphics::PGPLOT::Window for plotting";
-  }
-
-  return wantarray? ($m, $ms) : $m;
+  carp "plot_season() updated as season_m().\n";
+  return season_m( @_ );
 }
 
 =head1 METHODS
