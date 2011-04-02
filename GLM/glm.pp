@@ -1727,6 +1727,7 @@ IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the con
 Default options (case insensitive): 
 
     CONST  => 1,
+    PLOT   => 1,
 
 =for usage
 
@@ -1772,7 +1773,10 @@ Usage:
 sub PDL::ols {
     # y [n], ivs [n x attr] pdl
   my ($y, $ivs, $opt) = @_;
-  my %opt = ( CONST => 1 );
+  my %opt = (
+    CONST => 1,
+    PLOT  => 1,
+  );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
   $y = $y->squeeze;
@@ -1806,14 +1810,17 @@ sub PDL::ols {
   my $coeff = PDL::squeeze( $C x $Y );
      $coeff *= $ymean;        # Un-normalise
 
+  my %ret;
+
+    # ***$coeff x $ivs looks nice but produces nan on successive tries***
+  $ret{y_pred} = sumover( $coeff * $ivs->transpose );
+
+  $opt{PLOT} and $y->plot_residual( $ret{y_pred}, \%opt );
+
   return $coeff
     unless wantarray;
 
-  my %ret;
-
   $ret{b} = $coeff;
-    # ***$coeff x $ivs looks nice but produces nan on successive tries***
-  $ret{y_pred} = sumover( $coeff * $ivs->transpose );
   $ret{ss_total} = $opt{CONST}? $y->ss : sum( $y ** 2 );
   $ret{ss_residual} = $y->sse( $ret{y_pred} );
   $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
@@ -1838,7 +1845,7 @@ sub PDL::ols {
       my $G = $ivs->dice_axis(1, \@G);
       $opt{CONST} and
         $G = $G->glue( 1, ones($ivs->dim(0)) );
-      my $b_G = $ivs( ,$k)->ols( $G, {CONST=>0} );
+      my $b_G = $ivs( ,$k)->ols( $G, {CONST=>0,PLOT=>0} );
 
       my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
 
@@ -2423,6 +2430,52 @@ sub PDL::plot_means {
   return;
 }
 
+=head2 plot_residual
+
+=cut
+
+*plot_residual = \&PDL::plot_residual;
+sub PDL::plot_residual {
+  if (!$PGPLOT) {
+    carp "No PDL::Graphics::PGPLOT, no plot :(";
+    return;
+  }
+  my $opt = pop @_
+    if ref $_[-1] eq 'HASH';
+  my ($y, $y_pred) = @_;
+  my %opt = (
+     # see PDL::Graphics::PGPLOT::Window for next options
+    WIN   => undef,  # pgwin object. not closed here if passed
+                     # allows comparing multiple lines in same plot
+                     # set env before passing WIN
+    DEV   => '/xs',  # open and close dev for plotting if no WIN
+    SIZE  => 480,    # plot size in pixels
+    COLOR => 1,
+  );
+  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+
+  my $residuals = $y - $y_pred;
+
+  my $win = $opt{WIN};
+
+  if (!$win) {
+   $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
+   $win->env( $y_pred->minmax, $residuals->minmax,
+     {XTITLE=>'predicted value', YTITLE=>'residuals',
+      AXIS=>['BCNT', 'BCNST'], Border=>1,} );
+  }
+
+  $win->points($y_pred, $residuals, { COLOR=>$opt{COLOR} });
+  # add 0-line
+  $win->line(pdl($y_pred->minmax), pdl(0,0), { COLOR=>$opt{COLOR} } );
+
+  $win->close
+    unless $opt{WIN};
+
+  return;
+}
+
+ 
 =head2 plot_scree
 
 Scree plot. Plots proportion of variance accounted for by PCA components.
@@ -2493,6 +2546,7 @@ sub PDL::plot_scree {
      {XTitle=>'Compoment', YTitle=>'Proportion of Variance Accounted for',
      AXIS=>['BCNT', 'BCNST'], Border=>1, });
   }
+
   $win->points(sequence($ncomp), $self(0:$ncomp-1, ),
         {CHARSIZE=>2, COLOR=>$opt{COLOR}, PLOTLINE=>1} );
   $win->line( pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max+.05),

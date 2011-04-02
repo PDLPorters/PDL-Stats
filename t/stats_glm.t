@@ -81,7 +81,7 @@ is( tapprox( t_ols(), 0 ), 1 );
 sub t_ols {
   my $a = sequence 5;
   my $b = pdl(0,0,0,1,1);
-  my %m = $a->ols($b);
+  my %m = $a->ols($b, {plot=>0});
   my %a = (
     F    => 9,
     F_df => pdl(1,3),
