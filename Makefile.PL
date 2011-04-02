@@ -1,12 +1,6 @@
 use strict;
 use warnings;
-use ExtUtils::MakeMaker;
-
-eval 'use PDL::Lite;';
-if ($@) {
-  print STDERR "Please retry after PDL::Lite is properly installed.\n";
-  exit 0;
-}
+use ExtUtils::MakeMaker 6.54;
 
 WriteMakefile(
     NAME                => 'PDL::Stats',
@@ -19,7 +13,7 @@ WriteMakefile(
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,
-        'PDL::Lite'  => '2.4.8',
+        'PDL'        => '2.4.8',
     },
     PREREQ_FATAL        => 1,
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],

@@ -1,10 +1,14 @@
 Revision history for PDL-Stats
 
-0.4.4	08/01/2010
+0.5.0	08/01/2010
+    Prerequisite version update: PDL_2.4.8.
 	Updated tests to use __DATA__ instead of separate test data files.
-	GLM added interaction_code; bug fix for dummy_code.
-	GLM added ols_rptd!
+	GLM added interaction_code(); bug fix for dummy_code().
+	GLM added ols_rptd()!
+    GLM added plot_residual().
 	GLM eval wrapped optional modules; replaced perl reverse sort with slice (-1:0).
+    Basic added binomial_test().
+    TS updated plot_season() to season_m(); function name changes.
 
 0.4.3	04/08/2010
 	Distr::plot_distr() bug fix.
