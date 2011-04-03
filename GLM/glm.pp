@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'ols_rptd', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_scree');
+pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'ols_rptd', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_residuals', 'plot_scree');
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
@@ -1207,7 +1207,7 @@ Default options (case insensitive):
     IVNM   => [],   # auto filled as ['IV_0', 'IV_1', ... ]
     BTWN   => [],   # indices of between-subject IVs (matches IVNM indices)
     PLOT   => 1,    # plots highest order effect
-                    # can set plot_means options here
+                    # see plot_means() for more options
 
 Usage:
 
@@ -1232,7 +1232,8 @@ Usage:
     my ($data, $idv, $subj) = rtable 'recall_w_beer_and_wings.txt';
   
     my ($b, $w, $dv) = $data->dog;
-      # subj and ivs can be 1d pdl or @ ref
+      # subj and IVs can be 1d pdl or @ ref
+      # subj must be the first argument
     my %m = $dv->anova_rptd( $subj, $b, $w, {ivnm=>['Beer', 'Wings']} );
   
     print "$_\t$m{$_}\n" for (sort keys %m);
@@ -1727,7 +1728,7 @@ IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the con
 Default options (case insensitive): 
 
     CONST  => 1,
-    PLOT   => 1,
+    PLOT   => 1,   # see plot_residuals() for plot options
 
 =for usage
 
@@ -1815,7 +1816,7 @@ sub PDL::ols {
     # ***$coeff x $ivs looks nice but produces nan on successive tries***
   $ret{y_pred} = sumover( $coeff * $ivs->transpose );
 
-  $opt{PLOT} and $y->plot_residual( $ret{y_pred}, \%opt );
+  $opt{PLOT} and $y->plot_residuals( $ret{y_pred}, \%opt );
 
   return $coeff
     unless wantarray;
@@ -1878,15 +1879,36 @@ Repeated measures linear regression (Lorch & Myers, 1990; Van den Noortgate & On
 
 Usage:
 
-    # $subj can be 1D pdl or @ ref.
-    # each element in @ivs is treated as a separate IV
-    # pdl element is left as is
-    # 1D @ ref is effect_coded internally into pdl
-    # so please make sure to pass continuous IV as pdl
+    # This is the example from Lorch and Myers (1990),
+    # a study on how characteristics of sentences affected reading time
+    # Three within-subject IVs:
+    # SP -- serial position of sentence
+    # WORDS -- number of words in sentence
+    # NEW -- number of new arguments in sentence
 
-    my %r = $y->ols_rptd( $subj, @ivs );
+    # $subj can be 1D pdl or @ ref and must be the first argument
+    # IV can be 1D @ ref or pdl
+    # 1D @ ref is effect coded internally into pdl
+    # pdl is left as is
+
+    my %r = $rt->ols_rptd( $subj, $sp, $words, $new );
 
     print "$_\t$r{$_}\n" for (sort keys %r);
+
+    (ss_residual)   58.3754646504336
+    (ss_subject)    51.8590337714286
+    (ss_total)  405.188241771429
+    #      SP        WORDS      NEW
+    F   [  7.208473  61.354153  1.0243311]
+    F_p [0.025006181 2.619081e-05 0.33792837]
+    coeff   [0.33337285 0.45858933 0.15162986]
+    df  [1 1 1]
+    df_err  [9 9 9]
+    ms  [ 18.450705  73.813294 0.57026483]
+    ms_err  [ 2.5595857  1.2030692 0.55671923]
+    ss  [ 18.450705  73.813294 0.57026483]
+    ss_err  [ 23.036272  10.827623  5.0104731]
+
 
 =cut
 
@@ -2430,12 +2452,32 @@ sub PDL::plot_means {
   return;
 }
 
-=head2 plot_residual
+=head2 plot_residuals
+
+Plots residuals against predicted values.
+
+=for usage
+
+Usage:
+
+    $y->plot_residuals( $y_pred, { dev=>'/png' } );
+
+=for options
+
+Default options (case insensitive):
+
+     # see PDL::Graphics::PGPLOT::Window for more info
+    WIN   => undef,  # pgwin object. not closed here if passed
+                     # allows comparing multiple lines in same plot
+                     # set env before passing WIN
+    DEV   => '/xs',  # open and close dev for plotting if no WIN
+    SIZE  => 480,    # plot size in pixels
+    COLOR => 1,
 
 =cut
 
-*plot_residual = \&PDL::plot_residual;
-sub PDL::plot_residual {
+*plot_residuals = \&PDL::plot_residuals;
+sub PDL::plot_residuals {
   if (!$PGPLOT) {
     carp "No PDL::Graphics::PGPLOT, no plot :(";
     return;
