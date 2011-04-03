@@ -1153,7 +1153,10 @@ Binomial test. One-tailed significance test for two-outcome distribution. Given 
 
 Usage:
 
-  my $p = binomial_test( $x, $n, $p_expected );
+  # assume a fair coin, ie. 0.5 probablity of getting heads
+  # test whether getting 8 heads out of 10 coin flips is unusual
+
+  my $p = binomial_test( 8, 10, 0.5 );  # 0.0107421875. Yes it is unusual.
 
 =cut
 
