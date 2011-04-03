@@ -8,7 +8,7 @@ Of course, they also work in perl scripts.
 
 DEPENDENCIES
 
-PDL (>= 2.4.4)
+PDL
     Perl Data Language. Preferably installed with a Fortran compiler. A few methods (logistic regression and all plotting methods) will only work with a Fortran compiler and some methods (ordinary least squares regression and pca) work much faster with a Fortran compiler.
 
 GSL
