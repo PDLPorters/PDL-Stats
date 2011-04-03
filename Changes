@@ -1,7 +1,6 @@
 Revision history for PDL-Stats
 
 0.5.0	04/02/2011
-    Prerequisite version updated to PDL_2.4.8 because of lu_decomp() threading bug in PDL_2.4.7.
 	Updated tests to use __DATA__ instead of separate test data files.
 	GLM added interaction_code(); bug fix for dummy_code().
 	GLM added ols_rptd()!

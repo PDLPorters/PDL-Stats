@@ -13,7 +13,7 @@ WriteMakefile(
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,
-        'PDL'        => '2.4.8',
+        'PDL'        => '2.4.4',
     },
     PREREQ_FATAL        => 1,
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
