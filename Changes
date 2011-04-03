@@ -1,6 +1,6 @@
 Revision history for PDL-Stats
 
-0.5.0	08/01/2010
+0.5.0	04/02/2011
     Prerequisite version update: PDL_2.4.8.
 	Updated tests to use __DATA__ instead of separate test data files.
 	GLM added interaction_code(); bug fix for dummy_code().
