@@ -2239,8 +2239,8 @@ sub PDL::pca {
   }
 
   my $ind_sorted = $value->qsorti->(-1:0);
-  $score = $score->inplace->dice_axis(1, $ind_sorted)->sever;  # not threadable yet
-  $value = $value->dummy(1)->index($ind_sorted)->sever;        # allows threading
+  $score = $score( ,$ind_sorted)->sever;
+  $value = $value($ind_sorted)->sever;
 
     # var x axis
   my $loading = $score * sqrt( $value->transpose );

@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use ExtUtils::MakeMaker 6.54;
+use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => 'PDL::Stats',
