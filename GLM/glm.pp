@@ -2203,6 +2203,7 @@ Based on corr instead of cov (bad values are ignored pair-wise. OK when bad valu
 
 Default options (case insensitive):
 
+    CORR  => 1,       # boolean. Use correlation; otherwise covariance
     PLOT  => 1,       # scree plot for var accounted for
                       # can set plot_scree options here
 
@@ -2221,35 +2222,42 @@ sub PDL::pca {
   my ($self, $opt) = @_;
 
   my %opt = (
+    CORR  => 1,
     PLOT  => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
-  my $var_var = $self->corr_table;
+  my $var_var = $opt{CORR}? $self->stddz->cov_table
+              :             $self->cov_table
+              ;
 
     # value is axis pdl and score is var x axis
-  my ($value, $score);
+  my ($eigval, $eigvec);
   if ( $SLATEC ) {
-    ($value, $score) = $var_var->PDL::Slatec::eigsys;
+    ($eigval, $eigvec) = $var_var->PDL::Slatec::eigsys;
   }
   else {
-    ($score, $value) = $var_var->eigens_sym;
+    ($eigvec, $eigval) = $var_var->eigens_sym;
       # compatibility with PDL::Slatec::eigsys
-    $score = $score->inplace->transpose->sever;
+    $eigvec = $eigvec->inplace->transpose->sever;
   }
 
-  my $ind_sorted = $value->qsorti->(-1:0);
-  $score = $score( ,$ind_sorted)->sever;
-  $value = $value($ind_sorted)->sever;
+    # ind is sticky point for threading
+  my $ind_sorted = $eigval->qsorti->(-1:0);
+  $eigvec = $eigvec( ,$ind_sorted)->sever;
+  $eigval = $eigval($ind_sorted)->sever;
+
+    # transformed normed values
+  my $self_t = $eigvec x $self->stddz;
 
     # var x axis
-  my $loading = $score * sqrt( $value->transpose );
-  my $var     = $value / $self->dim(1);
+  my $loading = $eigvec * sqrt( $eigval->transpose );
+  my $var     = $eigval / $self->dim(1);
 
   $var->plot_scree(\%opt)
     if $opt{PLOT};
 
-  return ( loading=>$loading, value=>$value, score=>$score, var=>$var ); 
+  return ( loading=>$loading, value=>$eigval, score=>$eigvec, var=>$var ); 
 }
 
 =head2 pca_sorti
