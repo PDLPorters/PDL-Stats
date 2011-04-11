@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 48;
+    plan tests => 50;
 }
 
 use PDL::LiteF;
@@ -55,7 +55,7 @@ $b %= 2;
 $b = qsort $b;
 
   # 21-25
-is( tapprox( $a->cov($b), 0.6 ), 1 );
+is( tapprox( $a->cov($b), 0.6 ), 1, 'cov' );
 is( tapprox( $a->corr($b), 0.866025403784439 ), 1 );
 is( tapprox( $a->n_pair($b), 5 ), 1 );
 is( tapprox( $a->corr($b)->t_corr( 5 ), 3 ), 1 );
@@ -104,8 +104,15 @@ is( tapprox( $df, 3 ), 1 );
   is( tapprox( sum(pdl($data->dims) - pdl(14, 5)), 0 ), 1, 'rtable data dim' );
   is( tapprox( $data->sum / $data->nbad, 1.70731707317073 ), 1, 'rtable bad elem' );
 }
-
   # 45-46
+{
+  my $a = random 10, 3;
+  is( tapprox( sum($a->cov_table - $a->cov($a->dummy(1))), 0 ), 1, 'cov_table' );
+
+  $a->setbadat(4,0);
+  is( tapprox( sum($a->cov_table - $a->cov($a->dummy(1))), 0 ), 1, 'cov_table bad val' );
+}
+
 {
   my $a = random 10, 3;
   is( tapprox( sum($a->corr_table - $a->corr($a->dummy(1))), 0 ), 1 );
@@ -113,7 +120,7 @@ is( tapprox( $df, 3 ), 1 );
   $a->setbadat(4,0);
   is( tapprox( sum($a->corr_table - $a->corr($a->dummy(1))), 0 ), 1 );
 }
-  # 47
+  # 49
 {
   my $a = sequence 5, 2;
   $a( ,1) .= 0;
@@ -121,7 +128,7 @@ is( tapprox( $df, 3 ), 1 );
   is( $a->stdv->nbad, 1 );
 }
 
-  # 48
+  # 50
 SKIP: {
   eval { require PDL::GSL::CDF; };
   skip 'no PDL::GSL::CDF', 1 if $@;
