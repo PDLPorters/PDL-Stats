@@ -134,22 +134,22 @@ R2_change => pdl(.15, .15),
 
   my %p = $a->pca({CORR=>1,PLOT=>0});
   my %a = (
-loading => pdl(
+loadings => pdl(
  [qw( -0.976864  -0.979377  -0.934473)],
  [qw(  0.178533   0.161613  -0.356012)],
  [qw(  0.117734  -0.121249 0.00399995)],
 ),
 
   # loadings in R
-score   => pdl(
+eigenvector => pdl(
     # v1       v2        v3
  [qw(-0.585181 -0.586686 -0.559787)], # comp1
  [qw( 0.415376  0.376011 -0.828299)], # comp2
  [qw( 0.696438 -0.717227  0.023661)], # comp3
 ),
 
-value  => pdl( qw(2.78668 0.184737 0.0285787) ),
-var => pdl( qw(0.928895 0.0615791 0.00952624) ),
+eigenvalue  => pdl( qw(2.78668 0.184737 0.0285787) ),
+pct_var     => pdl( qw(0.928895 0.0615791 0.00952624) ),
   );
 
   for (keys %a) {
@@ -164,7 +164,7 @@ sub t_pca_sorti {
 
   my %m = $a->pca({PLOT=>0});
 
-  my ($iv, $ic) = $m{loading}->pca_sorti;
+  my ($iv, $ic) = $m{loadings}->pca_sorti;
 
   return sum($iv - pdl(qw(4 1 0 2 3))) + sum($ic - pdl(qw( 0 1 2 )));
 }
