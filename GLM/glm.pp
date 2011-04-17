@@ -2203,8 +2203,8 @@ Principal component analysis. Based on corr instead of cov (bad values are ignor
 
 Default options (case insensitive):
 
-    PLOT  => 1,     # calls plot_screes and plot_scores
-                    # can set plot_screes and plot_scores options here
+    PLOT  => 1,     # calls plot_screes by default
+                    # can set plot_scree options here
 
 =for usage
 
@@ -2217,7 +2217,7 @@ Usage:
     eigenvalue    # variance accounted for by each component
     [4.70192 0.199604 0.0471421 0.0372981 0.0140346]
 
-    eigenvector   # var x comp. weights for mapping variables to components
+    eigenvector   # dim var x comp. weights for mapping variables to component
     [
      [ -0.451251  -0.440696  -0.457628  -0.451491  -0.434618]
      [ -0.274551   0.582455   0.131494   0.255261  -0.709168]
@@ -2226,7 +2226,7 @@ Usage:
      [  0.229202   0.180393  -0.859217     0.4173  0.0503155]
     ]
     
-    loadings      # var x comp. correlation between variable and component
+    loadings      # dim var x comp. correlation between variable and component
     [
      [ -0.978489  -0.955601  -0.992316   -0.97901  -0.942421]
      [ -0.122661   0.260224  0.0587476   0.114043  -0.316836]
@@ -2237,6 +2237,10 @@ Usage:
     
     pct_var       # percent variance accounted for by each component
     [0.940384 0.0399209 0.00942842 0.00745963 0.00280691]
+
+Plot scores along the first two components,
+
+    $d->plot_scores( $r{eigenvector} );
 
 =cut
 
@@ -2272,24 +2276,8 @@ sub PDL::pca {
   my $loading = $eigvec * sqrt( $eigval->transpose );
   my $var     = $eigval / $eigval->sum;
 
-  if ($opt{PLOT}) {
-    # manually open a win here so both plot windows remain open
-    my $ncomp = $opt{NCOMP} || 20;
-       $ncomp = ($var->dim(0) < $ncomp)? $var->dim(0) : $ncomp;
-    my $dev  = $opt{DEV}  || $DEV;
-    my $size = $opt{SIZE} || 640;
-    my $win  = $opt{WIN};
-    if (!$win) {
-      $win = pgwin(DEV=>$dev, SIZE=>[$size, $size], UNIT=>3);
-      $win->env(0, $ncomp-1, 0, 1,
-      {XTitle=>'Compoment', YTitle=>'Proportion of Variance Accounted for',
-      AXIS=>['BCNT', 'BCNST'], Border=>1, });
-    }
-    $var->plot_screes({%opt, win=>$win});
-    $self->plot_scores($eigvec, \%opt);
-    $win->close
-      unless $opt{WIN};
-  }
+  $var->plot_screes(\%opt)
+    if $opt{PLOT};
 
   return ( eigenvalue=>$eigval, eigenvector=>$eigvec,
            pct_var=>$var, loadings=>$loading ); 
@@ -2625,7 +2613,7 @@ sub PDL::plot_scores {
    $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(-$max, $max, -$max, $max,
      {XTitle=>"Compoment $opt{COMP}->[0]", YTitle=>"Component $opt{COMP}->[1]",
-     AXIS=>['BCNT', 'BCNST'], Border=>1, });
+     AXIS=>['ABCNST', 'ABCNST'], Border=>1, });
   }
 
   $win->points( $z( ,0;-), $z( ,1;-), { COLOR=>$opt{COLOR}->[0] } );
