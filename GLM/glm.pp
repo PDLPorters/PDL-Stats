@@ -2383,7 +2383,7 @@ Default options (case insensitive):
     WIN   => undef,   # pgwin object. not closed here if passed
                       # allows comparing multiple lines in same plot
                       # set env before passing WIN
-    DEV   => '/xs' ,         # open and close dev for plotting if no WIN
+    DEV   => '/xs',         # open and close dev for plotting if no WIN
                             # defaults to '/png' in Windows
     SIZE  => 640,           # individual square panel size in pixels
     SYMBL => [0, 4, 7, 11], 

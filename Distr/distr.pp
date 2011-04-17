@@ -12,12 +12,13 @@ use PDL::LiteF;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
-my $PGPLOT;
-if ( grep { -e "$_/PGPLOT.pm"  } @INC ) {
+eval {
   require PDL::Graphics::PGPLOT::Window;
   PDL::Graphics::PGPLOT::Window->import( 'pgwin' );
-  $PGPLOT = 1;
-}
+};
+my $PGPLOT = 1 if !$@;
+
+my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 =head1 NAME
 
@@ -1071,7 +1072,8 @@ Default options (case insensitive):
     WIN   => undef,   # pgwin object. not closed here if passed
                       # allows comparing multiple distr in same plot
                       # set env before passing WIN
-    DEV   => '/xs',   # open and close dev for plotting if no WIN
+    DEV   => '/xs' ,  # open and close dev for plotting if no WIN
+                      # defaults to '/png' in Windows
     COLOR => 1,       # color for data distr
 
 =for usage
@@ -1101,7 +1103,7 @@ sub PDL::plot_distr {
   my %opt = (
     MAXBN => 20, 
     WIN   => undef,     # pgwin object. not closed here if passed
-    DEV   => '/xs',     # open and close default win if no WIN
+    DEV   => $DEV,      # open and close default win if no WIN
     COLOR => 1,         # color for data distr
   );
   my $opt = pop @distr

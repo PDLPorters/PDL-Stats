@@ -30,13 +30,13 @@ use PDL::Stats::Kmeans;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
-my $PGPLOT;
-  # check for PGPLOT not PDL::Graphics::PGPLOT
-if ( grep { -e "$_/PGPLOT.pm"  } @INC ) {
+eval {
   require PDL::Graphics::PGPLOT::Window;
   PDL::Graphics::PGPLOT::Window->import( 'pgwin' );
-  $PGPLOT = 1;
-}
+};
+my $PGPLOT = 1 if !$@;
+
+my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 EOD
 
@@ -808,8 +808,10 @@ Default options (case insensitive):
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
     PLOT  => 1,              # boolean
+      # see PDL::Graphics::PGPLOT::Window for next options
     WIN   => undef,          # pass pgwin object for more plotting control
-    DEV   => "/xs",          # see PDL::Graphics::PGPLOT for more info
+    DEV   => '/xs',          # open and close dev for plotting if no WIN
+                             # defaults to '/png' in Windows
     COLOR => 1,
 
 See PDL::Graphics::PGPLOT for detailed graphing options.
@@ -828,7 +830,7 @@ sub PDL::season_m {
     MISSING        => -999,  # internal mark for missing points in season
     PLOT  => 1,
     WIN   => undef,          # pass pgwin object for more plotting control
-    DEV   => "/xs",          # see PDL::Graphics::PGPLOT for more info
+    DEV   => $DEV,           # see PDL::Graphics::PGPLOT for more info
     COLOR => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
@@ -888,8 +890,9 @@ Plots deseasonalized data and original data points. Opens and closes default win
 Default options (case insensitive):
 
     WIN   => undef,
-    DEV   => "/xs",
-    COLOR => 1,       # data point color
+    DEV   => '/xs',    # open and close dev for plotting if no WIN
+                       # defaults to '/png' in Windows
+    COLOR => 1,        # data point color
 
 See PDL::Graphics::PGPLOT for detailed graphing options.
 
@@ -905,7 +908,7 @@ sub PDL::plot_dseason {
   if ($PGPLOT) {
     my %opt = (
         WIN   => undef,
-        DEV   => "/xs",
+        DEV   => $DEV,
         COLOR => 1,       # data point color
     );
     $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
@@ -972,8 +975,9 @@ Plots and returns autocorrelations for a time series.
 
 Default options (case insensitive):
 
-    SIG => 0.05,    # can specify .10, .05, .01, or .001
-    DEV => "/xs",   # see PDL::Graphics::PGPLOT
+    SIG  => 0.05,      # can specify .10, .05, .01, or .001
+    DEV  => '/xs',     # open and close dev for plotting
+                       # defaults to '/png' in Windows
 
 =for usage
 
@@ -996,7 +1000,7 @@ sub PDL::plot_acf {
   if ($PGPLOT) {
     my %opt = (
         SIG => 0.05,
-        DEV => "/xs",
+        DEV => $DEV,
     );
     $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
