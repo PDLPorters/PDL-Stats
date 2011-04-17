@@ -2204,7 +2204,7 @@ Principal component analysis. Based on corr instead of cov (bad values are ignor
 Default options (case insensitive):
 
     PLOT  => 1,     # calls plot_screes by default
-                    # can set plot_scree options here
+                    # can set plot_screes options here
 
 =for usage
 
