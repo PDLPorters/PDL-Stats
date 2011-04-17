@@ -2738,6 +2738,8 @@ Osgood C.E., Suci, G.J., & Tannenbaum, P.H. (1957). The Measurement of Meaning. 
 
 Rutherford, A. (2001). Introducing Anova and Ancova: A GLM Approach (1st ed.). Thousand Oaks, CA: Sage Publications.
 
+Shlens, J. (2009). A Tutorial on Principal Component Analysis. Retrieved April 10, 2011 from http://citeseerx.ist.psu.edu/
+
 The GLM procedure: unbalanced ANOVA for two-way design with interaction. (2008). SAS/STAT(R) 9.2 User's Guide. Retrieved June 18, 2009 from http://support.sas.com/
 
 Van den Noortgatea, W., & Onghenaa, P. (2006). Analysing repeated measures data in cognitive research: A comment on regression coefficient analyses. European Journal of Cognitive Psychology, 18, 937-952.
