@@ -2566,7 +2566,7 @@ sub PDL::plot_residuals {
  
 =head2 plot_scores
 
-Plots PCA original and rotated scores against two components. (Thank you, Bob MacCallum, for the documentation that led to this function!)
+Plots standardized original and PCA transformed scores against two components. (Thank you, Bob MacCallum, for the documentation that led to this function.)
 
 =for options
 
@@ -2608,29 +2608,29 @@ sub PDL::plot_scores {
                      # set env before passing WIN
     DEV   => $DEV ,  # open and close dev for plotting if no WIN
     SIZE  => 640,    # plot size in pixels
-    COLOR => [1,2],  # color for original and rotated scoress
+    COLOR => [1,2],  # color for original and transformed scoress
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
   my $i = pdl $opt{COMP};
-  my $mc = $self->dev_m;
+  my $z = $self->stddz;
 
     # transformed normed values
-  my $scores = sumover($eigvec( ,$i) * $mc->transpose->dummy(1))->transpose;
-  $mc = $mc( ,$i)->sever;
+  my $scores = sumover($eigvec( ,$i) * $z->transpose->dummy(1))->transpose;
+  $z = $z( ,$i)->sever;
 
   my $win = $opt{WIN};
-
+  my $max = pdl($z, $scores)->abs->ceil->max;
   if (!$win) {
    $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
-   my $max = pdl($mc, $scores)->abs->max;
    $win->env(-$max, $max, -$max, $max,
      {XTitle=>"Compoment $opt{COMP}->[0]", YTitle=>"Component $opt{COMP}->[1]",
      AXIS=>['BCNT', 'BCNST'], Border=>1, });
   }
 
-  $win->points( $mc( ,0;-), $mc( ,1;-), { COLOR=>$opt{COLOR}->[0] } );
+  $win->points( $z( ,0;-), $z( ,1;-), { COLOR=>$opt{COLOR}->[0] } );
   $win->points( $scores( ,0;-), $scores( ,1;-), { COLOR=>$opt{COLOR}->[1] } );
+  $win->legend( ['original', 'transformed'], .2*$max, .8*$max, {color=>[1,2],symbol=>[1,1]} );
   $win->close
     unless $opt{WIN};
   return;
