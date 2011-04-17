@@ -21,7 +21,7 @@ $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
 Loads modules named below, making the functions available in the current namespace.
 
-Documentations online at http://pdl-stats.sourceforge.net
+Properly formated documentations online at http://pdl-stats.sf.net
  
 =head1 SYNOPSIS
 
