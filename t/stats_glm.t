@@ -151,9 +151,8 @@ loadings	=> pdl(
 
 pct_var	=> pdl( qw(0.92889468 0.06157909 0.0095262297) ),
   );
-
   for (keys %a) {
-    is(tapprox(sum(abs($a{$_}-$p{$_})),0, 1e-5), 1, $_);
+    is(tapprox(sum(abs($a{$_}-$p{$_})),0, 1e-4), 1, $_);
   }
 }
 
