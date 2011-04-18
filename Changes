@@ -1,5 +1,11 @@
 Revision history for PDL-Stats
 
+0.5.3   04/18/2011
+        stats_glm.t pca() test SLATEC vs. MatrixOps precision fix.
+
+0.5.2   04/17/2011
+        stats_glm.t pca() test precision fix.
+
 0.5.1   04/16/2011
         ***GLM pca() return value names updated*** to be more compatible with the literature.
         GLM added plot_scores(); plot_scree() name changed to plot_screes() for consistency across plotting functions.

@@ -2554,7 +2554,7 @@ sub PDL::plot_residuals {
  
 =head2 plot_scores
 
-Plots standardized original and PCA transformed scores against two components. (Thank you, Bob MacCallum, for the documentation that led to this function.)
+Plots standardized original and PCA transformed scores against two components. (Thank you, Bob MacCallum, for the documentation suggestion that led to this function.)
 
 =for options
 
