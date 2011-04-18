@@ -132,7 +132,7 @@ R2_change => pdl(.15, .15),
    [qw(0 2 2 4 9)],
   );
 
-  my %p = $a->pca({CORR=>1,PLOT=>0});
+  my %p = $a->pca({PLOT=>0});
   my %a = (
 eigenvalue  => pdl( qw( 2.786684 0.18473727 0.028578689) ),
   # loadings in R
@@ -152,7 +152,7 @@ loadings	=> pdl(
 pct_var	=> pdl( qw(0.92889468 0.06157909 0.0095262297) ),
   );
   for (keys %a) {
-    is(tapprox(sum(abs($a{$_}-$p{$_})),0, 1e-4), 1, $_);
+    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-5), 1, $_);
   }
 }
 
