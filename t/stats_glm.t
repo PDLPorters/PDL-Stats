@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 45;
+    plan tests => 49;
       # 1-2
     use_ok( 'PDL::Stats::Basic' );
     use_ok( 'PDL::Stats::GLM' );
@@ -132,7 +132,7 @@ R2_change => pdl(.15, .15),
    [qw(0 2 2 4 9)],
   );
 
-  my %p = $a->pca({PLOT=>0});
+  my %p = $a->pca({CORR=>1, PLOT=>0});
   my %a = (
 eigenvalue  => pdl( qw( 2.786684 0.18473727 0.028578689) ),
   # loadings in R
@@ -153,6 +153,27 @@ pct_var	=> pdl( qw(0.92889468 0.06157909 0.0095262297) ),
   );
   for (keys %a) {
     is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-5), 1, $_);
+  }
+
+  %p = $a->pca({CORR=>0, PLOT=>0});
+  %a = (
+eigenvalue => pdl( qw[ 22.0561695 1.581758022 0.202065959 ] ),
+eigenvector => pdl(
+ [qw(-0.511688 -0.595281 -0.619528)],
+ [qw( 0.413568  0.461388  -0.78491)],
+ [qw( 0.753085 -0.657846 0.0101023)],
+),
+
+loadings    => pdl(
+ [qw(-0.96823408  -0.9739215 -0.94697802)],
+ [qw( 0.20956865  0.20214966 -0.32129495)],
+ [qw( 0.13639532 -0.10301693 0.001478041)],
+),
+
+pct_var => pdl( qw[0.925175 0.0663489 0.00847592] ),
+  );
+  for (keys %a) {
+    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-5), 1, "corr=>0, $_");
   }
 }
 

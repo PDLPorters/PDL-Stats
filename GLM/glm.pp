@@ -19,8 +19,12 @@ $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 eval { require PDL::GSL::CDF; };
 my $CDF = 1 if !$@;
 
+my $SLATEC = 1;
 eval { require PDL::Slatec; };
-my $SLATEC = 1 if !$@;
+if ($@) {
+  warn "No PDL::Slatec. Fall back on PDL::MatrixOps.\n";
+  undef $SLATEC;
+}
 
 eval {
   require PDL::Graphics::PGPLOT::Window;
@@ -2203,6 +2207,7 @@ Principal component analysis. Based on corr instead of cov (bad values are ignor
 
 Default options (case insensitive):
 
+    CORR  => 1,     # boolean. use correlation or covariance
     PLOT  => 1,     # calls plot_screes by default
                     # can set plot_screes options here
 
@@ -2249,12 +2254,12 @@ sub PDL::pca {
   my ($self, $opt) = @_;
 
   my %opt = (
+    CORR  => 1,
     PLOT  => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
-#  my $var_var = $opt{CORR}? $self->corr_table : $self->cov_table;
-  my $var_var = $self->corr_table;
+  my $var_var = $opt{CORR}? $self->corr_table : $self->cov_table;
 
     # value is axis pdl and score is var x axis
   my ($eigval, $eigvec);
@@ -2273,14 +2278,21 @@ sub PDL::pca {
   $eigval = $eigval($ind_sorted)->sever;
 
     # var x axis
-  my $loading = $eigvec * sqrt( $eigval->transpose );
   my $var     = $eigval / $eigval->sum;
+  my $loadings;
+  if ($opt{CORR}) {
+    $loadings = $eigvec * sqrt( $eigval->transpose );
+  }
+  else {
+    my $scores = $eigvec x $self->dev_m;
+    $loadings = $self->corr( $scores->dummy(1) );
+  }
 
   $var->plot_screes(\%opt)
     if $opt{PLOT};
 
   return ( eigenvalue=>$eigval, eigenvector=>$eigvec,
-           pct_var=>$var, loadings=>$loading ); 
+           pct_var=>$var, loadings=>$loadings ); 
 }
 
 =head2 pca_sorti
