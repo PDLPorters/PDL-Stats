@@ -2601,6 +2601,7 @@ sub PDL::plot_scores {
     if ref $_[-1] eq 'HASH';
   my ($self, $eigvec) = @_;
   my %opt = (
+    CORR  => 1,      # boolean. PCA was based on correlation or covariance
     COMP  => [0,1],  # indices to components to plot
      # see PDL::Graphics::PGPLOT::Window for next options
     WIN   => undef,  # pgwin object. not closed here if passed
@@ -2613,7 +2614,7 @@ sub PDL::plot_scores {
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
   my $i = pdl $opt{COMP};
-  my $z = $self->stddz;
+  my $z = $opt{CORR}? $self->stddz : $self->dev_m;
 
     # transformed normed values
   my $scores = sumover($eigvec( ,$i) * $z->transpose->dummy(1))->transpose;
