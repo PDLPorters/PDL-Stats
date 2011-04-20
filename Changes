@@ -1,8 +1,8 @@
 Revision history for PDL-Stats
 
 0.5.4   04/19/2011
-        GLM pca() can do cov version.
-        Undo PREREQ_FATAL => 1 [rt.cpan.org #67557]
+        GLM pca() and plot_scores() can do cov version.
+        [rt.cpan.org #67557] Undo PREREQ_FATAL => 1 in Makefile.PL.
 
 0.5.3   04/18/2011
         stats_glm.t pca() test SLATEC vs. MatrixOps precision fix.
