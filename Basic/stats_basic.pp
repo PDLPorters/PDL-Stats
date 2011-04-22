@@ -16,7 +16,7 @@ my $CDF = 1 if !$@;
 
 =head1 NAME
 
-PDL::Stats::Basic -- basic statistics and related utilities
+PDL::Stats::Basic -- basic statistics and related utilities such as standard deviation, Pearson correlation, and t-tests.
 
 =head1 DESCRIPTION
 
