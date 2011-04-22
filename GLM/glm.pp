@@ -2572,6 +2572,7 @@ Plots standardized original and PCA transformed scores against two components. (
 
 Default options (case insensitive):
 
+  CORR  => 1,      # boolean. PCA was based on correlation or covariance
   COMP  => [0,1],  # indices to components to plot
     # see PDL::Graphics::PGPLOT::Window for next options
   WIN   => undef,  # pgwin object. not closed here if passed
