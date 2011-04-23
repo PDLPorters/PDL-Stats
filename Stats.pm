@@ -89,6 +89,8 @@ If you have a list of list, ie array of array refs, pdl will create a multi-dime
     ]
     PDL: Double D [4,3]
 
+PDL::Stats puts observations in the first dimension and variables in the second dimension, ie pdl [obs, var]. In PDL::Stats the above example represents 4 observations on 3 variables.
+
     # you can do all kinds of fancy stuff on such a 2D pdl.
 
     my %result = $a->kmeans( {NCLUS=>2} );
@@ -98,7 +100,7 @@ Make sure the array of array refs is rectangular. If the array refs are of unequ
 
 =head2 info
 
-Tells you the data type (yes pdls are typed, but you shouldn't have to worry about it here*) and dimensionality of the pdl, as seen in the above example. It helps your sanity to keep track of the dimensionality of a pdl. PDL::Stats uses 2D pdl with observation x variable dimensionality. So in the above example we are talking about 4 separate observations with values on 3 different variables.
+Tells you the data type (yes pdls are typed, but you shouldn't have to worry about it here*) and dimensionality of the pdl, as seen in the above example. I find it a big help for my sanity to keep track of the dimensionality of a pdl. As mentioned above, PDL::Stats uses 2D pdl with observation x variable dimensionality.
 
 *pdl uses double precision by default. If you are working with things like epoch time, then you should probably use pdl(long, @epoch) to maintain the precision.
 
@@ -255,12 +257,11 @@ EOD
 
 ~~~~~~~~~~~~ ~~~~~ ~~~~~~~~ ~~~~~ ~~~ `` ><(((">
 
-Copyright (C) 2009 Maggie J. Xiong <maggiexyz users.sourceforge.net>
+Copyright (C) 2009-2011 Maggie J. Xiong <maggiexyz users.sourceforge.net>
 
 All rights reserved. There is no warranty. You are allowed to redistribute this software / documentation as described in the file COPYING in the PDL distribution.
 
 =cut
 
-;# Exit with OK status
 
 1;
