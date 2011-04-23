@@ -5,8 +5,6 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 49;
-      # 1-2
     use_ok( 'PDL::Stats::Basic' );
     use_ok( 'PDL::Stats::GLM' );
 }
@@ -173,7 +171,7 @@ loadings    => pdl(
 pct_var => pdl( qw[0.925175 0.0663489 0.00847592] ),
   );
   for (keys %a) {
-    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-5), 1, "corr=>0, $_");
+    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-4), 1, "corr=>0, $_");
   }
 }
 
@@ -424,6 +422,8 @@ sub t_anova_rptd_mixed_4w {
 
   is(sum(abs($inter - $ans)), 0, 'interaction_code');
 }
+
+done_testing();
 
 
 __DATA__

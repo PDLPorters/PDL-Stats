@@ -1,5 +1,8 @@
 Revision history for PDL-Stats
 
+0.5.5   04/22/2011
+        GLM quits installation with PDL-2.4.7 warning. GLM test update.
+
 0.5.4   04/19/2011
         GLM pca() and plot_scores() can do cov version.
         [rt.cpan.org #67557] Undo PREREQ_FATAL => 1 in Makefile.PL.

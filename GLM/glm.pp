@@ -36,7 +36,7 @@ my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 =head1 NAME
 
-PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA, OLS, PCA, and logistic regression.
+PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA, linear regression, PCA, and logistic regression.
 
 =head1 DESCRIPTION
 
