@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-pp_add_exported('', 'rtable', 'get_data', 'which_id', 
+pp_add_exported('', 'binomial_test', 'rtable', 'get_data', 'which_id', 
 );
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -11,9 +11,12 @@ use Carp;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
+eval { require PDL::GSL::CDF; };
+my $CDF = 1 if !$@;
+
 =head1 NAME
 
-PDL::Stats::Basic -- basic statistics and related utilities
+PDL::Stats::Basic -- basic statistics and related utilities such as standard deviation, Pearson correlation, and t-tests.
 
 =head1 DESCRIPTION
 
@@ -572,6 +575,121 @@ pp_def('cov',
 Sample covariance. see B<corr> for ways to call
 
 =cut
+  ',
+
+);
+
+pp_def('cov_table',
+  Pars      => 'a(n,m); float+ [o]c(m,m)',
+  HandleBad => 1,
+  Code      => '
+
+long N, M;
+N = $SIZE(n); M = $SIZE(m);
+$GENERIC(a) a_, b_;
+$GENERIC(c) ab, sa, sb, cov;
+
+if (N > 1 ) {
+  long i, j;
+  for (i=0; i<M; i++) {
+    for (j=i; j<M; j++) {
+      ab = 0; sa = 0; sb = 0;
+      loop (n) %{
+        a_ = $a(n=>n,m=>i);
+        b_ = $a(n=>n,m=>j);
+    	ab += a_ * b_;
+    	sa += a_;
+    	sb += b_;
+      %}
+      cov = ab - (sa * sb) / N;
+      $c(m0=>i, m1=>j) =
+      $c(m0=>j, m1=>i) = cov / N;
+    }
+  }
+}
+else {
+  barf( "too few N" );
+}
+
+  ',
+  BadCode  => '
+
+if ($SIZE(n) >= 2 ) {
+  $GENERIC(a) a_, b_;
+  $GENERIC(c) ab, sa, sb, cov;
+  long N, M, i, j;
+  M = $SIZE(m);
+  for (i=0; i<M; i++) {
+    for (j=i; j<M; j++) {
+      ab=0; sa=0; sb=0; N=0;
+      loop (n) %{
+        if ($ISBAD($a(n=>n, m=>i)) || $ISBAD($a(n=>n, m=>j))) { }
+        else { 
+          a_ = $a(n=>n,m=>i);
+          b_ = $a(n=>n,m=>j);
+          ab += a_ * b_;
+          sa += a_;
+          sb += b_;
+          N ++;
+        }
+      %}
+      if (N > 1) {
+        cov = ab - (sa * sb) / N;
+        $c(m0=>i, m1=>j) =
+        $c(m0=>j, m1=>i) = cov / N;
+      }
+      else {
+        $SETBAD($c(m0=>i, m1=>j));
+        $SETBAD($c(m0=>j, m1=>i));
+      }
+    }
+  }
+}
+else {
+  barf( "too few N" );
+}
+
+  ',
+  Doc      => '
+
+=for ref
+
+Square covariance table. Gives the same result as threading using B<cov> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
+
+=for usage
+
+Usage:
+
+    # 5 obs x 3 var, 2 such data tables
+
+    perldl> $a = random 5, 3, 2
+
+    perldl> p $cov = $a->cov_table
+    [
+     [
+      [ 8.9636438 -1.8624472 -1.2416588]
+      [-1.8624472  14.341514 -1.4245366]
+      [-1.2416588 -1.4245366  9.8690655]
+     ]
+     [
+      [   10.32644 -0.31311789 -0.95643674]
+      [-0.31311789   15.051779  -7.2759577]
+      [-0.95643674  -7.2759577   5.4465141]
+     ]
+    ]
+    # diagonal elements of the cov table are the variances
+    perldl> p $a->var
+    [
+     [ 8.9636438  14.341514  9.8690655]
+     [  10.32644  15.051779  5.4465141]
+    ]
+
+for the same cov matrix table using B<cov>,
+
+    perldl> p $a->dummy(2)->cov($a->dummy(1)) 
+
+=cut
+
   ',
 
 );
@@ -1135,6 +1253,37 @@ Paired sample t-test.
 );
 
 pp_addpm(<<'EOD');
+
+=head2 binomial_test
+
+=for Sig
+
+  Signature: (x(); n(); p_expected(); [o]p())
+
+=for ref
+
+Binomial test. One-tailed significance test for two-outcome distribution. Given the number of success, the number of trials, and the expected probability of success, returns the probability of getting this many or more successes.
+
+=for usage
+
+Usage:
+
+  # assume a fair coin, ie. 0.5 probablity of getting heads
+  # test whether getting 8 heads out of 10 coin flips is unusual
+
+  my $p = binomial_test( 8, 10, 0.5 );  # 0.0107421875. Yes it is unusual.
+
+=cut
+
+*binomial_test = \&PDL::binomial_test;
+sub PDL::binomial_test {
+  my ($x, $n, $P) = @_;
+  return 1 - PDL::GSL::CDF::gsl_cdf_binomial_P( $x, $P, $n )
+    if $CDF;
+
+  carp 'Please install PDL::GSL::CDF.';
+}
+
 
 =head1 METHODS
 

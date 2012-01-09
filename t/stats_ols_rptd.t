@@ -21,6 +21,12 @@ sub tapprox {
   return $diff < $eps;
 }
 
+# This is the example from Lorch and Myers (1990),
+# a study on how characteristics of sentences affected reading time
+# Three within-subject IVs:
+# SP -- serial position of sentence
+# WORDS -- number of words in sentence
+# NEW -- number of new arguments in sentence
 
 my ($data, $idv, $ido) = rtable \*DATA, {V=>0};
 
@@ -47,7 +53,7 @@ Snt	Sp	Wrds	New	subj	DV
 2	2	16	3	1	6.482
 3	3	9	2	1	1.714
 4	4	9	2	1	3.679
-5	5	10	3	1	4
+5	5	10	3	1	4.000
 6	6	18	4	1	6.973
 7	7	6	1	1	2.634
 1	1	13	1	2	2.795
@@ -56,7 +62,7 @@ Snt	Sp	Wrds	New	subj	DV
 4	4	9	2	2	3.714
 5	5	10	3	2	2.902
 6	6	18	4	2	8.018
-7	7	6	1	2	1.75
+7	7	6	1	2	1.750
 1	1	13	1	3	4.161
 2	2	16	3	3	4.491
 3	3	9	2	3	3.018
@@ -68,7 +74,7 @@ Snt	Sp	Wrds	New	subj	DV
 2	2	16	3	4	5.063
 3	3	9	2	4	2.464
 4	4	9	2	4	2.732
-5	5	10	3	4	2.67
+5	5	10	3	4	2.670
 6	6	18	4	4	7.571
 7	7	6	1	4	2.884
 1	1	13	1	5	3.625
@@ -87,15 +93,15 @@ Snt	Sp	Wrds	New	subj	DV
 7	7	6	1	6	3.688
 1	1	13	1	7	3.232
 2	2	16	3	7	8.357
-3	3	9	2	7	4.92
+3	3	9	2	7	4.920
 4	4	9	2	7	3.723
 5	5	10	3	7	3.143
-6	6	18	4	7	11.17
+6	6	18	4	7	11.170
 7	7	6	1	7	2.054
 1	1	13	1	8	7.161
 2	2	16	3	8	4.313
 3	3	9	2	8	3.366
-4	4	9	2	8	6.33
+4	4	9	2	8	6.330
 5	5	10	3	8	6.143
 6	6	18	4	8	6.071
 7	7	6	1	8	1.696
@@ -110,6 +116,6 @@ Snt	Sp	Wrds	New	subj	DV
 2	2	16	3	10	6.652
 3	3	9	2	10	2.179
 4	4	9	2	10	3.661
-5	5	10	3	10	3.33
+5	5	10	3	10	3.330
 6	6	18	4	10	7.866
 7	7	6	1	10	3.705

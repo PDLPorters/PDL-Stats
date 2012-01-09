@@ -5,8 +5,6 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 40;
-      # 1-2
     use_ok( 'PDL::Stats::Basic' );
     use_ok( 'PDL::Stats::GLM' );
 }
@@ -57,7 +55,7 @@ my $y = pdl(0, 1, 0, 1, 0);
 is( tapprox( $y->d0(), 6.73011667009256 ), 1 );
 is( tapprox( $y->dm( ones(5) * .5 ), 6.93147180559945 ), 1 );
 is( tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 1 );
-  # 14-15
+
 {
   my $a = pdl(ushort, [0,0,1,0,1], [0,0,0,1,1] );
   my $b = cat sequence(5), sequence(5)**2;
@@ -68,20 +66,30 @@ is( tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 1 );
                   [ 0.33333333, 0.80952381 ],
                  ],
             );
-  is( tapprox( sum( $m{R2} - $rsq ), 0 ), 1 );
+  my $coeff = pdl(
+   [
+    [qw(           0.2 -3.3306691e-16  -1.110223e-16)],
+    [qw(   0.014285714    0.071428571   -0.057142857)],
+   ],
+   [
+    [qw(           0.1 -1.6653345e-16  -1.110223e-16)],
+    [qw(  0.0071428571    0.035714286   -0.057142857)],
+   ],
+  );
+  is( tapprox( sum( abs($m{R2} - $rsq) ), 0 ), 1, 'ols_t R2' );
+  is( tapprox( sum( abs($m{b} - $coeff) ), 0 ), 1, 'ols_t b' );
 
   my %m0 = $a->ols_t(sequence(5), {CONST=>0});
   my $b0 = pdl ([ 0.2 ], [ 0.23333333 ]);
 
-  is( tapprox( sum( $m0{b} - $b0 ), 0 ), 1 );
+  is( tapprox( sum( abs($m0{b} - $b0) ), 0 ), 1, 'ols_t, const=>0' );
 }
 
-  # 16
-is( tapprox( t_ols(), 0 ), 1 );
+is( tapprox( t_ols(), 0 ), 1, 'ols' );
 sub t_ols {
   my $a = sequence 5;
   my $b = pdl(0,0,0,1,1);
-  my %m = $a->ols($b);
+  my %m = $a->ols($b, {plot=>0});
   my %a = (
     F    => 9,
     F_df => pdl(1,3),
@@ -93,13 +101,12 @@ sub t_ols {
     ss_model => 7.5,
   );
   my $sum;
-  $sum += sum($a{$_} - $m{$_})
+  $sum += sum(abs($a{$_} - $m{$_}))
     for (keys %a);
   return $sum;
 }
 
-  # 17
-is( tapprox( t_r2_change(), 0 ), 1 );
+is( tapprox( t_r2_change(), 0 ), 1, 'r2_change' );
 sub t_r2_change {
   my $a = sequence 5, 2;
   my $b = pdl(0,0,0,1,1);
@@ -116,24 +123,58 @@ R2_change => pdl(.15, .15),
   return $sum;
 }
 
-  # 18
-is( tapprox( t_pca(), 0 ), 1 );
-sub t_pca {
-  my $a = sequence 10, 5;
-  $a->where($a % 7 == 0) .= 0;
-
-  my %m = $a->pca({PLOT=>0});
-  my %a = (
-value => pdl(1.59696,1.17391,1.05055,0.603594,0.574989),
-var   => pdl(0.319391,0.234782,0.21011,0.120719,0.114998),
+{ # pca
+  my $a = pdl (
+   [qw(1 3 6 6 8)],
+   [qw(1 4 6 8 9)],
+   [qw(0 2 2 4 9)],
   );
-  my $sum;
-  $sum += sum($a{$_} - $m{$_})
-    for (keys %a);
-  return $sum / 10;
+
+  my %p = $a->pca({CORR=>1, PLOT=>0});
+  my %a = (
+eigenvalue  => pdl( qw( 2.786684 0.18473727 0.028578689) ),
+  # loadings in R
+eigenvector	=> pdl(
+    # v1       v2        v3
+ [qw(  0.58518141   0.58668657   0.55978709)],  # comp1
+ [qw( -0.41537629  -0.37601061   0.82829859)],  # comp2
+ [qw( -0.69643754   0.71722722 -0.023661276)],  # comp3
+),
+
+loadings	=> pdl(
+ [qw(   0.97686463    0.97937725    0.93447296)],
+ [qw(  -0.17853319    -0.1616134    0.35601163)],
+ [qw(  -0.11773439    0.12124893 -0.0039999937)],
+),
+
+pct_var	=> pdl( qw(0.92889468 0.06157909 0.0095262297) ),
+  );
+  for (keys %a) {
+    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-5), 1, $_);
+  }
+
+  %p = $a->pca({CORR=>0, PLOT=>0});
+  %a = (
+eigenvalue => pdl( qw[ 22.0561695 1.581758022 0.202065959 ] ),
+eigenvector => pdl(
+ [qw(-0.511688 -0.595281 -0.619528)],
+ [qw( 0.413568  0.461388  -0.78491)],
+ [qw( 0.753085 -0.657846 0.0101023)],
+),
+
+loadings    => pdl(
+ [qw(-0.96823408  -0.9739215 -0.94697802)],
+ [qw( 0.20956865  0.20214966 -0.32129495)],
+ [qw( 0.13639532 -0.10301693 0.001478041)],
+),
+
+pct_var => pdl( qw[0.925175 0.0663489 0.00847592] ),
+  );
+  for (keys %a) {
+    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-4), 1, "corr=>0, $_");
+  }
 }
 
-  # 19
 is( tapprox( t_pca_sorti(), 0 ), 1 );
 sub t_pca_sorti {
   my $a = sequence 10, 5;
@@ -141,17 +182,16 @@ sub t_pca_sorti {
 
   my %m = $a->pca({PLOT=>0});
 
-  my ($iv, $ic) = $m{loading}->pca_sorti;
+  my ($iv, $ic) = $m{loadings}->pca_sorti;
 
   return sum($iv - pdl(qw(4 1 0 2 3))) + sum($ic - pdl(qw( 0 1 2 )));
 }
 
-  # 20
 SKIP: {
   eval { require PDL::Fit::LM; };
   skip 'no PDL::Fit::LM', 1 if $@;
 
-  is( tapprox( t_logistic(), 0 ), 1 );
+  is( tapprox( t_logistic(), 0 ), 1, 'logistic' );
 }
 sub t_logistic {
   my $y = pdl( 0, 0, 0, 1, 1 );
@@ -168,30 +208,28 @@ $a_bad->setbadat(-1);
 my $b_bad = pdl(0, 0, 0, 0, 1, 1);
 $b_bad->setbadat(0);
 
-  # 21 
+  # 25
 is( tapprox( $a_bad->dev_m->avg, 0 ), 1 );
 is( tapprox( $a_bad->stddz->avg, 0 ), 1 );
-  # 23
+  # 27
 is( tapprox( $a_bad->sse($b_bad), 23), 1 );
 is( tapprox( $a_bad->mse($b_bad), 5.75), 1 );
 is( tapprox( $a_bad->rmse($b_bad), 2.39791576165636 ), 1 );
-  # 26
+  # 30
 is( tapprox( $b_bad->glue(1,ones(6))->pred_logistic(pdl(1,2))->sum, 4.54753948757851 ), 1 );
 
-  # 27
+  # 31
 is( tapprox( $b_bad->d0(), 6.73011667009256 ), 1 );
 is( tapprox( $b_bad->dm( ones(6) * .5 ), 6.93147180559945 ), 1 );
 is( tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), 1 );
 
-  # 30
-is( tapprox( t_effect_code_w(), 0 ), 1 );
+is( tapprox( t_effect_code_w(), 0 ), 1, 'effect_code_w' );
 sub t_effect_code_w {
   my @a = qw( a a a b b b b c c c );
   my $a = effect_code_w(\@a);
   return sum($a->sumover - pdl byte, (0, 0));
 }
 
-  # 31
 is( tapprox( t_anova(), 0 ), 1, 'anova_3w' );
 sub t_anova {
   my $d = sequence 60;
@@ -207,7 +245,6 @@ sub t_anova {
   ;
 }
 
-  # 32
 is( tapprox( t_anova_1way(), 0 ), 1, 'anova_1w' );
 sub t_anova_1way {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
@@ -222,7 +259,6 @@ sub t_anova_1way {
   ;
 }
 
-  # 33
 is( tapprox( t_anova_bad(), 0 ), 1, 'anova_bad' );
 sub t_anova_bad {
   my $d = sequence 60;
@@ -242,21 +278,19 @@ sub t_anova_bad {
   ;
 }
 
-  # 34
 {
   my $a = sequence 5, 2;
   $a( ,1) .= 0;
   $a = $a->setvaltobad(0);
   is( $a->fill_m->setvaltobad(0)->nbad, 5, 'fill_m nan to bad');
 }
-  # 35
+
 {
   my $a = ones 3, 2;
   $a( ,1) .= 2;
   is( which($a->stddz == 0)->nelem, 6, 'stddz nan vs bad');
 }
 
-  # 36
 is( tapprox( t_anova_rptd_1way(), 0 ), 1, 'anova_rptd_1w' );
 sub t_anova_rptd_1way {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
@@ -273,7 +307,6 @@ sub t_anova_rptd_1way {
   ;
 }
 
-  # 37
 is( tapprox( t_anova_rptd_2way_bad(), 0 ), 1, 'anova_rptd_2w_bad' );
 sub t_anova_rptd_2way_bad {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
@@ -297,7 +330,6 @@ sub t_anova_rptd_2way_bad {
   ;
 }
 
-  # 38
 is( tapprox( t_anova_rptd_3way(), 0 ), 1, 'anova_rptd_3w' );
 sub t_anova_rptd_3way {
   my $d = pdl( qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 ),
@@ -325,7 +357,7 @@ sub t_anova_rptd_3way {
         + sum( $m{'# a ~ b # se'} - $ans_ab_se )
   ;
 }
-  # 39
+
 is( tapprox( t_anova_rptd_mixed(), 0 ), 1, 'anova_rptd_mixed' );
 sub t_anova_rptd_mixed {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
@@ -376,6 +408,23 @@ sub t_anova_rptd_mixed_4w {
         + ($m{'| age ~ aa ~ beer ~ wings | F'} - $ans_4w_F)
   ;
 }
+
+{
+  my $a = effect_code( sequence(12) > 5 );
+  my $b = effect_code([ map {(0, 1)} (1..6) ]);
+  my $c = effect_code([ map {(0,0,1,1,2,2)} (1..2) ]);
+
+  my $ans = pdl [
+   [qw( 1 -1  0 -0 -1  1 -1  1 -0  0  1 -1 )],
+   [qw( 0 -0  1 -1 -1  1 -0  0 -1  1  1 -1 )]
+  ];
+  my $inter = interaction_code( $a, $b, $c);
+
+  is(sum(abs($inter - $ans)), 0, 'interaction_code');
+}
+
+done_testing();
+
 
 __DATA__
 subj	age	Apple-android	beer	wings	recall

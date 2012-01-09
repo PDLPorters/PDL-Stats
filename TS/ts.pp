@@ -30,13 +30,13 @@ use PDL::Stats::Kmeans;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
-my $PGPLOT;
-  # check for PGPLOT not PDL::Graphics::PGPLOT
-if ( grep { -e "$_/PGPLOT.pm"  } @INC ) {
+eval {
   require PDL::Graphics::PGPLOT::Window;
   PDL::Graphics::PGPLOT::Window->import( 'pgwin' );
-  $PGPLOT = 1;
-}
+};
+my $PGPLOT = 1 if !$@;
+
+my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 EOD
 
@@ -246,7 +246,7 @@ Integration. Opposite of differencing. IX(t) = X(t) + X(t-1), IX(0) = X(0). Can 
 );
 
 
-pp_def('dsea',
+pp_def('dseason',
   Pars  => 'x(t); int d(); [o]xd(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
@@ -446,7 +446,7 @@ loop(t) %{
   Doc   => undef,
 );
 
-pp_def('filt_exp',
+pp_def('filter_exp',
   Pars  => 'x(t); a(); [o]xf(t)',
   GenericTypes => [F,D],
   Code  => '
@@ -475,7 +475,7 @@ Filter, exponential smoothing. xf(t) = a * x(t) + (1-a) * xf(t-1)
   ',
 );
 
-pp_def('filt_ma',
+pp_def('filter_ma',
   Pars  => 'x(t); int q(); [o]xf(t)',
   GenericTypes => [F,D],
   Code  => '
@@ -797,7 +797,89 @@ loop (t) %{
 
 pp_addpm(<<'EOD');
 
-=head2 plot_dsea
+=head2 season_m
+
+Given length of season, returns seasonal mean and var for each period (returns seasonal mean only in scalar context).
+
+=for options
+
+Default options (case insensitive):
+
+    START_POSITION => 0,     # series starts at this position in season
+    MISSING        => -999,  # internal mark for missing points in season
+    PLOT  => 1,              # boolean
+      # see PDL::Graphics::PGPLOT::Window for next options
+    WIN   => undef,          # pass pgwin object for more plotting control
+    DEV   => '/xs',          # open and close dev for plotting if no WIN
+                             # defaults to '/png' in Windows
+    COLOR => 1,
+
+See PDL::Graphics::PGPLOT for detailed graphing options.
+
+=for usage
+
+    my ($m, $ms) = $data->season_m( 24, { START_POSITION=>2 } );
+
+=cut
+
+*season_m = \&PDL::season_m;
+sub PDL::season_m {
+  my ($self, $d, $opt) = @_;
+  my %opt = (
+    START_POSITION => 0,     # series starts at this position in season
+    MISSING        => -999,  # internal mark for missing points in season
+    PLOT  => 1,
+    WIN   => undef,          # pass pgwin object for more plotting control
+    DEV   => $DEV,           # see PDL::Graphics::PGPLOT for more info
+    COLOR => 1,
+  );
+  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt{PLOT} and !$PGPLOT) {
+    carp "No PDL::Graphics::PGPLOT, no plot :(";
+    $opt{PLOT} = 0;
+  }
+
+  my $n_season = ($self->dim(0) + $opt{START_POSITION}) / $d;
+  $n_season = pdl($n_season)->ceil->sum;
+
+  my @dims = $self->dims;
+  $dims[0] = $n_season * $d;
+  my $data = zeroes( @dims ) + $opt{MISSING};
+
+  $data($opt{START_POSITION} : $opt{START_POSITION} + $self->dim(0)-1, ) .= $self;
+  $data->badflag(1);
+  $data->inplace->setvaltobad( $opt{MISSING} );
+
+  my $s = sequence $d;
+  $s = $s->dummy(1, $n_season)->flat;
+  $s = $s->iv_cluster();
+
+  my ($m, $ms) = $data->centroid( $s );
+
+  if ($opt{PLOT}) {
+    my $w = $opt{WIN};
+    if (!$w) {
+      $w = pgwin( Dev=>$opt{DEV} );
+      $w->env( 0, $d-1, $m->minmax,
+              {XTitle=>'period', YTitle=>'mean'} );
+    }
+    $w->points( sequence($d), $m, {COLOR=>$opt{COLOR}, PLOTLINE=>1} );
+
+    if ($m->squeeze->ndims < 2) {
+      $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
+               {COLOR=>$opt{COLOR}} );
+    }
+    else {
+      carp "errb does not support multi dim pdl";
+    }
+    $w->close
+      unless $opt{WIN};
+  }
+
+  return wantarray? ($m, $ms) : $m;
+}
+
+=head2 plot_dseason
 
 =for ref
 
@@ -808,15 +890,16 @@ Plots deseasonalized data and original data points. Opens and closes default win
 Default options (case insensitive):
 
     WIN   => undef,
-    DEV   => "/xs",
-    COLOR => 1,       # data point color
+    DEV   => '/xs',    # open and close dev for plotting if no WIN
+                       # defaults to '/png' in Windows
+    COLOR => 1,        # data point color
 
 See PDL::Graphics::PGPLOT for detailed graphing options.
 
 =cut
 
-*plot_dsea = \&PDL::plot_dsea;
-sub PDL::plot_dsea {
+*plot_dseason = \&PDL::plot_dseason;
+sub PDL::plot_dseason {
   my ($self, $d, $opt) = @_;
   !defined($d) and croak "please set season period length";
   $self = $self->squeeze;
@@ -825,7 +908,7 @@ sub PDL::plot_dsea {
   if ($PGPLOT) {
     my %opt = (
         WIN   => undef,
-        DEV   => "/xs",
+        DEV   => $DEV,
         COLOR => 1,       # data point color
     );
     $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
@@ -853,76 +936,31 @@ sub PDL::plot_dsea {
   return $dsea; 
 }
 
-=head2 plot_season
+*filt_exp = \&PDL::filt_exp;
+sub PDL::filt_exp {
+  print STDERR "filt_exp() deprecated since version 0.5.0. Please use filter_exp() instead\n";
+  return filter_exp( @_ );
+}
 
-Seasonal subseries plot. Given length of season, plots mean and returns sample mean and sample var for each period.
+*filt_ma = \&PDL::filt_ma;
+sub PDL::filt_ma {
+  print STDERR "filt_ma() deprecated since version 0.5.0. Please use filter_ma() instead\n";
+  return filter_ma( @_ );
+}
 
-$data should be pdl dim (period) or (period x series). $data must start from period 0. If actual data starts later into the season, set previous periods to bad.
-
-=for options
-
-Default options (case insensitive):
-
-    WIN   => undef,
-    DEV   => "/xs",
-    COLOR => 1,
-
-See PDL::Graphics::PGPLOT for detailed graphing options.
-
-=for usage
-
-    $data->plot_season( 24, { DEV=>'/png' } );
-
-=cut
+*dsea = \&PDL::dsea;
+sub PDL::dsea {
+  print STDERR "dsea() deprecated since version 0.5.0. Please use dseason() instead\n";
+  return dseason( @_ );
+}
 
 *plot_season = \&PDL::plot_season;
 sub PDL::plot_season {
+  print STDERR "plot_season() deprecated since version 0.5.0. Please use season_m() instead\n";
   my ($self, $d, $opt) = @_;
-  $self = $self->squeeze;
-   
-  my ($m, $ms);
- 
-  if ($PGPLOT) {
-    my %opt = (
-        WIN   => undef,
-        DEV   => "/xs",
-        COLOR => 1,
-    );
-    $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
-    my $s = sequence $d;
-    $s = $s->dummy(1, $self->dim(0) / $d)->flat;
-    $s = $s->iv_cluster();
-
-    ($m, $ms) = $self->centroid( $s );
-
-    !$self->badflag and $ms /= $self->dim(0);
-
-    my $w;
-    if (!$opt{WIN}) {
-      $w = pgwin( Dev=>$opt{DEV} );
-      $w->env( 0, $d-1, $m->minmax,
-              {XTitle=>'period', YTitle=>'mean'} );
-    }
-    else {
-      $w = $opt{WIN};
-    }
-    $w->line( sequence($d), $m, {COLOR=>$opt{COLOR}} );
-    if ($m->squeeze->ndims < 2) {
-      $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
-               {COLOR=>$opt{COLOR}} );
-    }
-    else {
-      carp "errb does not support multi dim pdl";
-    }
-    $w->close
-      unless $opt{WIN};
-  }
-  else {
-    carp "Please install PDL::Graphics::PGPLOT::Window for plotting";
-  }
-
-  return wantarray? ($m, $ms) : $m;
+  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  $opt->{PLOT} = 1;
+  return $self->season_m( $d, $opt );
 }
 
 =head1 METHODS
@@ -937,8 +975,9 @@ Plots and returns autocorrelations for a time series.
 
 Default options (case insensitive):
 
-    SIG => 0.05,    # can specify .10, .05, .01, or .001
-    DEV => "/xs",   # see PDL::Graphics::PGPLOT
+    SIG  => 0.05,      # can specify .10, .05, .01, or .001
+    DEV  => '/xs',     # open and close dev for plotting
+                       # defaults to '/png' in Windows
 
 =for usage
 
@@ -961,7 +1000,7 @@ sub PDL::plot_acf {
   if ($PGPLOT) {
     my %opt = (
         SIG => 0.05,
-        DEV => "/xs",
+        DEV => $DEV,
     );
     $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
