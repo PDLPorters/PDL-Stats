@@ -1,7 +1,7 @@
 Revision history for PDL-Stats
 
 0.5.5   04/22/2011
-        GLM quits installation with PDL-2.4.7 warning. GLM POD and test update.
+        GLM Windows 32-bit test bug fix; GLM quits installation with PDL-2.4.7 warning. Documentation update.
 
 0.5.4   04/19/2011
         GLM pca() and plot_scores() can do cov version.
