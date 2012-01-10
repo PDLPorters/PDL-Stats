@@ -178,7 +178,7 @@ pct_var => pdl( qw[0.925175 0.0663489 0.00847592] ),
 is( tapprox( t_pca_sorti(), 0 ), 1 );
 sub t_pca_sorti {
   my $a = sequence 10, 5;
-  $a->where($a % 7 == 0) .= 0;
+  $a = lvalue_assign_detour( $a, which($a % 7 == 0), 0 );
 
   my %m = $a->pca({PLOT=>0});
 
@@ -236,7 +236,7 @@ sub t_anova {
   my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
   my $b = $d % 3;
   my $c = $d % 2;
-  $d(20) .= 10;
+  $d = lvalue_assign_detour( $d, 20, 10 );
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0});
   my $ans_F = pdl(165.252100840336, 0.0756302521008415);
   my $ans_m = pdl([qw(8 18 38 53)], [qw(8 23 38 53)]);
@@ -262,7 +262,7 @@ sub t_anova_1way {
 is( tapprox( t_anova_bad(), 0 ), 1, 'anova_bad' );
 sub t_anova_bad {
   my $d = sequence 60;
-  $d(20) .= 10;
+  $d = lvalue_assign_detour( $d, 20, 10 );
   $d->setbadat(1);
   $d->setbadat(10);
   my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
@@ -279,15 +279,13 @@ sub t_anova_bad {
 }
 
 {
-  my $a = sequence 5, 2;
-  $a( ,1) .= 0;
+  my $a = pdl([0,1,2,3,4], [0,0,0,0,0]);
   $a = $a->setvaltobad(0);
   is( $a->fill_m->setvaltobad(0)->nbad, 5, 'fill_m nan to bad');
 }
 
 {
-  my $a = ones 3, 2;
-  $a( ,1) .= 2;
+  my $a = pdl([1,1,1], [2,2,2]);
   is( which($a->stddz == 0)->nelem, 6, 'stddz nan vs bad');
 }
 
@@ -424,6 +422,18 @@ sub t_anova_rptd_mixed_4w {
 }
 
 done_testing();
+
+
+sub lvalue_assign_detour {
+    my ($pdl, $index, $new_value) = @_;
+
+    my @arr = list $pdl;
+    my @ind = ref($index)? list($index) : $index; 
+    $arr[$_] = $new_value
+        for (@ind);
+
+    return pdl(\@arr)->reshape($pdl->dims)->sever;
+}
 
 
 __DATA__

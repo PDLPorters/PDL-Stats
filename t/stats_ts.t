@@ -31,7 +31,7 @@ sub tapprox {
   is(tapprox( $a->acf(5)->portmanteau($a->nelem), 11.1753902662994 ), 1);
 
   my $b = sequence(10) + 1;
-  $b(7) .= 9;
+  $b = lvalue_assign_detour( $b, 7, 9 );
   is( tapprox( $b->mape($a), 0.302619047619048 ), 1 );
   is( tapprox( $b->mae($a), 1.1 ), 1 );
 
@@ -84,7 +84,7 @@ sub tapprox {
 
 {  # 22-23
   my $a = sequence(5)->dummy(1,3)->flat->sever;
-  $a(1) .= 3;
+  $a = lvalue_assign_detour( $a, 1, 3);
   $a = $a->dummy(1,2)->sever;
   $a(4,1) .= 0;
 
@@ -102,4 +102,16 @@ sub tapprox {
 
   is( tapprox(sum(abs($m - $ans_m)), 0), 1, 'season_m m' );
   is( tapprox(sum(abs($ms - $ans_ms)), 0), 1, 'season_m ms' );
+}
+
+
+sub lvalue_assign_detour {
+    my ($pdl, $index, $new_value) = @_;
+
+    my @arr = list $pdl;
+    my @ind = ref($index)? list($index) : $index; 
+    $arr[$_] = $new_value
+        for (@ind);
+
+    return pdl(\@arr)->reshape($pdl->dims)->sever;
 }

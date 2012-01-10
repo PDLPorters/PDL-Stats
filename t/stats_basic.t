@@ -122,8 +122,7 @@ is( tapprox( $df, 3 ), 1 );
 }
   # 49
 {
-  my $a = sequence 5, 2;
-  $a( ,1) .= 0;
+  my $a = pdl([0,1,2,3,4], [0,0,0,0,0]);
   $a = $a->setvaltobad(0);
   is( $a->stdv->nbad, 1 );
 }
