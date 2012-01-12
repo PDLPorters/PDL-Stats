@@ -77,7 +77,8 @@ sub t_centroid_bad {
 is(tapprox( t_kmeans(), 0 ), 1);
 sub t_kmeans {
   my $data = sequence 7, 3;
-  $data(1, ) .= 0;
+  my $ind  = $data(1, )->flat;    # only works because $data is sequence
+  $data = lvalue_assign_detour($data, $ind, 0);
   my %m = $data->kmeans({NCLUS=>2, NSEED=>6, NTRY=>10, V=>0});
   return sum( $m{centroid}->sumover - pdl qw(3.3333333  10.333333  17.333333) );
 }
@@ -85,9 +86,12 @@ sub t_kmeans {
 t_kmeans_4d();
 sub t_kmeans_4d {
   my $data = sequence 7, 3, 2, 2;
-  $data(1, ) .= 0;
-  $data(0,1,0, ) .= 0;
-  $data = lvalue_assign_detour( $data, which($data == 42), 0 );
+  # construct ind from sequence, then call lvalue_assign_detour
+  my $ind = sequence($data->dims)->(1, )->flat;
+  $data = lvalue_assign_detour($data, $ind, 0);
+  $ind = sequence($data->dims)->(0,1,0, )->flat;
+  $data = lvalue_assign_detour($data, $ind, 0);
+  $data = lvalue_assign_detour($data, which($data == 42), 0);
   my %m = $data->kmeans( {nclus=>[2,1,1], ntry=>10, v=>0} );
 #  print "$_\t$m{$_}\n" for (sort keys %m);
 
@@ -117,9 +121,12 @@ sub t_kmeans_4d {
 t_kmeans_4d_seed();
 sub t_kmeans_4d_seed {
   my $data = sequence 7, 3, 2, 2;
-  $data(1, ) .= 0;
-  $data(0,1,0, ) .= 0;
-  $data = lvalue_assign_detour( $data, which($data == 42), 0);
+  # construct ind from sequence, then call lvalue_assign_detour
+  my $ind = sequence($data->dims)->(1, )->flat;
+  $data = lvalue_assign_detour($data, $ind, 0);
+  $ind = sequence($data->dims)->(0,1,0, );
+  $data = lvalue_assign_detour($data, $ind, 0);
+  $data = lvalue_assign_detour($data, which($data == 42), 0);
 
     # centroid intentially has one less dim than data
   my $centroid = pdl(
@@ -173,8 +180,10 @@ sub t_kmeans_bad {
 t_kmeans_3d_bad();
 sub t_kmeans_3d_bad {
   my $data = sequence 7, 3, 2;
-  $data(0:1, ,0) .= 0;
-  $data(4:6, ,1) .= 1;
+  my $ind = sequence($data->dims)->(0:1, ,0)->flat;
+  $data = lvalue_assign_detour($data, $ind, 0);
+  $ind = sequence($data->dims)->(4:6, ,1)->flat;
+  $data = lvalue_assign_detour($data, $ind, 1);
   $data->setbadat(3,0,0);
   my %m = $data->kmeans( {nclus=>[2,1], ntry=>10, v=>0} );
 #  print "$_\t$m{$_}\n" for (sort keys %m);

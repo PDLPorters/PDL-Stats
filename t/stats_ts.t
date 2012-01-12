@@ -86,7 +86,8 @@ sub tapprox {
   my $a = sequence(5)->dummy(1,3)->flat->sever;
   $a = lvalue_assign_detour( $a, 1, 3);
   $a = $a->dummy(1,2)->sever;
-  $a(4,1) .= 0;
+  my $ind = sequence($a->dims)->(4,1)->flat;
+  $a = lvalue_assign_detour($a, $ind, 0);
 
   my $ans_m = pdl(
  [         4,         0, 1.6666667,         2,         3],
