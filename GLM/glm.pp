@@ -19,12 +19,8 @@ $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 eval { require PDL::GSL::CDF; };
 my $CDF = 1 if !$@;
 
-my $SLATEC = 1;
 eval { require PDL::Slatec; };
-if ($@) {
-  warn "No PDL::Slatec. Fall back on PDL::MatrixOps.\n";
-  undef $SLATEC;
-}
+my $SLATEC = 1 if !$@;
 
 eval {
   require PDL::Graphics::PGPLOT::Window;

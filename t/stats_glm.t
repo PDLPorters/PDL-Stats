@@ -12,6 +12,11 @@ BEGIN {
 use PDL::LiteF;
 use PDL::NiceSlice;
 
+eval { require PDL::Slatec; };
+if ($@) {
+  warn "No PDL::Slatec. Fall back on PDL::MatrixOps.\n";
+}
+
 sub tapprox {
   my($a,$b, $eps) = @_;
   $eps ||= 1e-6;
