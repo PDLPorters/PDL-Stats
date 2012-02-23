@@ -1,5 +1,8 @@
 Revision history for PDL-Stats
 
+0.5.6   01/21/2012
+        Moved no slatec warning from module to test. Removed lvalue assignments from tests.
+
 0.5.5   04/22/2011
         GLM Windows 32-bit test bug fix; GLM quits installation with PDL-2.4.7 warning. Documentation update.
 
