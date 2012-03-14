@@ -1518,23 +1518,17 @@ sub PDL::group_by {
 
     my $uniq_ns = pdl \@uniq_ns;
 
-    if ($uniq_ns->uniq->nelem == 1) {      # the same n across levels in factor
-        my $i = $factor->qsorti;
+	my $max = pdl(\@uniq_ns)->max;
 
-	    return $p($i, )->reshape( $p_dim0 / $uniq->nelem, $uniq->nelem, @p_threaddims )->mv(1,-1);
+    my $badvalue = int($p->max + 1);
+    my $p_tmp = ones($max, @p_threaddims, $uniq->nelem) * $badvalue;
+    for (0 .. $#uniq_ns) {
+        my $i = which $factor == $uniq($_);
+        $p_tmp->dice_axis(-1,$_)->squeeze->(0:$uniq_ns[$_]-1, ) .= $p($i, );
     }
-    else {                                 # unequal n across levels in factor
-	    my $max = pdl(\@uniq_ns)->max;
 
-        my $badvalue = int($p->max + 1);
-        my $p_tmp = ones($max, @p_threaddims, $uniq->nelem) * $badvalue;
-        for (0 .. $#uniq_ns) {
-            my $i = which $factor == $uniq($_);
-            $p_tmp->dice_axis(-1,$_)->squeeze->(0:$uniq_ns[$_]-1, ) .= $p($i, );
-        }
-        $p_tmp->badflag(1);
-        return $p_tmp->setvaltobad($badvalue);
-    }
+    $p_tmp->badflag(1);
+    return $p_tmp->setvaltobad($badvalue);
 }
 
 

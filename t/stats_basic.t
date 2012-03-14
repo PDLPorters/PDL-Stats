@@ -146,7 +146,7 @@ SKIP: {
     my $factor = sequence(10) > 4;
     my $ans = pdl( [[0..4], [10..14]], [[5..9], [15..19]] );
 
-    is( tapprox( sum(abs($a->group_by($factor)->qsort - $ans)), 0 ), 1, 'group_by equal n' );
+    is( tapprox( sum(abs($a->group_by($factor) - $ans)), 0 ), 1, 'group_by equal n' );
 
     $a = sequence 10,2;
     $factor = qsort sequence(10) % 3;
