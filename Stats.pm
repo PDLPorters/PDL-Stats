@@ -8,11 +8,11 @@ PDL::Stats - a collection of statistics modules in Perl Data Language, with a qu
 
 =head1 VERSION
 
-Version 0.5.6
+Version 0.6.0
 
 =cut
 
-$VERSION = '0.5.6';
+$VERSION = '0.6.0';
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
