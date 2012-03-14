@@ -1446,6 +1446,98 @@ sub which_id {
   return pdl @ind_select;
 }
 
+=head2 group_by
+
+Returns pdl reshaped according to the specified factor variable. Most useful when used in conjunction with other threading calculations such as average, stdv, etc. When the factor variable contains unequal number of cases in each level, the returned pdl is padded with bad values to fit the level with the most number of cases. This allows the subsequent calculation (average, stdv, etc) to return the correct results for each level.
+
+Usage:
+
+    # simple case with 1d pdl and equal number of n in each level of the factor
+
+	pdl> p $a = sequence 10
+	[0 1 2 3 4 5 6 7 8 9]
+
+	pdl> p $factor = $a > 4
+	[0 0 0 0 0 1 1 1 1 1]
+
+	pdl> p $a->group_by( $factor )->average
+	[2 7]
+
+    # more complex case with threading and unequal number of n across levels in the factor
+
+	pdl> p $a = sequence 10,2
+	[
+	 [ 0  1  2  3  4  5  6  7  8  9]
+	 [10 11 12 13 14 15 16 17 18 19]
+	]
+
+	pdl> p $factor = qsort $a( ,0) % 3
+	[
+	 [0 0 0 0 1 1 1 2 2 2]
+	]
+
+	pdl> p $a->group_by( $factor )
+	[
+	 [
+	  [ 0  1  2  3]
+	  [10 11 12 13]
+	 ]
+	 [
+	  [  4   5   6 BAD]
+	  [ 14  15  16 BAD]
+	 ]
+	 [
+	  [  7   8   9 BAD]
+	  [ 17  18  19 BAD]
+	 ]
+	]
+
+=cut
+
+sub PDL::group_by {
+    my $p = shift;
+    my $factor = shift;
+
+    $factor = $factor->squeeze;
+    die "Currently support only 1d factor pdl."
+        if $factor->ndims > 1;
+
+    die "Data pdl and factor pdl do not match!"
+        unless $factor->dim(0) == $p->dim(0);
+
+    # get active dim that will be split according to factor and dims to thread over
+	my @p_threaddims = $p->dims;
+	my $p_dim0 = shift @p_threaddims;
+
+    my $uniq = $factor->uniq;
+
+    my @uniq_ns;
+    for ($uniq->list) {
+        push @uniq_ns, which( $factor == $_ )->nelem;
+    }
+
+    my $uniq_ns = pdl \@uniq_ns;
+
+    if ($uniq_ns->uniq->nelem == 1) {      # the same n across levels in factor
+        my $i = $factor->qsorti;
+
+	    return $p($i, )->reshape( $p_dim0 / $uniq->nelem, $uniq->nelem, @p_threaddims )->mv(1,-1);
+    }
+    else {                                 # unequal n across levels in factor
+	    my $max = pdl(\@uniq_ns)->max;
+
+        my $badvalue = int($p->max + 1);
+        my $p_tmp = ones($max, @p_threaddims, $uniq->nelem) * $badvalue;
+        for (0 .. $#uniq_ns) {
+            my $i = which $factor == $uniq($_);
+            $p_tmp->dice_axis(-1,$_)->squeeze->(0:$uniq_ns[$_]-1, ) .= $p($i, );
+        }
+        $p_tmp->badflag(1);
+        return $p_tmp->setvaltobad($badvalue);
+    }
+}
+
+
 =head1 SEE ALSO
 
 PDL::Basic (hist for frequency counts)

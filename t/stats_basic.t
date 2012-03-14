@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 50;
+    plan tests => 52;
 }
 
 use PDL::LiteF;
@@ -115,10 +115,10 @@ is( tapprox( $df, 3 ), 1 );
 
 {
   my $a = random 10, 3;
-  is( tapprox( sum($a->corr_table - $a->corr($a->dummy(1))), 0 ), 1 );
+  is( tapprox( sum(abs($a->corr_table - $a->corr($a->dummy(1)))), 0 ), 1 );
 
   $a->setbadat(4,0);
-  is( tapprox( sum($a->corr_table - $a->corr($a->dummy(1))), 0 ), 1 );
+  is( tapprox( sum(abs($a->corr_table - $a->corr($a->dummy(1)))), 0 ), 1 );
 }
   # 49
 {
@@ -139,6 +139,23 @@ SKIP: {
 
   is (tapprox( sum(abs(binomial_test( $x,$n,$p ) - $a)) ,0), 1, 'binomial_test');
 }
+
+    # 51-52
+{
+    my $a = sequence 10, 2;
+    my $factor = sequence(10) > 4;
+    my $ans = pdl( [[0..4], [10..14]], [[5..9], [15..19]] );
+
+    is( tapprox( sum(abs($a->group_by($factor)->qsort - $ans)), 0 ), 1, 'group_by equal n' );
+
+    $a = sequence 10,2;
+    $factor = qsort sequence(10) % 3;
+    $ans = pdl( [1.5, 11.5], [5, 15], [8, 18] );
+
+    is( tapprox( sum(abs($a->group_by($factor)->average - $ans)), 0 ), 1, 'group_by unequal n' );
+}
+
+
 
 __DATA__
 999	90	91	92	93	94	
