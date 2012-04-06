@@ -1516,8 +1516,8 @@ sub PDL::group_by {
         push @uniq_ns, which( $factor == $_ )->nelem;
     }
 
+    # get number of n's in each group, find the biggest, fit output pdl to this
     my $uniq_ns = pdl \@uniq_ns;
-
 	my $max = pdl(\@uniq_ns)->max;
 
     my $badvalue = int($p->max + 1);
@@ -1529,6 +1529,19 @@ sub PDL::group_by {
 
     $p_tmp->badflag(1);
     return $p_tmp->setvaltobad($badvalue);
+}
+
+sub _array_to_pdl {
+  my ($var_ref) = @_;
+
+  my (%level, $l);
+  $l = 0;
+  for (@$var_ref) {
+    !exists $level{$_} and $level{$_} = $l ++;
+  } 
+  return wantarray? (pdl( map { $level{$_} } @$var_ref ), \%level)
+        :            pdl( map { $level{$_} } @$var_ref )
+        ;
 }
 
 

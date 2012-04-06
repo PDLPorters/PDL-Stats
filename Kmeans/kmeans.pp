@@ -764,7 +764,7 @@ sub PDL::iv_cluster {
     $var_ref = [ list $var_ref ];
   }
 
-  my ($var, $map_ref) = _array_to_pdl( $var_ref );
+  my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
   my $var_a = zeroes byte, $var->nelem, $var->max + 1;
 
   for my $l (0 .. $var->max) {
@@ -846,19 +846,6 @@ sub PDL::pca_cluster {
   $opt{V} and print STDERR "cluster membership mask as " . $c->info . "\n";
 
   return $c;
-}
-
-sub _array_to_pdl {
-  my ($var_ref) = @_;
-
-  my (%level, $l);
-  $l = 0;
-  for (@$var_ref) {
-    !exists $level{$_} and $level{$_} = $l ++;
-  } 
-  return wantarray? (pdl( map { $level{$_} } @$var_ref ), \%level)
-        :            pdl( map { $level{$_} } @$var_ref )
-        ;
 }
 
 =head1 	REFERENCES

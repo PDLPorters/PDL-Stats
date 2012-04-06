@@ -1008,7 +1008,7 @@ sub PDL::anova {
   my @pdl_ivs_raw
     = map { my $var
               = (ref $_ eq 'PDL')? [list $_($igood)] : [@$_[list $igood]];
-            scalar PDL::Stats::Kmeans::_array_to_pdl $var;
+            scalar PDL::Stats::Basic::_array_to_pdl $var;
           } @ivs_raw;
 
   my ($ivs_ref, $i_cmo_ref)
@@ -1331,7 +1331,7 @@ sub PDL::anova_rptd {
     # create new vars here so we don't mess up original caller @
   my ($sj, @pdl_ivs_raw)
     = map { my $var = (ref $_ eq 'PDL')? [list $_] : $_;
-            scalar PDL::Stats::Kmeans::_array_to_pdl $var;
+            scalar PDL::Stats::Basic::_array_to_pdl $var;
           } ( $subj, @ivs_raw );
 
     # delete bad data listwise ie remove subj if any cell missing
@@ -1622,7 +1622,7 @@ sub PDL::effect_code {
     $var_ref = [ list $var_ref ];
   }
 
-  my ($var, $map_ref) = PDL::Stats::Kmeans::_array_to_pdl( $var_ref );
+  my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
   my $var_e = zeroes float, $var->nelem, $var->max;
 
   for my $l (0 .. $var->max - 1) {
