@@ -1,7 +1,8 @@
 Revision history for PDL-Stats
 
-0.6.0   01/21/2012
-        Added group_by method in Basic.pm.
+0.6.0   04/08/2012
+        Added group_by() method in Basic.pm.
+        Removed old deprecated method get_data() from Basic.pm
         Moved no slatec warning from module to test. Removed lvalue assignments from tests.
 
 0.5.5   04/22/2011
