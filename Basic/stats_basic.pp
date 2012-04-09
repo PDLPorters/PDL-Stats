@@ -1412,40 +1412,6 @@ sub get_data {
   return rtable @_;
 }
 
-=head2 which_id
-
-=for ref
-
-Lookup specified var (obs) ids in $idv ($ido) (see B<rtable>) and return indices in $idv ($ido) as pdl if found. The indices are ordered by the specified subset. Useful for selecting data by var (obs) id.
-
-=for usage
-
-    my $ind = which_id $ido, ['smith', 'summers', 'tesla'];
-
-    my $data_subset = $data( $ind, );
-
-    # take advantage of perl pattern matching
-    # e.g. use data from people whose last name starts with s
-
-    my $i = which_id $ido, [ grep { /^s/ } @$ido ];
-
-    my $data_s = $data($i, );
-
-=cut
-
-sub which_id {
-  my ($id, $id_s) = @_;
-
-  my %ind;
-  @ind{ @$id } = ( 0 .. $#$id );
-
-  my @ind_select;
-  for (@$id_s) {
-    defined( $ind{$_} ) and push @ind_select, $ind{$_};
-  }
-  return pdl @ind_select;
-}
-
 =head2 group_by
 
 Returns pdl reshaped according to the specified factor variable. Most useful when used in conjunction with other threading calculations such as average, stdv, etc. When the factor variable contains unequal number of cases in each level, the returned pdl is padded with bad values to fit the level with the most number of cases. This allows the subsequent calculation (average, stdv, etc) to return the correct results for each level.
@@ -1494,7 +1460,64 @@ Usage:
 
 =cut
 
+*group_by = \&PDL::group_by;
 sub PDL::group_by {
+    my $p = shift;
+    my @factors = @_;
+
+    if ( @factors == 1 ) {
+        my $factor = $factors[0];
+        ($factor, my $map) = _array_to_pdl( $factor )
+            if ref $factor eq 'ARRAY';
+
+        my $p_reshaped = _group_by_single_factor( $p, $factor );
+
+        return wantarray? () : $p_reshaped;
+    }
+
+    # make sure all are arrays instead of pdls
+    @factors = map { ref($_) eq 'PDL'? [$_->list] : $_ } @factors;
+
+    my (@cells);
+    for my $ele (0 .. $#{$factors[0]}) {
+        my $c = join '_', map { $_->[$ele] } @factors;
+        push @cells, $c;
+    }
+    # get uniq cell labels (ref List::MoreUtils::uniq)
+    my %seen;
+    my @uniq_cells = grep {! $seen{$_}++ } @cells;
+
+    my $flat_factor = _array_to_pdl( \@cells );
+
+    my $p_reshaped = _group_by_single_factor( $p, $flat_factor );
+
+    # get levels of each factor and reshape accordingly
+    my @levels;
+    for (@factors) {
+        my %uniq;
+        @uniq{ @$_ } = ();
+        push @levels, scalar keys %uniq;
+    }
+
+    $p_reshaped = $p_reshaped->reshape( $p_reshaped->dim(0), @levels )->sever;
+
+    # make labels for the returned data structure matching pdl structure
+    my @labels;
+    if (wantarray) {
+        for my $ifactor (0 .. $#levels) {
+            my @factor_label;
+            for my $ilevel (0 .. $levels[$ifactor]-1) {
+                my $i = $ifactor * $levels[$ifactor] + $ilevel;
+                push @factor_label, $uniq_cells[$i];
+            }
+            push @labels, \@factor_label;
+        }
+    }
+
+    return wantarray? ($p_reshaped, \@labels) : $p_reshaped;
+}
+
+sub _group_by_single_factor {
     my $p = shift;
     my $factor = shift;
 
@@ -1529,6 +1552,40 @@ sub PDL::group_by {
 
     $p_tmp->badflag(1);
     return $p_tmp->setvaltobad($badvalue);
+}
+
+=head2 which_id
+
+=for ref
+
+Lookup specified var (obs) ids in $idv ($ido) (see B<rtable>) and return indices in $idv ($ido) as pdl if found. The indices are ordered by the specified subset. Useful for selecting data by var (obs) id.
+
+=for usage
+
+    my $ind = which_id $ido, ['smith', 'summers', 'tesla'];
+
+    my $data_subset = $data( $ind, );
+
+    # take advantage of perl pattern matching
+    # e.g. use data from people whose last name starts with s
+
+    my $i = which_id $ido, [ grep { /^s/ } @$ido ];
+
+    my $data_s = $data($i, );
+
+=cut
+
+sub which_id {
+  my ($id, $id_s) = @_;
+
+  my %ind;
+  @ind{ @$id } = ( 0 .. $#$id );
+
+  my @ind_select;
+  for (@$id_s) {
+    defined( $ind{$_} ) and push @ind_select, $ind{$_};
+  }
+  return pdl @ind_select;
 }
 
 sub _array_to_pdl {
