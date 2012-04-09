@@ -1462,12 +1462,18 @@ sub PDL::group_by {
 
     if ( @factors == 1 ) {
         my $factor = $factors[0];
-        ($factor, my $map) = _array_to_pdl( $factor )
-            if ref $factor eq 'ARRAY';
+        my $label;
+        if (ref $factor eq 'ARRAY') {
+            $label  = _ordered_uniq($factor);
+            $factor = _array_to_pdl($factor);
+        } else {
+            my $perl_factor = [$factor->list];
+            $label  = _ordered_uniq($perl_factor);
+        }
 
         my $p_reshaped = _group_by_single_factor( $p, $factor );
 
-        return wantarray? () : $p_reshaped;
+        return wantarray? ($p_reshaped, $label) : $p_reshaped;
     }
 
     # make sure all are arrays instead of pdls
@@ -1510,6 +1516,16 @@ sub PDL::group_by {
     }
 
     return wantarray? ($p_reshaped, \@labels) : $p_reshaped;
+}
+
+# get uniq cell labels (ref List::MoreUtils::uniq)
+sub _ordered_uniq {
+    my $arr = shift;
+
+    my %seen;
+    my @uniq = grep { ! $seen{$_}++ } @$arr;
+
+    return \@uniq;
 }
 
 sub _group_by_single_factor {
