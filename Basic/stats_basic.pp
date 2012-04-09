@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-pp_add_exported('', 'binomial_test', 'rtable', 'get_data', 'which_id', 
+pp_add_exported('', 'binomial_test', 'rtable', 'which_id', 
 );
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -1291,7 +1291,7 @@ sub PDL::binomial_test {
 
 =for ref
 
-Replaces the old method B<get_data>. Reads either file or file handle*. Returns observation x variable pdl and var and obs ids if specified. Ids in perl @ ref to allow for non-numeric ids. Other non-numeric entries are treated as missing, which are filled with $opt{MISSN} then set to BAD*. Can specify num of data rows to read from top but not arbitrary range.
+Reads either file or file handle*. Returns observation x variable pdl and var and obs ids if specified. Ids in perl @ ref to allow for non-numeric ids. Other non-numeric entries are treated as missing, which are filled with $opt{MISSN} then set to BAD*. Can specify num of data rows to read from top but not arbitrary range.
 
 *If passed handle, it will not be closed here.
 
@@ -1405,11 +1405,6 @@ sub rtable {
   $data = $data->setvaltobad( $opt{MISSN} );
   $data->check_badflag;
   return wantarray? (@$idv? ($data, $idv, $ido) : ($data, $ido)) : $data;
-}
-
-sub get_data {
-  print STDERR "get_data() deprecated since version 0.4.2. Please use rtable() instead\n";
-  return rtable @_;
 }
 
 =head2 group_by
