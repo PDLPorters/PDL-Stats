@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 52;
+    plan tests => 55;
 }
 
 use PDL::LiteF;
@@ -146,13 +146,34 @@ SKIP: {
     my $factor = sequence(10) > 4;
     my $ans = pdl( [[0..4], [10..14]], [[5..9], [15..19]] );
 
-    is( tapprox( sum(abs($a->group_by($factor) - $ans)), 0 ), 1, 'group_by equal n' );
+    my ($a_, $l) = $a->group_by($factor);
+    is( tapprox( sum(abs($a_ - $ans)), 0 ), 1, 'group_by single factor equal n' );
+    is_deeply( $l, [0, 1], 'group_by single factor label');
 
     $a = sequence 10,2;
     $factor = qsort sequence(10) % 3;
     $ans = pdl( [1.5, 11.5], [5, 15], [8, 18] );
 
-    is( tapprox( sum(abs($a->group_by($factor)->average - $ans)), 0 ), 1, 'group_by unequal n' );
+    is( tapprox( sum(abs($a->group_by($factor)->average - $ans)), 0 ), 1, 'group_by single factor unequal n' );
+
+    $a = sequence 10;
+    my @factors = ( [qw( a a a a b b b b b b )], [qw(0 1 0 1 0 1 0 1 0 1)] );
+    $ans = pdl(
+[
+ [0,2,-1],
+ [1,3,-1],
+],
+[
+ [4,6,8],
+ [5,7,9],
+]
+    );
+    $ans->badflag(1);
+    $ans = $ans->setvaltobad(-1);
+
+    my ($a_, $l) = $a->group_by( @factors );
+    is(tapprox(sum(abs($a_ - $ans)), 0), 1, 'group_by multiple factors') or diag($a_, $ans);
+    is_deeply($l, [[qw(a_0 a_1)], [qw( b_0 b_1 )]], 'group_by multiple factors label');
 }
 
 
