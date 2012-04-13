@@ -32,6 +32,8 @@ pp_addhdr('
 
 my ($header) = `gsl-config --cflags` =~ m/-I(.+)$/;
 $header .= '/gsl/gsl_cdf.h';
+# for win32. Thanks Sisyphus!
+$header =~ s/"//g;
 
 open my $fh, "< $header" or die "$!";
 
