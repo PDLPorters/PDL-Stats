@@ -2,6 +2,12 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+if ($] > 5.014000 and $] < 5.015009) {
+    warn "Perl version bewteen 5.14.0 and 5.15.8 detected. Sheepishly bailing out of installation because of perl and PDL :lvalue subroutine issue. For more information, please see perl bug ticket #107366 https://rt.perl.org/rt3//Public/Bug/Display.html?id=107366\n";
+    exit;
+}
+
+
 WriteMakefile(
     NAME                => 'PDL::Stats',
     AUTHOR              => 'Maggie J. Xiong  <maggiexyz users.sourceforge.net>',
