@@ -171,7 +171,7 @@ SKIP: {
     $ans->badflag(1);
     $ans = $ans->setvaltobad(-1);
 
-    my ($a_, $l) = $a->group_by( @factors );
+    ($a_, $l) = $a->group_by( @factors );
     is(tapprox(sum(abs($a_ - $ans)), 0), 1, 'group_by multiple factors') or diag($a_, $ans);
     is_deeply($l, [[qw(a_0 a_1)], [qw( b_0 b_1 )]], 'group_by multiple factors label');
 }
