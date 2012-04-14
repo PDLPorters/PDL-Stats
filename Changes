@@ -2,6 +2,7 @@ Revision history for PDL-Stats
 
 0.6.0   04/08/2012
         Added group_by() method in Basic.pm.
+        Bails out of installation if running under perl 5.14.0 to 5.15.8.
         Removed old deprecated method get_data() from Basic.pm
         Moved no slatec warning from module to test. Removed lvalue assignments from tests.
 
