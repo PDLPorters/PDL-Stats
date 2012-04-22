@@ -16,7 +16,6 @@ WriteMakefile(
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
-    PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,
         'PDL'        => '2.4.4',
@@ -26,3 +25,15 @@ WriteMakefile(
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => ['PDL-Stats-*'] },
 );
+
+sub MY::postamble {
+    my $text =
+'
+update_doc ::
+	@echo "Updating PDL documentation database ..."
+	@$(PERL) add_doc.pl
+
+';
+
+    return $text;
+}
