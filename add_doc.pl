@@ -23,11 +23,9 @@ chdir 'blib/lib' or die "can't change to blib/lib";
 
 $current_dir = getcwd;
 
-#$pdldoc->outfile('pdldoc.db');
-
 $pdldoc->ensuredb();
 $pdldoc->scantree("$current_dir/PDL");
-$pdldoc->scan("$current_dir/PDL/Stats.pm");
-$pdldoc->savedb();
+eval { $pdldoc->savedb(); };
+warn $@ if $@;
 
-print STDERR "PDL docs database updated.\n";
+print "PDL docs database updated.\n";

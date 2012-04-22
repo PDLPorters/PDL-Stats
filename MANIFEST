@@ -1,6 +1,7 @@
 Changes
 MANIFEST
 Makefile.PL
+add_doc.pl
 README
 Stats.pm
 Basic/stats_basic.pp

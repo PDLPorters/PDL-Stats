@@ -29,7 +29,7 @@ WriteMakefile(
 sub MY::postamble {
     my $text =
 '
-update_doc ::
+install ::
 	@echo "Updating PDL documentation database ..."
 	@$(PERL) add_doc.pl
 
