@@ -1452,6 +1452,44 @@ Usage:
 	  [ 17  18  19 BAD]
 	 ]
 	]
+     ARRAY(0xa2a4e40)
+
+    # group_by supports perl factors, multiple factors
+    # returns factor labels in addition to pdl in array context
+
+    pdl> p $a = sequence 12
+    [0 1 2 3 4 5 6 7 8 9 10 11]
+
+    pdl> $odd_even = [qw( e o e o e o e o e o e o )]
+
+    pdl> $magnitude = [qw( l l l l l l h h h h h h )]
+
+    pdl> ($a_grouped, $label) = $a->group_by( $odd_even, $magnitude )
+
+    pdl> p $a_grouped
+    [
+     [
+      [0 2 4]
+      [1 3 5]
+     ]
+     [
+      [ 6  8 10]
+      [ 7  9 11]
+     ]
+    ]
+
+    pdl> p Dumper $label
+    $VAR1 = [
+              [
+                'e_l',
+                'o_l'
+              ],
+              [
+                'e_h',
+                'o_h'
+              ]
+            ];
+
 
 =cut
 
