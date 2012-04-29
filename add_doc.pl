@@ -1,4 +1,3 @@
-use Cwd;
 use PDL::Doc;
 use File::Copy qw(copy);
 
@@ -11,6 +10,10 @@ for (@INC) {
     $dir = $_;
     $file = $dir."/PDL/pdldoc.db";
     if (-f $file) {
+        if (! -w "$dir/PDL") {
+            print "No write permission at $dir/PDL! Not updating docs database.\n";
+            exit;
+        }
         print "Found docs database $file\n";
         $pdldoc = new PDL::Doc ($file);
         last DIRECTORY;
@@ -19,13 +22,15 @@ for (@INC) {
 
 die ("Unable to find docs database! Not updating docs database.\n") unless $pdldoc;
 
-chdir 'blib/lib' or die "can't change to blib/lib";
+for (@INC) {
+    $dir = "$_/PDL/Stats";
+    if (-d $dir) {
+        $pdldoc->ensuredb();
+        $pdldoc->scantree($dir);
+        eval { $pdldoc->savedb(); };
+        warn $@ if $@;
 
-$current_dir = getcwd;
-
-$pdldoc->ensuredb();
-$pdldoc->scantree("$current_dir/PDL");
-eval { $pdldoc->savedb(); };
-warn $@ if $@;
-
-print "PDL docs database updated.\n";
+        print "PDL docs database updated.\n";
+        last;
+    }
+}

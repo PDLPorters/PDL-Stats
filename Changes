@@ -1,5 +1,8 @@
 Revision history for PDL-Stats
 
+0.6.2   04/29/2012
+        Windows pdldoc database install fix.
+
 0.6.1   04/24/2012
         Bails out of installation if running under perl 5.15.0 to 5.15.8 but allows --force to attempt a build regardless.
 
