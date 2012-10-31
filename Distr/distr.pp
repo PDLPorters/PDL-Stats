@@ -1025,29 +1025,161 @@ poisson distribution. pmf: f(x;l) = e^(-l) * l^x / x!
 );
 
 pp_def('pmf_poisson',
+  Pars      => 'x(); l(); float+ [o]p()',
+  GenericTypes => [F,D],
+  HandleBad => 1,
+  Code      => q{
+
+  if ($x() < 0) {
+    $p() = 0;
+  }
+  else if ($x() < GSL_SF_FACT_NMAX / 2) {
+    /* Exact formula */
+    $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( (unsigned int) $x() );
+  }
+  else {
+    /* Use Stirling's approximation. See
+     * http://en.wikipedia.org/wiki/Stirling%27s_approximation
+     */
+    double log_p = $x() - $l() + $x() * log($l() / $x())
+      - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
+      + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
+    $p() = exp(log_p);
+  }
+
+  },
+  BadCode   => q{
+
+  if ( $ISBAD($x()) || $ISBAD($l()) ) {
+    $SETBAD( $p() );
+  }
+  else {
+    if ($x() < 0) {
+      $p() = 0;
+    }
+    else if ($x() < GSL_SF_FACT_NMAX / 2) {
+      /* Exact formula */
+      $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( (unsigned int) $x() );
+    }
+    else {
+      /* Use Stirling's approximation. See
+       * http://en.wikipedia.org/wiki/Stirling%27s_approximation
+       */
+      double log_p = $x() - $l() + $x() * log($l() / $x())
+        - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
+        + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
+      $p() = exp(log_p);
+    }
+  }
+
+  },
+  Doc      => q{
+
+=for ref
+
+probability mass function for poisson distribution. Uses Stirling's formula
+for large values of the input
+
+=cut
+
+  },
+
+);
+
+pp_def('pmf_poisson_stirling',
+  Pars      => 'x(); l(); [o]p()',
+  GenericTypes => [F,D],
+  HandleBad => 1,
+  Code      => q{
+
+  if ($x() < 0) {
+    $p() = 0;
+  }
+  else if ($x() == 0) {
+    $p() = exp(-$l());
+  }
+  else {
+    /* Use Stirling's approximation. See
+     * http://en.wikipedia.org/wiki/Stirling%27s_approximation
+     */
+    double log_p = $x() - $l() + $x() * log($l() / $x())
+      - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
+      + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
+    $p() = exp(log_p);
+  }
+
+  },
+  BadCode   => q{
+
+  if ( $ISBAD($x()) || $ISBAD($l()) ) {
+    $SETBAD( $p() );
+  }
+  else if ($x() < 0) {
+    $p() = 0;
+  }
+  else if ($x() == 0) {
+    $p() = exp(-$l());
+  }
+  else {
+    /* Use Stirling's approximation. See
+     * http://en.wikipedia.org/wiki/Stirling%27s_approximation
+     */
+    double log_p = $x() - $l() + $x() * log($l() / $x())
+      - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
+      + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
+    $p() = exp(log_p);
+  }
+
+  },
+  Doc      => q{
+
+=for ref
+
+probability mass function for poisson distribution. Uses Stirling's formula
+for all values of the input, 
+
+=cut
+
+  },
+
+);
+
+pp_def('pmf_poisson_factorial',
   Pars      => 'ushort x(); l(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
+  Code      => q{
 
-  $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
+  if ($x() < GSL_SF_FACT_NMAX) {
+    $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
+  }
+  else {
+    /* bail out */
+    $p() = 0;
+  }
 
-  ',
-  BadCode   => '
+  },
+  BadCode   => q{
 
-if ( $ISBAD($x()) || $ISBAD($l()) ) {
-  $SETBAD( $p() );
-}
-else {
-  $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
-}
+  if ( $ISBAD($x()) || $ISBAD($l()) ) {
+    $SETBAD( $p() );
+  }
+  else {
+    if ($x() < GSL_SF_FACT_NMAX) {
+      $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
+    }
+    else {
+      $p() = 0;
+    }
+  }
 
-  ',
+  },
   Doc      => '
 
 =for ref
 
-probability mass function for poisson distribution.
+probability mass function for poisson distribution. Input is limited to
+x < 170.
 
 =cut
 
