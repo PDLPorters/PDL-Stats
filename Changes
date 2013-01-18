@@ -1,5 +1,8 @@
 Revision history for PDL-Stats
 
+0.6.3   01/17/2013
+        binomial_test() bug fix -- [rt.cpan.org #82725]
+
 0.6.2   04/29/2012
         Windows pdldoc database install fix.
 

@@ -131,11 +131,11 @@ is( tapprox( $df, 3 ), 1 );
 SKIP: {
   eval { require PDL::GSL::CDF; };
   skip 'no PDL::GSL::CDF', 1 if $@;
-  my $x = pdl(2, 8);
-  my $n = pdl(10, 20);
+  my $x = pdl(1, 2);
+  my $n = pdl(2, 10);
   my $p = .5;
 
-  my $a = pdl qw[ 0.9453125 0.74827766];
+  my $a = pdl qw[ 0.75  0.9892578125 ];
 
   is (tapprox( sum(abs(binomial_test( $x,$n,$p ) - $a)) ,0), 1, 'binomial_test');
 }

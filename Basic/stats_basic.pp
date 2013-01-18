@@ -1262,7 +1262,9 @@ pp_addpm(<<'EOD');
 
 =for ref
 
-Binomial test. One-tailed significance test for two-outcome distribution. Given the number of success, the number of trials, and the expected probability of success, returns the probability of getting this many or more successes.
+Binomial test. One-tailed significance test for two-outcome distribution. Given the number of successes, the number of trials, and the expected probability of success, returns the probability of getting this many or more successes.
+
+This function does NOT currently support bad value in the number of successes.
 
 =for usage
 
@@ -1278,10 +1280,19 @@ Usage:
 *binomial_test = \&PDL::binomial_test;
 sub PDL::binomial_test {
   my ($x, $n, $P) = @_;
-  return 1 - PDL::GSL::CDF::gsl_cdf_binomial_P( $x, $P, $n )
-    if $CDF;
 
-  carp 'Please install PDL::GSL::CDF.';
+  carp 'Please install PDL::GSL::CDF.' unless $CDF;
+  carp 'This function does NOT currently support bad value in the number of successes.' if $x->badflag();
+
+  my $pdlx = pdl($x);
+  $pdlx->badflag(1);
+  $pdlx = $pdlx->setvaltobad(0);
+
+  my $p = 1 - PDL::GSL::CDF::gsl_cdf_binomial_P( $pdlx - 1, $P, $n );
+  $p = $p->setbadtoval(1);
+  $p->badflag(0);
+
+  return $p;
 }
 
 
