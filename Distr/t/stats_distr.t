@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 43;
+    plan tests => 46;
       # 1
     use_ok( 'PDL::Stats::Distr' );
 }
@@ -147,4 +147,9 @@ sub tapprox {
   $a %= 2;
   is( tapprox( $a->mle_poisson, .4 ), 1 );
   is( tapprox( $a->pmf_poisson(.4)->sum, 2.54721617493543 ), 1 );
+  is( tapprox( $a->pmf_poisson_factorial(.4)->sum, 2.54721617493543 ), 1 );
+  is( tapprox( $a->pmf_poisson_stirling(.4)->sum, 2.5470618950599 ), 1 );
+
+  $a += 171;
+  ok( $a->pmf_poisson_stirling(10)->sum );  # the result is so close to 0 it's pointless to test with tapprox
 }

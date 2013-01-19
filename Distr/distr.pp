@@ -1077,8 +1077,7 @@ pp_def('pmf_poisson',
 
 =for ref
 
-probability mass function for poisson distribution. Uses Stirling's formula
-for large values of the input
+Probability mass function for poisson distribution. Uses Stirling's formula for x > 85.
 
 =cut
 
@@ -1135,8 +1134,7 @@ pp_def('pmf_poisson_stirling',
 
 =for ref
 
-probability mass function for poisson distribution. Uses Stirling's formula
-for all values of the input, 
+Probability mass function for poisson distribution. Uses Stirling's formula for all values of the input. See http://en.wikipedia.org/wiki/Stirling's_approximation for more info.
 
 =cut
 
@@ -1144,7 +1142,37 @@ for all values of the input,
 
 );
 
-pp_def('pmf_poisson_factorial',
+
+
+pp_addpm(<<'EOD');
+
+=head2 pmf_poisson_factorial
+
+=for sig
+
+  Signature: ushort x(); l(); float+ [o]p()
+
+=for ref
+
+Probability mass function for poisson distribution. Input is limited to x < 170 to avoid gsl_sf_fact() overflow.
+
+=cut
+
+*pmf_poisson_factorial = \&PDL::pmf_poisson_factorial;
+sub PDL::pmf_poisson_factorial {
+	my ($x, $l) = @_;
+
+	my $pdlx = pdl($x);
+	if (any( $pdlx >= 170 )) {
+		croak "Does not support input greater than 170. Please use pmf_poisson or pmf_poisson_stirling instead.";
+	} else {
+		return _pmf_poisson_factorial(@_);
+	}
+}
+
+EOD
+
+pp_def('_pmf_poisson_factorial',
   Pars      => 'ushort x(); l(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
@@ -1174,16 +1202,7 @@ pp_def('pmf_poisson_factorial',
   }
 
   },
-  Doc      => '
-
-=for ref
-
-probability mass function for poisson distribution. Input is limited to
-x < 170.
-
-=cut
-
-  ',
+  Doc      => undef,
 
 );
 
@@ -1330,7 +1349,7 @@ PDL::GSL::CDF
 
 =head1 AUTHOR
 
-Copyright (C) 2009 Maggie J. Xiong <maggiexyz users.sourceforge.net>
+Copyright (C) 2009 Maggie J. Xiong <maggiexyz users.sourceforge.net>, David Mertens
 
 All rights reserved. There is no warranty. You are allowed to redistribute this software / documentation as described in the file COPYING in the PDL distribution.
 
