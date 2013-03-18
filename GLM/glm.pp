@@ -989,6 +989,7 @@ sub PDL::anova {
   my %opt = (
     IVNM   => [],      # auto filled as ['IV_0', 'IV_1', ... ]
     PLOT   => 1,       # plots highest order effect
+    IGNORE_MISSING   => 1,       # truncates BAD values from piddles in ols
     V      => 1,       # carps if bad value in dv
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
@@ -1726,6 +1727,7 @@ Default options (case insensitive):
 
     CONST  => 1,
     PLOT   => 1,   # see plot_residuals() for plot options
+    IGNORE_MISSING   => 1,   # option to use Bad values for representing missing data netries, thus giving accurate p values
 
 =for usage
 
@@ -1774,6 +1776,7 @@ sub PDL::ols {
   my %opt = (
     CONST => 1,
     PLOT  => 1,
+    IGNORE_MISSING => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
@@ -1782,6 +1785,27 @@ sub PDL::ols {
     croak "use ols_t for threaded version";
 
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
+  if (eval {require PDL::Bad; } and 
+  	$opt{IGNORE_MISSING}) { #require PDL::Bad;
+	#warn "y ,$y,\nivs $ivs\n";
+	 if ( $y->check_badflag or $ivs->check_badflag and $ivs->getndims == 1) {
+  		my $idx=which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
+		#warn "index $idx\n y ,$y,\n ivs $ivs\n";
+		$y=$y($idx);
+	  	$ivs=$ivs($idx,);
+		#my $y2=$y($idx);
+	  	#my $ivs2=$ivs($idx,);
+		#$ivs->badflag(0);
+		#$y->badflag(0);
+		#print "info idx, y, ivs, y2, ivs2: ",$idx->info,$y->info,$ivs->info,$y2->info,$ivs2->info;
+		#warn "index $idx y ,$y2, ivs $ivs2\n";
+		#$y=$y2;
+		#$ivs=$ivs2;
+		$ivs->badflag(0);
+		$y->badflag(0);
+		
+	}
+  } #else { warn "No bad values\n";}
     # set up ivs and const as ivs
   $opt{CONST} and
     $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
