@@ -1786,21 +1786,11 @@ sub PDL::ols {
 
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
   if (eval {require PDL::Bad; } and 
-  	$opt{IGNORE_MISSING}) { #require PDL::Bad;
-	#warn "y ,$y,\nivs $ivs\n";
+  	$opt{IGNORE_MISSING}) { 
 	 if ( $y->check_badflag or $ivs->check_badflag and $ivs->getndims == 1) {
   		my $idx=which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
-		#warn "index $idx\n y ,$y,\n ivs $ivs\n";
 		$y=$y($idx);
 	  	$ivs=$ivs($idx,);
-		#my $y2=$y($idx);
-	  	#my $ivs2=$ivs($idx,);
-		#$ivs->badflag(0);
-		#$y->badflag(0);
-		#print "info idx, y, ivs, y2, ivs2: ",$idx->info,$y->info,$ivs->info,$y2->info,$ivs2->info;
-		#warn "index $idx y ,$y2, ivs $ivs2\n";
-		#$y=$y2;
-		#$ivs=$ivs2;
 		$ivs->badflag(0);
 		$y->badflag(0);
 		
