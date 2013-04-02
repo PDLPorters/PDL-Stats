@@ -1787,10 +1787,10 @@ sub PDL::ols {
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
   if (eval {require PDL::Bad; } and 
   	$opt{IGNORE_MISSING}) { 
-	 if ( $y->check_badflag or $ivs->check_badflag and $ivs->getndims == 1) {
+	 if ( $y->check_badflag or $ivs->check_badflag ) {
   		my $idx=which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
-		$y=$y($idx);
-	  	$ivs=$ivs($idx,);
+		$y=$y($idx)->sever;
+	  	$ivs=$ivs($idx,)->sever;
 		$ivs->badflag(0);
 		$y->badflag(0);
 		
