@@ -111,6 +111,30 @@ sub t_ols {
   return $sum;
 }
 
+is( tapprox( t_ols_bad(), 0 ), 1, 'ols with bad value' );
+sub t_ols_bad {
+  my $a = sequence 6;
+  my $b = pdl(0,0,0,1,1,1);
+  $a->setbadat(5);
+  my %m = $a->ols($b, {plot=>0});
+  is( $b->sumover, 3, "ols with bad value didn't change caller value" );
+  ok( $a->check_badflag, "ols with bad value didn't remove caller bad flag" );
+  my %a = (
+    F    => 9,
+    F_df => pdl(1,3),
+    R2   => .75,
+    b    => pdl(2.5, 1),
+    b_se => pdl(0.83333333, 0.52704628),
+    b_t  => pdl(3, 1.8973666),
+    ss_total => 10,
+    ss_model => 7.5,
+  );
+  my $sum;
+  $sum += sum(abs($a{$_} - $m{$_}))
+    for (keys %a);
+  return $sum;
+}
+
 is( tapprox( t_r2_change(), 0 ), 1, 'r2_change' );
 sub t_r2_change {
   my $a = sequence 5, 2;
