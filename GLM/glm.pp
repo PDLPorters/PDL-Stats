@@ -405,7 +405,7 @@ pp_def('rmse',
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
         d2 += pow($a() - $b(), 2);
-	N  ++;
+        N  ++;
       }
     %}
     if (N)  { $c() = sqrt( d2 / N ); }
@@ -751,9 +751,8 @@ sub PDL::ols_t {
   my $Y = $ivs x $y2->dummy(0);
 
   my $C;
-    # somehow PDL::Slatec gives weird numbers when CONST=>0
+
   if ( $SLATEC ) {
-#  if ( $opt{CONST} and $SLATEC ) {
     $C = PDL::Slatec::matinv( $ivs x $ivs->xchg(0,1) );
   }
   else {
@@ -889,10 +888,11 @@ anova supports bad value in the dependent variable.
 
 Default options (case insensitive):
 
-    V      => 1,       # carps if bad value in dv
-    IVNM   => [],      # auto filled as ['IV_0', 'IV_1', ... ]
-    PLOT   => 1,       # plots highest order effect
-                       # can set plot_means options here
+    V      => 1,          # carps if bad value in dv
+    IGNORE_MISSING => 1,  # truncates BAD values from piddles in ols
+    IVNM   => [],         # auto filled as ['IV_0', 'IV_1', ... ]
+    PLOT   => 1,          # plots highest order effect
+                          # can set plot_means options here
 
 =for usage
 
@@ -987,6 +987,7 @@ sub PDL::anova {
   }
 
   my %opt = (
+    IGNORE_MISSING => 1,       # truncates BAD values from piddles in ols
     IVNM   => [],      # auto filled as ['IV_0', 'IV_1', ... ]
     PLOT   => 1,       # plots highest order effect
     V      => 1,       # carps if bad value in dv
@@ -1068,8 +1069,7 @@ sub PDL::anova {
   @ret{ sort keys %$cm_ref } = @$cm_ref{ sort keys %$cm_ref };
 
   my $highest = join(' ~ ', @{ $opt{IVNM} });
-  $cm_ref->{"# $highest # m"}->plot_means( $cm_ref->{"# $highest # se"}, 
-                                           { %opt, IVNM=>$idv } )
+  $cm_ref->{"# $highest # m"}->plot_means( $cm_ref->{"# $highest # se"}, {%opt, IVNM=>$idv} )
     if $opt{PLOT};
 
   return %ret;
@@ -1726,6 +1726,7 @@ Default options (case insensitive):
 
     CONST  => 1,
     PLOT   => 1,   # see plot_residuals() for plot options
+    IGNORE_MISSING   => 1,   # option to use Bad values for representing missing data netries, thus giving accurate p values
 
 =for usage
 
@@ -1774,6 +1775,7 @@ sub PDL::ols {
   my %opt = (
     CONST => 1,
     PLOT  => 1,
+    IGNORE_MISSING => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
@@ -1782,6 +1784,15 @@ sub PDL::ols {
     croak "use ols_t for threaded version";
 
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
+  if ($opt{IGNORE_MISSING}) { 
+     if ($y->check_badflag or $ivs->check_badflag) {
+        my $idx = which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
+        $y = $y($idx)->sever;
+        $ivs = $ivs($idx,)->sever;
+        $ivs->badflag(0);
+        $y->badflag(0);
+     }
+  }
     # set up ivs and const as ivs
   $opt{CONST} and
     $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
