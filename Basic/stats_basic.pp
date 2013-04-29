@@ -1654,11 +1654,17 @@ sub _array_to_pdl {
   my (%level, $l);
   $l = 0;
   for (@$var_ref) {
-    !exists $level{$_} and $level{$_} = $l ++;
-  } 
-  return wantarray? (pdl( map { $level{$_} } @$var_ref ), \%level)
-        :            pdl( map { $level{$_} } @$var_ref )
-        ;
+    if (defined($_) and $_ ne '' and $_ ne 'BAD') {
+      $level{$_} = $l ++
+        if !exists $level{$_};
+    }
+  }
+
+  my $pdl = pdl( map { (defined($_) and $_ ne '' and $_ ne 'BAD')?  $level{$_} : -1 } @$var_ref );
+  $pdl = $pdl->setvaltobad(-1);
+  $pdl->check_badflag;
+
+  return wantarray? ($pdl, \%level) : $pdl;
 }
 
 

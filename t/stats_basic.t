@@ -4,10 +4,6 @@ use strict;
 use warnings;
 use Test::More;
 
-BEGIN {
-    plan tests => 55;
-}
-
 use PDL::LiteF;
 use PDL::NiceSlice;
 use PDL::Stats::Basic;
@@ -176,6 +172,24 @@ SKIP: {
     is_deeply($l, [[qw(a_0 a_1)], [qw( b_0 b_1 )]], 'group_by multiple factors label');
 }
 
+
+{
+    my @a = qw(a a b b c c);
+    my $a = PDL::Stats::Basic::_array_to_pdl( \@a );
+    my $ans = pdl( 0,0,1,1,2,2 );
+    is( tapprox( sum(abs($a - $ans)), 0 ), 1, '_array_to_pdl' );
+
+    $a[-1] = undef;
+    my $a_bad = PDL::Stats::Basic::_array_to_pdl( \@a );
+    my $ans_bad = pdl( 0,0,1,1,2,2 );
+    $ans_bad = $ans_bad->setbadat(-1);
+
+    is( $a_bad(-1)->isbad(), 1, '_array_to_pdl with missing value' );
+    is( tapprox( sum(abs($a_bad - $ans_bad)), 0 ), 1, '_array_to_pdl with missing value correctly coded' );
+}
+
+
+done_testing();
 
 
 __DATA__
