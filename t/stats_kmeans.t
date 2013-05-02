@@ -5,7 +5,6 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 18;
       # 1-2
     use_ok( 'PDL::Stats::Basic' );
     use_ok( 'PDL::Stats::Kmeans' );
@@ -28,6 +27,15 @@ sub t_iv_cluster {
   my @a = qw( a a b b );
   my $a = iv_cluster( \@a );
   return abs($a - pdl(byte, [1,1,0,0], [0,0,1,1]))->sum;
+}
+
+is(tapprox( t_iv_cluster_bad(), 0 ), 1);
+sub t_iv_cluster_bad {
+  my @a = qw( a a BAD b b );
+  my $a = iv_cluster( \@a );
+
+  is(sum(abs(which($a->isbad) - pdl(2,7))), 0, 'iv_cluster has bad value');
+  return abs($a - pdl(byte, [1,1,-9,0,0], [0,0,-9,1,1]))->sum;
 }
 
 is(tapprox( t_assign(), 0 ), 1);
@@ -238,6 +246,9 @@ sub t_pca_cluster {
   my $ans = pdl( [0,1,0,1], [-1,1,1,0] );
   is( abs($c->which_cluster - $ans)->sum, 0, 'which_cluster');
 }
+
+done_testing();
+
 
 
 sub lvalue_assign_detour {

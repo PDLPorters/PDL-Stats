@@ -882,14 +882,15 @@ sub PDL::r2_change {
 
 Analysis of variance. Uses type III sum of squares for unbalanced data.
 
-anova supports bad value in the dependent variable.
+Dependent variable should be a 1D pdl. Independent variables can be passed as 1D perl array ref or 1D pdl.
+
+Supports bad value (by ignoring missing or BAD values in dependent and independent variables list-wise).
 
 =for options
 
 Default options (case insensitive):
 
-    V      => 1,          # carps if bad value in dv
-    IGNORE_MISSING => 1,  # truncates BAD values from piddles in ols
+    V      => 1,          # carps if bad value in variables
     IVNM   => [],         # auto filled as ['IV_0', 'IV_1', ... ]
     PLOT   => 1,          # plots highest order effect
                           # can set plot_means options here
@@ -977,9 +978,9 @@ Usage:
 sub PDL::anova {
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
-  my ($self, @ivs_raw) = @_;
+  my ($y, @ivs_raw) = @_;
   croak "Mismatched number of elements in DV and IV. Are you passing IVs the old-and-abandoned way?"
-    if (ref $ivs_raw[0] eq 'ARRAY') and (@{ $ivs_raw[0] } != $self->nelem);
+    if (ref $ivs_raw[0] eq 'ARRAY') and (@{ $ivs_raw[0] } != $y->nelem);
 
   for (@ivs_raw) {
     croak "too many dims in IV!"
@@ -987,10 +988,9 @@ sub PDL::anova {
   }
 
   my %opt = (
-    IGNORE_MISSING => 1,       # truncates BAD values from piddles in ols
     IVNM   => [],      # auto filled as ['IV_0', 'IV_1', ... ]
     PLOT   => 1,       # plots highest order effect
-    V      => 1,       # carps if bad value in dv
+    V      => 1,       # carps if bad value
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{IVNM} = [ map { "IV_$_" } (0 .. $#ivs_raw) ]
@@ -999,18 +999,19 @@ sub PDL::anova {
 
   my %ret;
 
-  $self = $self->squeeze;
-  my $igood = which $self->isgood;
-  carp $igood->nelem . " good values in DV"
-    if $igood->nelem < $self->nelem and $opt{V};
-  $self = $self( $igood )->sever;
-  $self->badflag(0);
+  $y = $y->squeeze;
     # create new vars here so we don't mess up original caller @
-  my @pdl_ivs_raw
-    = map { my $var
-              = (ref $_ eq 'PDL')? [list $_($igood)] : [@$_[list $igood]];
-            scalar PDL::Stats::Basic::_array_to_pdl $var;
-          } @ivs_raw;
+  my @pdl_ivs_raw = map {
+    my $var = (ref $_ eq 'PDL')? [list $_] : $_;
+    scalar PDL::Stats::Basic::_array_to_pdl $var;
+  } @ivs_raw;
+
+  my $pdl_ivs_raw = pdl \@pdl_ivs_raw;
+
+  ($y, $pdl_ivs_raw) = _rm_bad_value( $y, $pdl_ivs_raw );
+
+    # dog preserves data flow
+  @pdl_ivs_raw = map {$_->copy} $pdl_ivs_raw->dog;
 
   my ($ivs_ref, $i_cmo_ref)
     = _effect_code_ivs( \@pdl_ivs_raw );
@@ -1022,12 +1023,12 @@ sub PDL::anova {
   my $ivs = PDL->null->glue( 1, @$ivs_ref );
   $ivs = $ivs->glue(1, ones $ivs->dim(0));
 
-  my $b_full = $self->ols_t( $ivs, {CONST=>0} );
+  my $b_full = $y->ols_t( $ivs, {CONST=>0} );
 
-  $ret{ss_total} = $self->ss;
-  $ret{ss_residual} = $self->sse( sumover( $b_full * $ivs->xchg(0,1) ) );
+  $ret{ss_total} = $y->ss;
+  $ret{ss_residual} = $y->sse( sumover( $b_full * $ivs->xchg(0,1) ) );
   $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
-  $ret{F_df} = pdl($ivs->dim(1) - 1, $self->nelem - ($ivs->dim(1) - 1) -1);
+  $ret{F_df} = pdl($ivs->dim(1) - 1, $y->nelem - ($ivs->dim(1) - 1) -1);
   $ret{ms_model} = $ret{ss_model} / $ret{F_df}->(0);
   $ret{ms_residual} = $ret{ss_residual} / $ret{F_df}->(1);
   $ret{F} = $ret{ms_model} / $ret{ms_residual};
@@ -1045,12 +1046,12 @@ sub PDL::anova {
       $G = $G->glue(1, ones $G->dim(0));
     }
     else {
-      $G = ones( $self->dim(0) );
+      $G = ones( $y->dim(0) );
     }
-    $b_G = $self->ols_t( $G, {CONST=>0} );
+    $b_G = $y->ols_t( $G, {CONST=>0} );
 
     $ret{ "| $idv->[$k] | ss" }
-      = $self->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
+      = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
     $ret{ "| $idv->[$k] | F_df" }
       = pdl( $ivs_ref->[$k]->dim(1), $ret{F_df}->(1)->copy )->squeeze;
     $ret{ "| $idv->[$k] | ms" }
@@ -1064,7 +1065,7 @@ sub PDL::anova {
 
   for (keys %ret) { $ret{$_} = $ret{$_}->squeeze };
 
-  my $cm_ref = _cell_means( $self, $ivs_cm_ref, $i_cmo_ref, $idv, \@pdl_ivs_raw );
+  my $cm_ref = _cell_means( $y, $ivs_cm_ref, $i_cmo_ref, $idv, \@pdl_ivs_raw );
     # sort bc we can't count on perl % internal key order implementation
   @ret{ sort keys %$cm_ref } = @$cm_ref{ sort keys %$cm_ref };
 
@@ -1459,7 +1460,9 @@ sub _add_errors {
 
   my (@grp, %grp_s);
   for my $n (0 .. $subj->nelem - 1) {
-    my $s = '';
+      # something not treated as BAD by _array_to_pdl to start off marking group membership
+      # if no $opt->{BTWN}, everyone ends up in the same grp
+    my $s = '_';
     $s .= $_->($n)
       for (@$raw_ivs[@{ $opt->{BTWN} }]);
     push @grp, $s;                 # group membership
@@ -1562,6 +1565,8 @@ sub _fix_rptd_se {
 
 Dummy coding of nominal variable (perl @ ref or 1d pdl) for use in regression.
 
+Supports BAD value (missing or 'BAD' values result in the corresponding pdl elements being marked as BAD).
+
 =for usage
 
     perldl> @a = qw(a a a b b b c c c)
@@ -1589,6 +1594,8 @@ sub PDL::dummy_code {
 =for ref
 
 Unweighted effect coding of nominal variable (perl @ ref or 1d pdl) for use in regression. returns in @ context coded pdl and % ref to level - pdl->dim(1) index.
+
+Supports BAD value (missing or 'BAD' values result in the corresponding pdl elements being marked as BAD).
 
 =for usage
 
@@ -1631,6 +1638,12 @@ sub PDL::effect_code {
     $v->index( which $var == $var->max ) .= -1;
   }
 
+  if ($var->badflag) {
+    my $ibad = which $var->isbad;
+    $var_e($ibad, ) .= -99;
+    $var_e = $var_e->setvaltobad(-99);
+  }
+
   return wantarray? ($var_e, $map_ref) : $var_e;
 }
 
@@ -1639,6 +1652,8 @@ sub PDL::effect_code {
 =for ref
 
 Weighted effect code for nominal variable. returns in @ context coded pdl and % ref to level - pdl->dim(1) index.
+
+Supports BAD value (missing or 'BAD' values result in the corresponding pdl elements being marked as BAD).
 
 =for usage
 
@@ -1675,6 +1690,8 @@ sub PDL::effect_code_w {
 =head2 interaction_code
 
 Returns the coded interaction term for effect-coded variables.
+
+Supports BAD value (missing or 'BAD' values result in the corresponding pdl elements being marked as BAD).
 
 =for usage
 
@@ -1716,7 +1733,7 @@ sub PDL::interaction_code {
 
 =for ref
 
-Ordinary least squares regression, aka linear regression. Unlike B<ols_t>, ols returns the full model in list context with various stats, but is not threadable. 
+Ordinary least squares regression, aka linear regression. Unlike B<ols_t>, ols is not threadable, but it can handle bad value (by ignoring observations with bad value in dependent or independent variables list-wise) and returns the full model in list context with various stats. 
 
 IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the constant vector in $x. Intercept is automatically added and returned as LAST of the coeffs if CONST=>1. Returns full model in list context and coeff in scalar context.
 
@@ -1726,7 +1743,6 @@ Default options (case insensitive):
 
     CONST  => 1,
     PLOT   => 1,   # see plot_residuals() for plot options
-    IGNORE_MISSING   => 1,   # option to use Bad values for representing missing data netries, thus giving accurate p values
 
 =for usage
 
@@ -1775,7 +1791,6 @@ sub PDL::ols {
   my %opt = (
     CONST => 1,
     PLOT  => 1,
-    IGNORE_MISSING => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
@@ -1784,15 +1799,9 @@ sub PDL::ols {
     croak "use ols_t for threaded version";
 
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
-  if ($opt{IGNORE_MISSING}) { 
-     if ($y->check_badflag or $ivs->check_badflag) {
-        my $idx = which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
-        $y = $y($idx)->sever;
-        $ivs = $ivs($idx,)->sever;
-        $ivs->badflag(0);
-        $y->badflag(0);
-     }
-  }
+
+  ($y, $ivs) = _rm_bad_value( $y, $ivs );
+
     # set up ivs and const as ivs
   $opt{CONST} and
     $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
@@ -1876,6 +1885,20 @@ sub PDL::ols {
   return %ret;
 }
 
+sub _rm_bad_value {
+  my ($y, $ivs) = @_;
+
+  my $idx;
+  if ($y->check_badflag or $ivs->check_badflag) {
+     $idx = which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
+     $y = $y($idx)->sever;
+     $ivs = $ivs($idx,)->sever;
+     $ivs->badflag(0);
+     $y->badflag(0);
+  }
+
+  return $y, $ivs, $idx;
+}
 
 =head2 ols_rptd
 

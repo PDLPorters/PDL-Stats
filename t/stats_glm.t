@@ -252,6 +252,18 @@ is( tapprox( $b_bad->d0(), 6.73011667009256 ), 1 );
 is( tapprox( $b_bad->dm( ones(6) * .5 ), 6.93147180559945 ), 1 );
 is( tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), 1 );
 
+{
+  my @a = qw( a a a b b b b c c BAD );
+  my $a = effect_code(\@a);
+  my $ans = pdl [
+   [qw( 1   1   1   0   0   0   0  -1  -1 -99 )],
+   [qw( 0   0   0   1   1   1   1  -1  -1 -99 )]
+  ];
+  $ans = $ans->setvaltobad(-99);
+  is( sum(abs(which($a->isbad) - pdl(9,19))), 0, 'effect_code got bad value' );
+  is( tapprox( sum(abs($a - $ans)), 0 ), 1, 'effect_code coded with bad value' );
+}
+
 is( tapprox( t_effect_code_w(), 0 ), 1, 'effect_code_w' );
 sub t_effect_code_w {
   my @a = qw( a a a b b b b c c c );
@@ -288,8 +300,8 @@ sub t_anova_1way {
   ;
 }
 
-is( tapprox( t_anova_bad(), 0 ), 1, 'anova_bad' );
-sub t_anova_bad {
+is( tapprox( t_anova_bad_dv(), 0 ), 1, 'anova_3w bad dv' );
+sub t_anova_bad_dv {
   my $d = sequence 60;
   $d = lvalue_assign_detour( $d, 20, 10 );
   $d->setbadat(1);
@@ -300,10 +312,29 @@ sub t_anova_bad {
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, v=>0});
   my $ans_F = pdl( 150.00306433446, 0.17534855325553 );
   my $ans_m = pdl([qw( 4 22 37 52 )], [qw( 10 22 37 52 )]);
-  my $ans_se = pdl([qw( 0 6 3 6 )], [qw( 1.7320508 3 6 3 )]);
+  my $ans_se = pdl([qw( 0 6 1.7320508 3.4641016 )], [qw( 3 3 3.4641016 1.7320508 )]);
+
+  return sum(abs(pdl( @m{'| A | F', '| A ~ B ~ C | F'} ) - $ans_F))
+       + sum(abs($m{'# A ~ B ~ C # m'}->(,1,)->squeeze - $ans_m))
+       + sum(abs($m{'# A ~ B ~ C # se'}->(,1,)->squeeze - $ans_se))
+  ;
+}
+
+is( tapprox( t_anova(), 0 ), 1, 'anova_3w bad dv iv' );
+sub t_anova_bad_dv_iv {
+  my $d = sequence 62;
+  my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
+  push @a, qw( a b );
+  my $b = $d % 3;
+  my $c = $d % 2;
+  $c->inplace->setbadat(60);
+  $d->inplace->setbadat(61);
+  $d = lvalue_assign_detour( $d, 20, 10 );
+  my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0});
+  my $ans_F = pdl(165.252100840336, 0.0756302521008415);
+  my $ans_m = pdl([qw(8 18 38 53)], [qw(8 23 38 53)]);
   return  sum( pdl( @m{'| A | F', '| A ~ B ~ C | F'} ) - $ans_F )
         + sum( $m{'# A ~ B ~ C # m'}->(,2,)->squeeze - $ans_m )
-        + sum( $m{'# A ~ B ~ C # se'}->(,2,)->squeeze - $ans_se )
   ;
 }
 

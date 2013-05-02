@@ -765,11 +765,17 @@ sub PDL::iv_cluster {
   }
 
   my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
-  my $var_a = zeroes byte, $var->nelem, $var->max + 1;
+  my $var_a = zeroes( byte, $var->nelem, $var->max + 1 );
 
   for my $l (0 .. $var->max) {
     my $v = $var_a( ,$l);
     $v->index( which $var == $l ) .= 1;
+  }
+
+  if ($var->badflag) {
+    my $ibad = which $var->isbad;
+    $var_a($ibad, ) .= -1;
+    $var_a->inplace->setvaltobad(-1);
   }
 
   return wantarray? ($var_a, $map_ref) : $var_a;
