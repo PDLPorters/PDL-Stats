@@ -1007,8 +1007,14 @@ sub PDL::anova {
   } @ivs_raw;
 
   my $pdl_ivs_raw = pdl \@pdl_ivs_raw;
+    # explicit set badflag if any iv had bad value because pdl() removes badflag
+  $pdl_ivs_raw->badflag( scalar grep { $_->badflag } @pdl_ivs_raw );
 
   ($y, $pdl_ivs_raw) = _rm_bad_value( $y, $pdl_ivs_raw );
+
+  if ($opt{V} and $y->nelem < $pdl_ivs_raw[0]->nelem) {
+    printf STDERR "%d subjects with missing data removed\n", $pdl_ivs_raw[0]->nelem - $y->nelem;
+  }
 
     # dog preserves data flow
   @pdl_ivs_raw = map {$_->copy} $pdl_ivs_raw->dog;
@@ -1197,7 +1203,7 @@ sub _combinations {
 
 Repeated measures and mixed model anova. Uses type III sum of squares. The standard error (se) for the means are based on the relevant mean squared error from the anova, ie it is pooled across levels of the effect.
 
-anova_rptd supports bad value in the dependent variable. It automatically removes bad data listwise, ie remove a subject's data if there is any cell missing for the subject.
+anova_rptd supports bad value in the dependent and independent variables. It automatically removes bad data listwise, ie remove a subject's data if there is any cell missing for the subject.
 
 Default options (case insensitive):
 
@@ -1309,7 +1315,7 @@ For mixed model anova, ie when there are between-subject IVs involved, feed the 
 sub PDL::anova_rptd {
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
-  my ($self, $subj, @ivs_raw) = @_;
+  my ($y, $subj, @ivs_raw) = @_;
 
   for (@ivs_raw) {
     croak "too many dims in IV!"
@@ -1336,8 +1342,13 @@ sub PDL::anova_rptd {
           } ( $subj, @ivs_raw );
 
     # delete bad data listwise ie remove subj if any cell missing
-  $self = $self->squeeze;
-  my $ibad = which $self->isbad;
+  $y = $y->squeeze;
+  my $pdl_ivs_raw = pdl \@pdl_ivs_raw;
+    # explicit set badflag because pdl() removes badflag
+  $pdl_ivs_raw->badflag( scalar grep { $_->badflag } @pdl_ivs_raw );
+
+  my $ibad = which( $y->isbad | nbadover($pdl_ivs_raw->transpose) );
+
   my $sj_bad = $sj($ibad)->uniq;
   if ($sj_bad->nelem) {
     print STDERR $sj_bad->nelem . " subjects with missing data removed\n"
@@ -1345,7 +1356,7 @@ sub PDL::anova_rptd {
     $sj = $sj->setvaltobad($_)
       for (list $sj_bad);
     my $igood = which $sj->isgood;
-    for ($self, $sj, @pdl_ivs_raw) {
+    for ($y, $sj, @pdl_ivs_raw) {
       $_ = $_( $igood )->sever;
       $_->badflag(0);
     }
@@ -1365,10 +1376,10 @@ sub PDL::anova_rptd {
   my $ivs = PDL->null->glue( 1, @$ivs_ref );
   $ivs = $ivs->glue(1, grep { defined($_) and ref($_) } @$err_ref);
   $ivs = $ivs->glue(1, ones $ivs->dim(0));
-  my $b_full = $self->ols_t( $ivs, {CONST=>0} );
+  my $b_full = $y->ols_t( $ivs, {CONST=>0} );
 
-  $ret{ss_total} = $self->ss;
-  $ret{ss_residual} = $self->sse( sumover( $b_full * $ivs->xchg(0,1) ) );
+  $ret{ss_total} = $y->ss;
+  $ret{ss_residual} = $y->sse( sumover( $b_full * $ivs->xchg(0,1) ) );
 
   my @full = (@$ivs_ref, @$err_ref);
   EFFECT: for my $k (0 .. $#full) {
@@ -1396,15 +1407,15 @@ sub PDL::anova_rptd {
   
       $G = PDL->null->glue( 1, grep { ref $_ } @full[@G] );
       $G = $G->glue(1, ones $G->dim(0));
-      $b_G = $self->ols_t( $G, {CONST=>0} );
+      $b_G = $y->ols_t( $G, {CONST=>0} );
   
       if ($k == $#full) {
         $ret{ss_subject}
-          = $self->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
+          = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
       }
       else {
         $ret{ "| $idv->[$i] |$e ss" }
-          = $self->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
+          = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
         $ret{ "| $idv->[$i] |$e df" }
           = $full[$k]->dim(1);
         $ret{ "| $idv->[$i] |$e ms" }
@@ -1436,7 +1447,7 @@ sub PDL::anova_rptd {
   for (keys %ret) {ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze};
 
   my $cm_ref
-    = _cell_means( $self, $ivs_cm_ref, $i_cmo_ref, $idv, \@pdl_ivs_raw );
+    = _cell_means( $y, $ivs_cm_ref, $i_cmo_ref, $idv, \@pdl_ivs_raw );
   my @ls = map { $_->uniq->nelem } @pdl_ivs_raw;
   $cm_ref
     = _fix_rptd_se( $cm_ref, \%ret, $opt{'IVNM'}, \@ls, $sj->uniq->nelem );
