@@ -9,15 +9,14 @@ print STDERR "PDL ", ($pdl_installed ? 'is' : 'is not'), " installed\n";
 if (!$pdl_installed) {
   # write dummy makefile if PDL not installed
   WriteMakefile(
-		'NAME'		=> 'PDL::Graphics::PLplot',
+		'NAME'		=> 'PDL::Stats::Basic',
 		'PREREQ_PM'	=> { 'PDL' => '2.4.4' },
-		);
+  );
   print STDERR "Wrote dummy Makefile\n";
   exit;
 } else {
 	print STDERR "PDL installed, proceeding...\n";
 	use ExtUtils::MakeMaker;
-#PDL::Core::Dev->import();
 	
 	$package = ["stats_basic.pp",Basic,PDL::Stats::Basic];
 	eval qq{

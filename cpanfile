@@ -1,1 +1,1 @@
-requires 'PDL', '2.4.10';
+requires 'PDL', '2.4.4';

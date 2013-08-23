@@ -25,7 +25,6 @@ WriteMakefile(
         'Test::More' => 0,
         'PDL'        => '2.4.4',
     },
-    PREREQ_FATAL        => 0,
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => ['PDL-Stats-*'] },
