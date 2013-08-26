@@ -1,4 +1,5 @@
 # Stolen from PDL::Graphics::PLplot's Makefile.PL
+use ExtUtils::MakeMaker;
 eval {
 	require PDL::Core::Dev;
 	PDL::Core::Dev->import;
@@ -15,9 +16,6 @@ if (!$pdl_installed) {
 	print STDERR "Wrote dummy Makefile\n";
 	exit;
 } else {
-	print STDERR "PDL installed, proceeding...\n";
-	use ExtUtils::MakeMaker;
-
 	$package = ["stats_basic.pp",Basic,PDL::Stats::Basic];
 	%hash = pdlpp_stdargs($package);
 
