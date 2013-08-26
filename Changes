@@ -2,9 +2,9 @@ Revision history for PDL-Stats
 
 0.6.3   05/05/2013
         binomial_test() bug fix -- [rt.cpan.org #82725]
-		pmf_poisson() updated to handle large input values thanks to David Mertens.
-		ols() bad value support update thanks to Ingo Schmid.
-		anova(), anova_rptd() bad value support update.
+        pmf_poisson() updated to handle large input values thanks to David Mertens.
+        ols() bad value support update thanks to Ingo Schmid.
+        anova(), anova_rptd() bad value support update.
 
 0.6.2   04/29/2012
         Windows pdldoc database install fix.
