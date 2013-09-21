@@ -57,9 +57,9 @@ is( tapprox( $b->glue(1,ones(5))->pred_logistic(pdl(1,2))->sum, 4.54753948757851
 
 my $y = pdl(0, 1, 0, 1, 0);
   # 11-13
-is( tapprox( $y->d0(), 6.73011667009256 ), 1 );
-is( tapprox( $y->dm( ones(5) * .5 ), 6.93147180559945 ), 1 );
-is( tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 1 );
+is( tapprox( $y->d0(), 6.73011667009256 ), 1, 'd0');
+is( tapprox( $y->dm( ones(5) * .5 ), 6.93147180559945 ), 1, 'dm' );
+is( tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 1, 'dvrs' );
 
 {
   my $a = pdl(ushort, [0,0,1,0,1], [0,0,0,1,1] );

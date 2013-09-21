@@ -1471,13 +1471,14 @@ sub _add_errors {
 
   my (@grp, %grp_s);
   for my $n (0 .. $subj->nelem - 1) {
+      # construct string to code group membership
       # something not treated as BAD by _array_to_pdl to start off marking group membership
       # if no $opt->{BTWN}, everyone ends up in the same grp
     my $s = '_';
-    (my $tmp = $s) .= $_->($n)
+    $s .= $_->($n)
       for (@$raw_ivs[@{ $opt->{BTWN} }]);
     push @grp, $s;                 # group membership
-    (my $tmp = $s) .= $subj($n);               # keep track of total uniq subj
+    $s .= $subj($n);               # keep track of total uniq subj
     $grp_s{$s} = 1;
   }
   my $grp = PDL::Stats::Kmeans::iv_cluster \@grp;
@@ -1487,7 +1488,6 @@ sub _add_errors {
   for my $g (0 .. $grp->dim(1)-1) {
     my $gsub = $subj( which $grp( ,$g) )->effect_code;
     my ($nobs, $nsub) = $gsub->dims;
-    $DB::single = 1;
     (my $tmp = $spdl($d0:$d0+$nobs-1, $d1:$d1+$nsub-1)) .= $gsub;
     $d0 += $nobs;
     $d1 += $nsub;
