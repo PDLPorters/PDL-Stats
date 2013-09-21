@@ -442,8 +442,8 @@ sub _scree_ind {
     croak "1D pdl only please";
 
   my $a = zeroes 2, $self->nelem;
-  $a((0), ) .= sequence $self->nelem;
-  $a((1), ) .= $self;
+  (my $tmp = $a((0), )) .= sequence $self->nelem;
+  (my $tmp = $a((1), )) .= $self;
 
   my $d = _d_point2line( $a, $a( ,(0)), $a( ,(-1)) );
 
@@ -769,12 +769,12 @@ sub PDL::iv_cluster {
 
   for my $l (0 .. $var->max) {
     my $v = $var_a( ,$l);
-    $v->index( which $var == $l ) .= 1;
+    (my $tmp = $v->index( which $var == $l )) .= 1;
   }
 
   if ($var->badflag) {
     my $ibad = which $var->isbad;
-    $var_a($ibad, ) .= -1;
+    (my $tmp = $var_a($ibad, )) .= -1;
     $var_a->inplace->setvaltobad(-1);
   }
 
