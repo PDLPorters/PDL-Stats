@@ -1,6 +1,7 @@
 # Stolen from PDL::Graphics::PLplot's Makefile.PL
 use ExtUtils::MakeMaker;
 eval {
+	require PDL::Core;
 	require PDL::Core::Dev;
 	PDL::Core::Dev->import;
 };
@@ -15,6 +16,10 @@ if (!$pdl_installed) {
 	print STDERR "Wrote dummy Makefile for cpan install\n";
 	exit;
 } else {
+	if (defined(&PDL::indx)) {
+		print STDERR "*** PDL with 64bit support detected. ***\n*** Please note that PDL::Stats does not currently have 64bit support. ***\n";
+	}
+
 	eval q{
 		$package = ["stats_basic.pp",Basic,PDL::Stats::Basic];
 		%hash = pdlpp_stdargs($package);
