@@ -75,6 +75,9 @@ pp_addhdr('
 
 pp_addpm( <<'EOD' );
 
+# my tmp var for PDL 2.007 slice upate
+my $_tmp;
+
 =head2 random_cluster
 
 =for sig
@@ -442,8 +445,8 @@ sub _scree_ind {
     croak "1D pdl only please";
 
   my $a = zeroes 2, $self->nelem;
-  (my $tmp = $a((0), )) .= sequence $self->nelem;
-  (my $tmp = $a((1), )) .= $self;
+  ($_tmp = $a((0), )) .= sequence $self->nelem;
+  ($_tmp = $a((1), )) .= $self;
 
   my $d = _d_point2line( $a, $a( ,(0)), $a( ,(-1)) );
 
@@ -769,12 +772,12 @@ sub PDL::iv_cluster {
 
   for my $l (0 .. $var->max) {
     my $v = $var_a( ,$l);
-    (my $tmp = $v->index( which $var == $l )) .= 1;
+    ($_tmp = $v->index( which $var == $l )) .= 1;
   }
 
   if ($var->badflag) {
     my $ibad = which $var->isbad;
-    (my $tmp = $var_a($ibad, )) .= -1;
+    ($_tmp = $var_a($ibad, )) .= -1;
     $var_a->inplace->setvaltobad(-1);
   }
 

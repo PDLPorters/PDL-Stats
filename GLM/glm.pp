@@ -600,6 +600,9 @@ Deviance residual for logistic regression.
 
 pp_addpm(<<'EOD');
 
+# my tmp var for PDL 2.007 slice upate
+my $_tmp;
+
 =head2 ols_t
 
 =for ref
@@ -743,7 +746,7 @@ sub PDL::ols_t {
   # Internally normalise data
   # (double) it or ushort y and sequence iv won't work right
   my $ymean = $y->abs->sumover->double / $y->dim(0);
-  (my $tmp = $ymean->where( $ymean==0 )) .= 1;
+  ($_tmp = $ymean->where( $ymean==0 )) .= 1;
   my $y2 = $y / $ymean->dummy(0);
  
   # Do the fit
@@ -1155,8 +1158,8 @@ sub _cell_means {
   for (@$ivs_ref) {
     my $last = zeroes $_->dim(0);
     my $i_neg = which $_( ,0) == -1;
-    (my $tmp = $last($i_neg)) .= 1;
-    (my $tmp = $_->where($_ == -1)) .= 0;
+    ($_tmp = $last($i_neg)) .= 1;
+    ($_tmp = $_->where($_ == -1)) .= 0;
     $_ = $_->glue(1, $last);
 
     my @v = split ' ~ ', $ids->[$i];
@@ -1488,7 +1491,7 @@ sub _add_errors {
   for my $g (0 .. $grp->dim(1)-1) {
     my $gsub = $subj( which $grp( ,$g) )->effect_code;
     my ($nobs, $nsub) = $gsub->dims;
-    (my $tmp = $spdl($d0:$d0+$nobs-1, $d1:$d1+$nsub-1)) .= $gsub;
+    ($_tmp = $spdl($d0:$d0+$nobs-1, $d1:$d1+$nsub-1)) .= $gsub;
     $d0 += $nobs;
     $d1 += $nsub;
   }
@@ -1564,7 +1567,7 @@ sub _fix_rptd_se {
       } @se;
 
   for my $i (0 .. $#se) {
-    (my $tmp = $cm_ref->{"# $se[$i] # se"})
+    ($_tmp = $cm_ref->{"# $se[$i] # se"})
       .= sqrt( $ret->{"| $se[$i] || err ms"} / $n_obs[$i] );
   }
 
@@ -1596,7 +1599,7 @@ sub PDL::dummy_code {
 
   my $var_e = effect_code( $var_ref );
 
-  (my $tmp = $var_e->where( $var_e == -1 )) .= 0;
+  ($_tmp = $var_e->where( $var_e == -1 )) .= 0;
 
   return $var_e;
 }
@@ -1646,13 +1649,13 @@ sub PDL::effect_code {
 
   for my $l (0 .. $var->max - 1) {
     my $v = $var_e( ,$l);
-    (my $tmp = $v->index( which $var == $l )) .= 1;
-    (my $tmp = $v->index( which $var == $var->max )) .= -1;
+    ($_tmp = $v->index( which $var == $l )) .= 1;
+    ($_tmp = $v->index( which $var == $var->max )) .= -1;
   }
 
   if ($var->badflag) {
     my $ibad = which $var->isbad;
-    (my $tmp = $var_e($ibad, )) .= -99;
+    ($_tmp = $var_e($ibad, )) .= -99;
     $var_e = $var_e->setvaltobad(-99);
   }
 
@@ -1693,7 +1696,7 @@ sub PDL::effect_code_w {
     my $pos = which $factor == 1;
     my $neg = which $factor == -1;
     my $w = $pos->nelem / $neg->nelem;
-    (my $tmp = $factor($neg)) *= $w;
+    ($_tmp = $factor($neg)) *= $w;
   }
 
   return wantarray? ($var_e, $map_ref) : $var_e;
@@ -1866,7 +1869,7 @@ sub PDL::ols {
   my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
 
   $opt{CONST} and 
-    (my $tmp = $se_b(-1)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) * $C(-1,-1) );
+    ($_tmp = $se_b(-1)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) * $C(-1,-1) );
 
     # get the se for bs by successivly regressing each iv by the rest ivs
   if ($ivs->dim(1) > 1) {
@@ -1879,11 +1882,11 @@ sub PDL::ols {
 
       my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
 
-      (my $tmp = $se_b($k)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / $ss_res_k );
+      ($_tmp = $se_b($k)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / $ss_res_k );
     }
   }
   else {
-    (my $tmp = $se_b(0))
+    ($_tmp = $se_b(0))
       .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / sum( $ivs( ,0)**2 ) );
   }
 
@@ -1999,7 +2002,7 @@ sub PDL::ols_rptd {
     my $iv = $s->glue(1, @ivs[ @i_rest ]);
     my $b  = $y->ols_t($iv);
     $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
-    (my $tmp = $r{ss}->($i)) .= $y->sse($pred) - $ss_pe;
+    ($_tmp = $r{ss}->($i)) .= $y->sse($pred) - $ss_pe;
   }
 
   # STEP 3: get precitor x subj interaction as error term
@@ -2019,7 +2022,7 @@ sub PDL::ols_rptd {
     my $iv = $iv_p->glue(1, $e_rest);
     my $b  = $y->ols_t($iv);
     my $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
-    (my $tmp = $r{ss_err}->($i)) .= $y->sse($pred) - $r{'(ss_residual)'};
+    ($_tmp = $r{ss_err}->($i)) .= $y->sse($pred) - $r{'(ss_residual)'};
   }
 
   # Finally, get MS, F, etc
@@ -2163,19 +2166,19 @@ sub PDL::logistic {
         = PDL::Fit::LM::lmfit( $G, $self, $opt{WT}, \&_logistic, $init,
         { Maxiter=>$opt{MAXIT}, Eps=>$opt{EPS} } );
   
-      (my $tmp = $coeff_chisq($k)) .= $self->dm( $y_G ) - $ret{Dm};
+      ($_tmp = $coeff_chisq($k)) .= $self->dm( $y_G ) - $ret{Dm};
     }
   }
   else {
       # d0 is, by definition, the deviance with only intercept
-    (my $tmp = $coeff_chisq(0)) .= $ret{D0} - $ret{Dm};
+    ($_tmp = $coeff_chisq(0)) .= $ret{D0} - $ret{Dm};
   }
 
   my $y_c
       = PDL::Fit::LM::lmfit( $ivs, $self, $opt{WT}, \&_logistic_no_intercept, $opt{INITP}->(0:-2)->copy,
       { Maxiter=>$opt{MAXIT}, Eps=>$opt{EPS} } );
 
-  (my $tmp = $coeff_chisq(-1)) .= $self->dm( $y_c ) - $ret{Dm};
+  ($_tmp = $coeff_chisq(-1)) .= $self->dm( $y_c ) - $ret{Dm};
 
   $ret{b} = $coeff;
   $ret{b_chisq} = $coeff_chisq;
@@ -2200,18 +2203,18 @@ sub _logistic {
     # independent variable $x, and fit parameters as specified above.
     # Use the .= (dot equals) assignment operator to express the equality 
     # (not just a plain equals)
-  (my $tmp = $ym) .= 1 / ( 1 + exp( -1 * (sumover($b * $x->transpose) + $c) ) );
+  ($_tmp = $ym) .= 1 / ( 1 + exp( -1 * (sumover($b * $x->transpose) + $c) ) );
 
   my (@dy) = map {$dyda -> slice(",($_)") } (0 .. $par->dim(0)-1);
 
     # Partial derivative of the function with respect to each slope 
     # fit parameter ($b in this case). Again, note .= assignment 
     # operator (not just "equals")
-  (my $tmp = $dy[$_]) .= $x( ,$_) * $ym * (1 - $ym)
+  ($_tmp = $dy[$_]) .= $x( ,$_) * $ym * (1 - $ym)
     for (0 .. $b->dim(0)-1);
 
     # Partial derivative of the function re intercept par
-  (my $tmp = $dy[-1]) .= $ym * (1 - $ym);
+  ($_tmp = $dy[-1]) .= $ym * (1 - $ym);
 }
 
 sub _logistic_no_intercept {
@@ -2223,14 +2226,14 @@ sub _logistic_no_intercept {
     # independent variable $x, and fit parameters as specified above.
     # Use the .= (dot equals) assignment operator to express the equality 
     # (not just a plain equals)
-  (my $tmp = $ym) .= 1 / ( 1 + exp( -1 * sumover($b * $x->transpose) ) );
+  ($_tmp = $ym) .= 1 / ( 1 + exp( -1 * sumover($b * $x->transpose) ) );
 
   my (@dy) = map {$dyda -> slice(",($_)") } (0 .. $par->dim(0)-1);
 
     # Partial derivative of the function with respect to each slope 
     # fit parameter ($b in this case). Again, note .= assignment 
     # operator (not just "equals")
-  (my $tmp = $dy[$_]) .= $x( ,$_) * $ym * (1 - $ym)
+  ($_tmp = $dy[$_]) .= $x( ,$_) * $ym * (1 - $ym)
     for (0 .. $b->dim(0)-1);
 }
 
@@ -2397,7 +2400,7 @@ sub PDL::pca_sorti {
   my $ic = $icomp($ivar_sort)->iv_cluster;
   for my $comp (0 .. $ic->dim(1)-1) {
     my $i = $self(which($ic( ,$comp)), ($comp))->qsorti->(-1:0);
-    (my $tmp = $ivar_sort(which $ic( ,$comp)))
+    ($_tmp = $ivar_sort(which $ic( ,$comp)))
       .= $ivar_sort(which $ic( ,$comp))->($i)->sever;
   }
   return wantarray? ($ivar_sort, pdl(0 .. $ic->dim(1)-1)) : $ivar_sort;
