@@ -128,7 +128,7 @@ Here the function corr takes two inputs, two 1D pdl with the same numbers of ele
     
       Signature: (a(n); b(m); float+ [o]t(); [o]d())
 
-Here the function t_test can take two 1D pdls of unequal size (n==m is certainly fine), and give back two scalars, t-value and degrees of freedom. Yes we accomodate t-tests with unequal sample sizes.
+Here the function t_test can take two 1D pdls of unequal size (n==m is certainly fine), and give back two scalars, t-value and degrees of freedom. Yes we accommodate t-tests with unequal sample sizes.
 
     assign
     

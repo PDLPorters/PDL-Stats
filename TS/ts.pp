@@ -2,6 +2,8 @@
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
+=encoding utf8
+
 =head1 NAME
 
 PDL::Stats::TS -- basic time series functions
