@@ -467,6 +467,111 @@ sub t_anova_rptd_mixed {
   ;
 }
 
+# Tests for mixed anova thanks to Erich Greene
+
+is( tapprox( t_anova_rptd_mixed_l2ord1(), 0,      ), 1, 'anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var' );
+is( tapprox( t_anova_rptd_mixed_l2ord2(), 0,      ), 1, 'anova_rptd mixed with 2 btwn-subj var levels, data grouped by subject'    );
+is( tapprox( t_anova_rptd_mixed_l3ord1(), 0, .001 ), 1, 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var' );
+is( tapprox( t_anova_rptd_mixed_l3ord2(), 0, .001 ), 1, 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject'    );
+sub t_anova_rptd_mixed_backend {
+    my ($d,$s,$w,$b,$ans) = @_;
+    my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
+    my $error;
+    $error += $m{$_} - $$ans{$_} foreach keys %$ans;
+    return $error;
+}
+sub t_anova_rptd_mixed_l2_common {
+    my ($d,$s,$w,$b) = @_;
+    my %ans = (
+	       '| within | df'           => 2,
+	       '| within || err df'      => 12,
+	       '| within | ss'           =>   .25,
+	       '| within | ms'           =>   .125,
+	       '| within || err ss'      => 23.666667,
+	       '| within || err ms'      =>  1.9722222,
+	       '| within | F'            =>  0.063380282,
+	       '| between | df'          =>  1,
+	       '| between || err df'     =>  6,
+	       '| between | ss'          =>  2.0416667,
+	       '| between | ms'          =>  2.0416667,
+	       '| between || err ss'     => 16.583333,
+	       '| between || err ms'     =>  2.7638889,
+	       '| between | F'           =>  0.73869347,
+	       '| within ~ between | df' =>  2,
+	       '| within ~ between | ss' =>  6.0833333,
+	       '| within ~ between | ms' =>  3.0416667,
+	       '| within ~ between | F'  =>  1.5422535,
+	      );
+    $ans{"| within ~ between || err $_"} = $ans{"| within || err $_"} foreach qw/df ss ms/;
+    return t_anova_rptd_mixed_backend($d,$s,$w,$b,\%ans);
+}
+sub t_anova_rptd_mixed_l3_common {
+    my ($d,$s,$w,$b) = @_;
+    my %ans = (
+	       '| within | df'           =>  2,
+	       '| within || err df'      => 12,
+	       '| within | ss'           =>   .963,
+	       '| within | ms'           =>   .481,
+	       '| within || err ss'      => 20.889,
+	       '| within || err ms'      =>  1.741,
+	       '| within | F'            =>   .277,
+	       '| between | df'          =>  2,
+	       '| between || err df'     =>  6,
+	       '| between | ss'          =>  1.185,
+	       '| between | ms'          =>   .593,
+	       '| between || err ss'     => 13.111,
+	       '| between || err ms'     =>  2.185,
+	       '| between | F'           =>   .271,
+	       '| within ~ between | df' =>  4,
+	       '| within ~ between | ss' =>  4.148,
+	       '| within ~ between | ms' =>  1.037,
+	       '| within ~ between | F'  =>   .596,
+	      );
+    $ans{"| within ~ between || err $_"} = $ans{"| within || err $_"} foreach qw/df ss ms/;
+    return t_anova_rptd_mixed_backend($d,$s,$w,$b,\%ans);
+}
+sub t_anova_rptd_mixed_l2ord1 {
+    my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
+    my $s = sequence(8)->dummy(1,3)->flat;
+    # [0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7]
+    my $w = qsort sequence(24) % 3;
+    # [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]
+    my $b = (sequence(8) % 2)->qsort->dummy(1,3)->flat;
+    # [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
+    return t_anova_rptd_mixed_l2_common($d,$s,$w,$b);
+}
+sub t_anova_rptd_mixed_l2ord2 {
+    my $d = pdl qw( 3 1 4 2 4 2 1 1 1 5 2 5 2 3 4 1 5 3 5 5 2 3 3 2);
+    my $s = qsort sequence(24) % 8;
+    # [0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7]
+    my $w = sequence(3)->dummy(1,8)->flat;
+    # [0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]
+    my $b = qsort sequence(24) % 2;
+    # [0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1]
+    return t_anova_rptd_mixed_l2_common($d,$s,$w,$b);
+}
+sub t_anova_rptd_mixed_l3ord1 {
+    my $d = pdl qw( 5 2 2 5 4 1 5 3 5 4 4 3 4 3 4 3 5 1 4 3 3 4 5 4 5 5 2 );
+    my $s = sequence(9)->dummy(1,3)->flat;
+    # [0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8]
+    my $w = qsort sequence(27) % 3;
+    # [0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]
+    my $b = (sequence(9) % 3)->qsort->dummy(1,3)->flat;
+    # [0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2]
+    return t_anova_rptd_mixed_l3_common($d,$s,$w,$b);
+}
+sub t_anova_rptd_mixed_l3ord2 {
+    my $d = pdl qw( 5 4 4 2 4 3 2 3 3 5 4 4 4 3 5 1 4 4 5 3 5 3 5 5 5 1 2 );
+    my $s = qsort sequence(27) % 9;
+    # [0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7 8 8 8]
+    my $w = sequence(3)->dummy(1,9)->flat;
+    # [0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]
+    my $b = qsort sequence(27) % 3;
+    # [0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]
+    return t_anova_rptd_mixed_l3_common($d,$s,$w,$b);
+}
+
+
 is( tapprox( t_anova_rptd_mixed_bad(), 0 ), 1, 'anova_rptd mixed bad' );
 sub t_anova_rptd_mixed_bad {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 1 1 1 1 );
