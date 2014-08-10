@@ -467,32 +467,6 @@ sub t_anova_rptd_mixed {
   ;
 }
 
-is( tapprox( t_anova_rptd_mixed_more(), 0 ), 1, 'anova_rptd mixed with more btwn-subj var levels' );
-sub t_anova_rptd_mixed_more {
-  my $d = pdl qw( 5 2 2 5 4 1 5 3 5 4 4 3 4 3 4 3 5 1 4 3 3 4 5 4 5 5 2 3 5 5 2 2 4 2 2 2 ); 
-  my $s = sequence(4)->dummy(1,9)->flat;
-# [0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]
-  my $a = qsort sequence(36) % 3;
-# [0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2]
-  my $b = (sequence(12) % 3)->qsort->dummy(1,3)->flat;
-# [0 0 0 0 1 1 1 1 2 2 2 2 0 0 0 0 1 1 1 1 2 2 2 2 0 0 0 0 1 1 1 1 2 2 2 2]
-  my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_a_F  = 1.1394659; 
-  my $ans_a_ms = 0.44444444; 
-  my $ans_ab_F = 3.4896142; 
-  my $ans_b_F  = 0.15789474; 
-  my $ans_b_ems = 1.2314815;
-  my $ans_ab_se = ones(3,3) * 0.31226843;
-  return  ($m{'| a | F'} - $ans_a_F)
-        + ($m{'| a | ms'} - $ans_a_ms)
-        + ($m{'| a ~ b | F'} - $ans_ab_F)
-        + ($m{'| b | F'} - $ans_b_F)
-        + ($m{'| b || err ms'} - $ans_b_ems)
-        + sum( $m{'# a ~ b # se'} - $ans_ab_se )
-  ;
-}
-
 is( tapprox( t_anova_rptd_mixed_bad(), 0 ), 1, 'anova_rptd mixed bad' );
 sub t_anova_rptd_mixed_bad {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 1 1 1 1 );
