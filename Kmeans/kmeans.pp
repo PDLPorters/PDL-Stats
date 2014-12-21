@@ -82,7 +82,7 @@ my $_tmp;
 
 =for sig
 
-  Signature: (byte [o]cluster(o,c); int obs=>o; int clu=>c)
+  Signature: (short [o]cluster(o,c); int obs=>o; int clu=>c)
 
 =for ref
 
@@ -108,7 +108,7 @@ sub random_cluster {
 EOD
 
 pp_def('_random_cluster',
-  Pars  => 'byte a(o,c); byte [o]b(o,c)',
+  Pars  => 'short a(o,c); short [o]b(o,c)',
   Inplace   => 1,
   GenericTypes => [U],
   Code  => '
@@ -132,7 +132,7 @@ loop (o) %{
 );
 
 pp_def('which_cluster',
-  Pars  => 'byte a(o,c); int [o]b(o)',
+  Pars  => 'short a(o,c); int [o]b(o)',
   GenericTypes => [U,L],
   HandleBad    => 1,
   Code  => '
@@ -199,7 +199,7 @@ Usage:
 );
 
 pp_def('assign',
-  Pars  => 'data(o,v); centroid(c,v); byte [o]cluster(o,c)',
+  Pars  => 'data(o,v); centroid(c,v); short [o]cluster(o,c)',
   GenericTypes => [F,D],
   HandleBad => 1,
   Code  => '
@@ -768,7 +768,7 @@ sub PDL::iv_cluster {
   }
 
   my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
-  my $var_a = zeroes( byte, $var->nelem, $var->max + 1 );
+  my $var_a = zeroes( short, $var->nelem, $var->max + 1 );
 
   for my $l (0 .. $var->max) {
     my $v = $var_a( ,$l);
