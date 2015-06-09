@@ -23,7 +23,7 @@ WriteMakefile(
       : ()),
     PREREQ_PM => {
         'Test::More' => 0,
-        'PDL'        => 0,
+        'PDL'        => 2.008,
     },
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

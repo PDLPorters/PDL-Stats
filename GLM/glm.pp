@@ -100,9 +100,9 @@ pp_def('fill_m',
     %}
   ',
   CopyBadStatusCode => '
-    /* propogate badflag if inplace AND it has changed */
+    /* propagate badflag if inplace AND it has changed */
     if ( a == b && $ISPDLSTATEBAD(a) )
-      PDL->propogate_badflag( b, 0 );
+      PDL->propagate_badflag( b, 0 );
 
     /* always make sure the output is "good" */
     $SETPDLSTATEGOOD(b);
@@ -167,9 +167,9 @@ pp_def('fill_rand',
     %}
   ',
   CopyBadStatusCode => '
-    /* propogate badflag if inplace AND it has changed */
+    /* propagate badflag if inplace AND it has changed */
     if ( a == b && $ISPDLSTATEBAD(a) )
-      PDL->propogate_badflag( b, 0 );
+      PDL->propagate_badflag( b, 0 );
 
     /* always make sure the output is "good" */
     $SETPDLSTATEGOOD(b);
