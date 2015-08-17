@@ -1,6 +1,9 @@
 Revision history for PDL-Stats
 
 
+0.70    18/08/2015
+        Updated to work with PDL-2.008. More tests for anova.
+
 0.6.5   11/03/2013
         Updated to work with PDL-2.007. Real 64bit support yet to come.
 
