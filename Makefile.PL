@@ -28,6 +28,16 @@ WriteMakefile(
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => ['PDL-Stats-*'] },
+    META_MERGE          => {
+      "meta-spec" => { version => 2 },
+      resources => {
+        repository => {
+          type => 'git',
+          url => 'git://github.com/PDLPorters/PDL-Stats',
+          web => 'https://github.com/PDLPorters/PDL-Stats',
+        },
+      },
+    },
 );
 
 sub MY::postamble {
