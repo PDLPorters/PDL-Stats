@@ -22,8 +22,17 @@ WriteMakefile(
       ? ('LICENSE'=> 'perl')
       : ()),
     PREREQ_PM => {
-        'Test::More' => 0,
         'PDL::Core'  => 2.008,
+    },
+    CONFIGURE_REQUIRES => {
+        'PDL::Core'  => 2.008,
+    },
+    BUILD_REQUIRES => {
+        'PDL::Core'  => 2.008,
+    },
+    TEST_REQUIRES => {
+        'PDL::Core'  => 2.008,
+        'Test::More' => 0,
     },
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
