@@ -82,12 +82,18 @@ sub t_centroid_bad {
   return sum( $m - $m_a + ( $ss - $ss_a ) );
 }
 
-is(tapprox( t_kmeans(), 0 ), 1);
+# kmeans is undeterministic. retry to for optimal results
+ok(t_kmeans_with_retry(), 't_kmeans');
+sub t_kmeans_with_retry {
+    for my $retry (1..3) {
+        return 1 if (tapprox(t_kmeans(), 0))
+    }
+}
 sub t_kmeans {
   my $data = sequence 7, 3;
   my $ind  = $data(1, )->flat;    # only works because $data is sequence
   $data = lvalue_assign_detour($data, $ind, 0);
-  my %m = $data->kmeans({NCLUS=>2, NSEED=>6, NTRY=>20, V=>0});
+  my %m = $data->kmeans({NCLUS=>2, NSEED=>6, NTRY=>10, V=>0});
   return sum( $m{centroid}->sumover - pdl qw(3.3333333  10.333333  17.333333) );
 }
 
@@ -177,11 +183,17 @@ sub t_kmeans_4d_seed {
   is(tapprox( sum( $m{ss}->sumover - $a{ss_sum} ), 0, 1e-3 ), 1);
 }
 
-is(tapprox( t_kmeans_bad(), 0 ), 1);
+# kmeans is undeterministic. retry to for optimal results
+is(t_kmeans_bad_with_retry(), 1, 't_kmeans_bad');
+sub t_kmeans_bad_with_retry {
+    for my $retry (1..3) {
+        return 1 if (tapprox(t_kmeans_bad(), 0))
+    }
+}
 sub t_kmeans_bad {
   my $data = sequence 7, 3;
   $data = $data->setbadat(4,0);
-  my %m = $data->kmeans({NCLUS=>2, NTRY=>20, V=>0});
+  my %m = $data->kmeans({NCLUS=>2, NTRY=>10, V=>0});
   return sum( $m{ms}->sumover - pdl qw( 1.5  1.9166667  1.9166667 ) );
 }
 
