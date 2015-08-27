@@ -194,6 +194,7 @@ sub t_kmeans_bad {
   my $data = sequence 7, 3;
   $data = $data->setbadat(4,0);
   my %m = $data->kmeans({NCLUS=>2, NTRY=>10, V=>0});
+  print "$_\t$m{$_}\n" for (sort keys %m);
   return sum( $m{ms}->sumover - pdl qw( 1.5  1.9166667  1.9166667 ) );
 }
 
