@@ -4,13 +4,9 @@ package PDL::Stats;
 
 PDL::Stats - a collection of statistics modules in Perl Data Language, with a quick-start guide for non-PDL people.
 
-=head1 VERSION
-
-Version 0.70
-
 =cut
 
-$VERSION = '0.70';
+$VERSION = '0.71';
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
