@@ -2,7 +2,7 @@ Changes
 MANIFEST
 Makefile.PL
 add_doc.pl
-README
+README.md
 Stats.pm
 Basic/stats_basic.pp
 Basic/Makefile.PL

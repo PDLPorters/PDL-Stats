@@ -1,4 +1,13 @@
-PDL-Stats
+# PDL-Stats
+
+| OS      |  Build status |
+|:-------:|--------------:|
+| Linux   | [![Build Status](https://travis-ci.org/PDLPorters/PDL-Stats.png?branch=master)](https://travis-ci.org/PDLPorters/PDL-Stats) |
+| Windows | [![Build status](https://ci.appveyor.com/api/projects/status/0vyo5c507j1ig690/branch/master?svg=true)](https://ci.appveyor.com/project/zmughal/pdl-stats/branch/master) |
+
+[![Coverage Status](https://coveralls.io/repos/PDLPorters/PDL-Stats/badge.svg?branch=master&service=github)](https://coveralls.io/github/PDLPorters/PDL-Stats?branch=master)
+[![CPAN version](https://badge.fury.io/pl/PDL-Stats.svg)](https://metacpan.org/pod/PDL::Stats)
+
 
 This is a collection of statistics modules in Perl Data Language, with a quick-start guide for non-PDL people.
 
@@ -6,24 +15,26 @@ They make perldl--the simple shell for PDL--work like a teenie weenie R, but wit
 
 Of course, they also work in perl scripts.
 
-DEPENDENCIES
+## DEPENDENCIES
 
-PDL
-    Perl Data Language. Preferably installed with a Fortran compiler. A few methods (logistic regression and all plotting methods) will only work with a Fortran compiler and some methods (ordinary least squares regression and pca) work much faster with a Fortran compiler.
+- PDL
 
-    The recommended PDL version is 2.4.8. PDL-2.4.7 introduced a bug in lu_decomp() which caused a few functions in PDL::Stats::GLM to fail. Otherwise the minimum compatible PDL version is 2.4.4.
+  Perl Data Language. Preferably installed with a Fortran compiler. A few methods (logistic regression and all plotting methods) will only work with a Fortran compiler and some methods (ordinary least squares regression and pca) work much faster with a Fortran compiler.
 
-GSL (Optional)
-    GNU Scientific Library. This is required by PDL::Stats::Distr and PDL::GSL::CDF, the latter of which provides p-values for PDL::Stats::GLM. GSL is otherwise NOT required for the core PDL::Stats modules to work, ie Basic, Kmeans, and GLM.
+  The recommended PDL version is 2.4.8. PDL-2.4.7 introduced a bug in lu_decomp() which caused a few functions in PDL::Stats::GLM to fail. Otherwise the minimum compatible PDL version is 2.4.4.
 
-PGPLOT (Optional)
+- GSL (Optional)
 
-    PDL-Stats currently uses PGPLOT for plotting. There are three pgplot/PGPLOT modules, which cause much confusion upon installation. First there is the pgplot Fortran library. Then there is the perl PGPLOT module, which is the perl interface to pgplot. Finally there is PDL::Graphics::PGPLOT, which depends on pgplot and PGPLOT, that PDL-Stats uses for plotting.
+  GNU Scientific Library. This is required by PDL::Stats::Distr and PDL::GSL::CDF, the latter of which provides p-values for PDL::Stats::GLM. GSL is otherwise NOT required for the core PDL::Stats modules to work, ie Basic, Kmeans, and GLM.
 
-INSTALLATION
+- PGPLOT (Optional)
 
-*nix
-----
+  PDL-Stats currently uses PGPLOT for plotting. There are three pgplot/PGPLOT modules, which cause much confusion upon installation. First there is the pgplot Fortran library. Then there is the perl PGPLOT module, which is the perl interface to pgplot. Finally there is PDL::Graphics::PGPLOT, which depends on pgplot and PGPLOT, that PDL-Stats uses for plotting.
+
+## INSTALLATION
+
+### *nix
+
 For standard perl module installation in *nix environment form source, to install all included modules, extract the files from the archive by entering this at a shell,
 
     tar xvf PDL-Stats-xxx.tar.gz
@@ -50,8 +61,8 @@ then add /home/user/my_perl_lib to your PERL5LIB environment variable.
 
 If you have trouble installing PDL, you can look for help at the PDL wiki or PDL mailing list.
 
-Wiondows
---------
+### Windows
+
 Thanks to Sisyphus, Windows users can download and install the ppm version of PDL-Stats and all dependencies using the PPM utility included in ActiveState perl or Strawberry perl. You can also get the PPM utility from CPAN.
 
     ppm install http://www.sisyphusion.tk/ppm/PGPLOT.ppd
@@ -59,7 +70,7 @@ Thanks to Sisyphus, Windows users can download and install the ppm version of PD
     ppm install http://www.sisyphusion.tk/ppm/PDL-Stats.ppd
 
 
-SUPPORT AND DOCUMENTATION
+## SUPPORT AND DOCUMENTATION
 
 After installing, you can find documentation for the modules with the
 perldoc command.
@@ -87,8 +98,7 @@ If you notice a bug or have a request, please submit a report at
 If you would like to help develop or maintain the package, please email me at the address below.
 
 
-COPYRIGHT AND LICENCE
-~~~~~~~~~~~~ ~~~~~ ~~~~~~~~ ~~~~~ ~~~ `` ><(((">
+## COPYRIGHT AND LICENCE
 
 Copyright (C) 2009-2012 Maggie J. Xiong  <maggiexyz users.sourceforge.net>
 
