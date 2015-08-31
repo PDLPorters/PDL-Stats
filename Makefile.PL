@@ -24,7 +24,6 @@ WriteMakefile(
         'PDL::Core'  => 2.008,
         'PDL::Graphics::PGPLOT' => 0,
         'PGPLOT' => 0,
-        'PDL::GSL::CDF' => 0,
         'PDL::Slatec' => 0,
     },
     CONFIGURE_REQUIRES => {
@@ -34,7 +33,6 @@ WriteMakefile(
         'PDL::Core'  => 2.008,
         'PDL::Graphics::PGPLOT' => 0,
         'PGPLOT' => 0,
-        'PDL::GSL::CDF' => 0,
         'PDL::Slatec' => 0,
     },
     TEST_REQUIRES => {
@@ -42,7 +40,6 @@ WriteMakefile(
         'Test::More' => 0,
         'PDL::Graphics::PGPLOT' => 0,
         'PGPLOT' => 0,
-        'PDL::GSL::CDF' => 0,
         'PDL::Slatec' => 0,
     },
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
