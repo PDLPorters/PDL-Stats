@@ -43,7 +43,7 @@ WriteMakefile(
         'PDL::Slatec' => 0,
     },
     DIR                 => ['Basic', 'Distr', 'GLM', 'Kmeans', 'GSL', 'TS'],
-    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', PREOP => '$(PERL) -MPDL::Core::Dev -e pdlpp_mkgen $(DISTVNAME)' },
+    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', PREOP => 'gsl-config --version && $(PERL) -MPDL::Core::Dev -e pdlpp_mkgen $(DISTVNAME)' },
     clean               => { FILES => ['PDL-Stats-*'] },
     META_MERGE          => {
       "meta-spec" => { version => 2 },
