@@ -5,7 +5,7 @@ if (defined(&PDL::indx)) {
 }
 
 eval q{
-        $package = ["stats_basic.pp",Basic,PDL::Stats::Basic];
+        $package = ["stats_basic.pd",Basic,PDL::Stats::Basic];
         %hash = pdlpp_stdargs($package);
 
         WriteMakefile( %hash );

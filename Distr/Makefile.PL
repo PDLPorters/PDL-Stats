@@ -2,7 +2,7 @@ use PDL::Core::Dev;
 use ExtUtils::MakeMaker;
 PDL::Core::Dev->import();
 
-$package = ["distr.pp",Distr,PDL::Stats::Distr];
+$package = ["distr.pd",Distr,PDL::Stats::Distr];
 %hash = pdlpp_stdargs($package);
 
 chomp( my $libgsl = `gsl-config --libs` );
