@@ -54,13 +54,13 @@ pp_addhdr('
 
 pp_def('_acf',
   Pars  => 'x(t); [o]r(h)',
-  OtherPars => 'int lag=>h',
+  OtherPars => 'IV lag=>h',
   GenericTypes => [F,D],
   Code  => '
 
 $GENERIC(x) s, s2, m, cov0, covh;
 s=0; s2=0; m=0; cov0=0; covh=0;
-long T, i;
+PDL_Indx  T, i;
 T = $SIZE(t);
 
 loop(t) %{
@@ -88,7 +88,7 @@ loop (h) %{
 
 pp_def('_acvf',
   Pars  => 'x(t); [o]v(h)',
-  OtherPars => 'int lag=>h;',
+  OtherPars => 'IV lag=>h;',
   GenericTypes => [F,D],
   Code  => '
 
@@ -195,7 +195,7 @@ EOD
 pp_def('diff',
   Pars  => 'x(t); [o]dx(t)',
   Inplace   => 1,
-  GenericTypes => [U,L,F,D],
+  GenericTypes => [U,L,Q,F,D],
   Code  => '
 
 long tr;
@@ -225,7 +225,7 @@ Differencing. DX(t) = X(t) - X(t-1), DX(0) = X(0). Can be done inplace.
 pp_def('inte',
   Pars  => 'x(n); [o]ix(n)',
   Inplace   => 1,
-  GenericTypes => [F,D],
+  GenericTypes => [L,Q,F,D],
   Code  => '
 
 $GENERIC(x) tmp;
@@ -249,12 +249,12 @@ Integration. Opposite of differencing. IX(t) = X(t) + X(t-1), IX(0) = X(0). Can 
 
 
 pp_def('dseason',
-  Pars  => 'x(t); int d(); [o]xd(t)',
+  Pars  => 'x(t); indx d(); [o]xd(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
 $GENERIC(x) xc, sum;
-int i, q, max;
+PDL_Indx i, q, max;
 q = ($d() % 2)? ($d() - 1) / 2 : $d() / 2;
 max = $SIZE(t) - 1;
 
@@ -287,7 +287,7 @@ else {
   ',
   BadCode  => '
 $GENERIC(x) sum;
-int i, q, min, max, ti, dd;
+PDL_Indx i, q, min, max, ti, dd;
 min = -1; max = -1;
 q = ($d() % 2)? ($d() - 1) / 2 : $d() / 2;
 
@@ -405,7 +405,7 @@ sub PDL::fill_ma {
 EOD
 
 pp_def('_fill_ma',
-  Pars  => 'x(t); int q(); [o]xf(t)',
+  Pars  => 'x(t); indx q(); [o]xf(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code     => '
@@ -416,7 +416,7 @@ loop(t) %{
   ',
   BadCode  => '
 $GENERIC(x) sum, xx;
-int i, n, max;
+PDL_Indx i, n, max;
 max = $SIZE(t) - 1;
 loop(t) %{
   if ($ISBAD(x())) {
@@ -478,11 +478,11 @@ Filter, exponential smoothing. xf(t) = a * x(t) + (1-a) * xf(t-1)
 );
 
 pp_def('filter_ma',
-  Pars  => 'x(t); int q(); [o]xf(t)',
+  Pars  => 'x(t); indx q(); [o]xf(t)',
   GenericTypes => [F,D],
   Code  => '
 $GENERIC(x) sum;
-int i, n, max;
+PDL_Indx i, n, max;
 n = 2 * $q() + 1;
 max = $SIZE(t) - 1;
 loop(t) %{
@@ -515,7 +515,7 @@ pp_def('mae',
 
 $GENERIC(c) sum;
 sum = 0;
-int N = $SIZE(n);
+PDL_Indx N = $SIZE(n);
 loop(n) %{
   sum += fabs( $a() - $b() );
 %}
@@ -526,7 +526,7 @@ $c() = sum / N;
 
 $GENERIC(c) sum;
 sum = 0;
-int N = 0;
+PDL_Indx N = 0;
 loop(n) %{
   if ($ISBAD(a()) || $ISBAD(b())) { }
   else {
@@ -567,7 +567,7 @@ pp_def('mape',
 
 $GENERIC(c) sum;
 sum = 0;
-int N = $SIZE(n);
+PDL_Indx N = $SIZE(n);
 loop(n) %{
   sum += fabs( ($a() - $b()) / $a() );
 %}
@@ -579,7 +579,7 @@ $c() = sum / N;
 
 $GENERIC(c) sum;
 sum = 0;
-int N = 0;
+PDL_Indx N = 0;
 loop(n) %{
   if ($ISBAD(a()) || $ISBAD(b())) { }
   else {
@@ -769,11 +769,11 @@ EOD
 
 pp_def('_pred_ar',
   Pars  => 'x(p); b(p); [o]pred(t)',
-  OtherPars => 'int end=>t;',
+  OtherPars => 'IV end=>t;',
   GenericTypes => [F,D],
   Code  => '
 
-int ord = $SIZE(p);
+PDL_Indx ord = $SIZE(p);
 $GENERIC(x) xt, xp[ord];
 
 loop (t) %{

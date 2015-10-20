@@ -82,7 +82,7 @@ pp_def('fill_m',
   BadCode   => '
     $GENERIC(b) sa, m;
     sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -148,7 +148,7 @@ pp_def('fill_rand',
   ',
   BadCode   => '
     $GENERIC(a) *g[ $SIZE(n) ];
-    long i, j;
+    PDL_Indx i, j;
     i = 0;
     srand( time( NULL ) );
     loop (n) %{
@@ -161,7 +161,8 @@ pp_def('fill_rand',
         $b() = $a();
       }
       else {
-        j = (long) ((i-1) * (double)(rand()) / (double)(RAND_MAX) + .5);
+        /* XXX-FIXME works on 64bit, but rand() is quite limited */
+        j = (PDL_Indx) ((i-1) * (double)(rand()) / (double)(RAND_MAX) + .5);
         $b() = *g[j];
       }
     %}
@@ -213,7 +214,7 @@ pp_def('dev_m',
   Code      => '
     $GENERIC(b) sa, m;
     sa = 0; m = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -225,7 +226,7 @@ pp_def('dev_m',
   BadCode   => '
     $GENERIC(b) sa, m;
     sa = 0; m = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -262,7 +263,7 @@ pp_def('stddz',
   Code      => '
     $GENERIC(b) sa, a2, m, sd;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(),2);
@@ -276,7 +277,7 @@ pp_def('stddz',
   BadCode   => '
     $GENERIC(b) sa, a2, m, sd;
     sa = 0; a2 = 0; m = 0; sd = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -360,7 +361,7 @@ pp_def('mse',
   ',
   BadCode  => '
     $GENERIC(c) ss = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
@@ -391,7 +392,7 @@ pp_def('rmse',
   Code      => '
     $GENERIC(c) d2;
     d2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       d2 += pow($a() - $b(), 2);
     %}
@@ -400,7 +401,7 @@ pp_def('rmse',
   BadCode  => '
     $GENERIC(c) d2;
     d2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
@@ -439,7 +440,7 @@ pp_def('pred_logistic',
   BadCode  => '
     loop (n) %{
       $GENERIC(c) l = 0;
-      long bad = 0;
+      PDL_Indx bad = 0;
       loop (m) %{
         if ( $ISBAD($a()) || $ISBAD($b()) ) {
           bad = 1;
@@ -477,7 +478,7 @@ pp_def('d0',
   Code      => '
     $GENERIC(c) p, ll;
     p = 0; ll = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       p += $a();
     %}
@@ -490,7 +491,7 @@ pp_def('d0',
   BadCode  => '
     $GENERIC(c) p, ll;
     p = 0; ll = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
         p += $a();
