@@ -699,20 +699,20 @@ sub PDL::kmeans {
     push @shapes, \@dims;
   }
 
-  $clus_this = $clus_this->mv(-1,2)->clump(2..$clus_this->ndims-1)->dice_axis(2,\@i_best)->reshape( @{ $shapes[1] } )->sever,
+  $clus_this = $clus_this->mv(-1,2)->clump(2..$clus_this->ndims-1)->dice_axis(2,\@i_best)->sever->reshape( @{ $shapes[1] } )->sever,
 
   return (
     centroid =>
-$centroid->mv(-1,2)->clump(2..$centroid->ndims-1)->dice_axis(2,\@i_best)->reshape( @{ $shapes[0] } )->sever,
+$centroid->mv(-1,2)->clump(2..$centroid->ndims-1)->dice_axis(2,\@i_best)->sever->reshape( @{ $shapes[0] } )->sever,
 
     cluster  => $clus_this,
     n        => $clus_this->sumover,
 
     R2       =>
-$R2->mv(-1,0)->clump(0..$R2->ndims-1)->dice_axis(0,\@i_best)->reshape( @{ $shapes[2] } )->sever,
+$R2->mv(-1,0)->clump(0..$R2->ndims-1)->dice_axis(0,\@i_best)->sever->reshape( @{ $shapes[2] } )->sever,
 
     $ss_ms   => 
-$ss_cv->mv(-1,2)->clump(2..$ss_cv->ndims-1)->dice_axis(2,\@i_best)->reshape( @{ $shapes[0] } )->sever,
+$ss_cv->mv(-1,2)->clump(2..$ss_cv->ndims-1)->dice_axis(2,\@i_best)->sever->reshape( @{ $shapes[0] } )->sever,
   ); 
 }
 
