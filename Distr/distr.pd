@@ -75,7 +75,7 @@ pp_def('mme_beta',
   Code      => '
     $GENERIC(alpha) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -88,7 +88,7 @@ pp_def('mme_beta',
   BadCode   => '
     $GENERIC(alpha) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -172,7 +172,7 @@ pp_def('mme_binomial',
   Code      => '
     $GENERIC(p) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -186,7 +186,7 @@ pp_def('mme_binomial',
   BadCode   => '
     $GENERIC(p) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -260,7 +260,7 @@ pp_def('mle_exp',
   HandleBad => 1,
   Code      => '
     $GENERIC(l) sa = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -268,7 +268,7 @@ pp_def('mle_exp',
   ',
   BadCode   => '
     $GENERIC(l) sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -332,7 +332,7 @@ pp_def('mme_gamma',
   Code      => '
     $GENERIC(shape) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -345,7 +345,7 @@ pp_def('mme_gamma',
   BadCode   => '
     $GENERIC(shape) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -420,7 +420,7 @@ pp_def('mle_gaussian',
   Code      => '
     $GENERIC(m) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -431,7 +431,7 @@ pp_def('mle_gaussian',
   BadCode   => '
     $GENERIC(m) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -503,7 +503,7 @@ pp_def('mle_geo',
   HandleBad => 1,
   Code      => '
     $GENERIC(p) sa = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -511,7 +511,7 @@ pp_def('mle_geo',
   ',
   BadCode   => '
     $GENERIC(p) sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -570,7 +570,7 @@ pp_def('mle_geosh',
   HandleBad => 1,
   Code      => '
     $GENERIC(p) sa = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -578,7 +578,7 @@ pp_def('mle_geosh',
   ',
   BadCode   => '
     $GENERIC(p) sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -647,7 +647,7 @@ pp_def('mle_lognormal',
   Code      => '
     $GENERIC(m) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += log($a());
     %}
@@ -660,7 +660,7 @@ pp_def('mle_lognormal',
   BadCode   => '
     $GENERIC(m) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
         sa += log($a());
@@ -705,7 +705,7 @@ pp_def('mme_lognormal',
   Code      => '
     $GENERIC(m) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -716,7 +716,7 @@ pp_def('mme_lognormal',
   BadCode   => '
     $GENERIC(m) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -800,7 +800,7 @@ pp_def('mme_nbd',
   Code      => '
     $GENERIC(p) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -813,7 +813,7 @@ pp_def('mme_nbd',
   BadCode   => '
     $GENERIC(p) sa, a2, m, v;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ($ISGOOD( $a() )) {
 	sa += $a();
@@ -891,7 +891,7 @@ pp_def('mme_pareto',
   Code      => '
     $GENERIC(xm) sa, min;
     sa = 0; min = $a(n=>0);
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       if (min > $a())
@@ -908,7 +908,7 @@ pp_def('mme_pareto',
   BadCode   => '
     $GENERIC(xm) sa, min;
     sa = 0; min = $a(n=>0);
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -989,7 +989,7 @@ pp_def('mle_poisson',
   Code      => '
     $GENERIC(l) sa;
     sa = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -998,7 +998,7 @@ pp_def('mle_poisson',
   BadCode   => '
     $GENERIC(l) sa;
     sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();

@@ -115,11 +115,11 @@ pp_def('_random_cluster',
 if ($SIZE(c) > $SIZE(o))
   barf("more cluster than obs!");
 /* threading w time only srand produces identical clusters */
-int r;
+long r;
 srand( time( NULL ) + r++);
-int nc = $SIZE(c);
+PDL_Indx nc = $SIZE(c);
 loop (o) %{
-  int cl = rand() % nc;
+  PDL_Indx cl = rand() % nc; /* XXX-FIXME rand() is not 64bit friendly here! */
   loop (c) %{
     $b() = (c == cl)? 1 : 0;
   %}
@@ -132,12 +132,12 @@ loop (o) %{
 );
 
 pp_def('which_cluster',
-  Pars  => 'short a(o,c); int [o]b(o)',
+  Pars  => 'short a(o,c); indx [o]b(o)',
   GenericTypes => [U,L],
   HandleBad    => 1,
   Code  => '
 
-int cl;
+PDL_Indx cl;
 
 loop(o) %{
   cl=-1;
@@ -154,7 +154,7 @@ loop(o) %{
 
   BadCode  => '
 
-int cl;
+PDL_Indx cl;
 
 loop(o) %{
   cl=-1;
@@ -205,7 +205,7 @@ pp_def('assign',
   Code  => '
 
 $GENERIC(centroid) ssc, ssmin;
-int cl = 0;
+PDL_Indx cl = 0;
 
 loop (o) %{
   ssmin = -1;
@@ -229,7 +229,7 @@ loop (o) %{
   BadCode  => '
 
 $GENERIC(centroid) ssc, ssmin;
-long cl, nvc;
+PDL_Indx cl, nvc;
 cl = 0;
 
 loop (o) %{
@@ -313,7 +313,7 @@ pp_def('centroid',
   HandleBad => 1,
   Code  => '
 $GENERIC(m) s[ $SIZE(c) ][ $SIZE(v) ], s2[ $SIZE(c) ][ $SIZE(v) ];
-long n[ $SIZE(c) ];
+PDL_Indx n[ $SIZE(c) ];
 
 loop (c) %{
   loop (v) %{
@@ -349,7 +349,7 @@ loop (c) %{
   ',
   BadCode  => '
 $GENERIC(m) s[ $SIZE(c) ][ $SIZE(v) ], s2[ $SIZE(c) ][ $SIZE(v) ];
-long n[ $SIZE(c) ][ $SIZE(v) ];
+PDL_Indx n[ $SIZE(c) ][ $SIZE(v) ];
 
 loop (c) %{
   loop (v) %{

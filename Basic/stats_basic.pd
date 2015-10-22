@@ -53,7 +53,7 @@ pp_def('stdv',
   Code      => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -63,7 +63,7 @@ pp_def('stdv',
   BadCode  => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
 	sa += $a();
@@ -96,7 +96,7 @@ pp_def('stdv_unbiased',
   Code      => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -106,7 +106,7 @@ pp_def('stdv_unbiased',
   BadCode  => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
 	sa += $a();
@@ -139,7 +139,7 @@ pp_def('var',
   Code      => '
     $GENERIC(b) a2, sa;
     a2 = 0; sa = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       a2 += pow($a(), 2);
       sa += $a();
@@ -149,7 +149,7 @@ pp_def('var',
   BadCode  => '
     $GENERIC(b) a2, sa;
     a2 = 0; sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         a2 += pow($a(), 2);
@@ -182,7 +182,7 @@ pp_def('var_unbiased',
   Code      => '
     $GENERIC(b) a2, sa;
     a2 = 0; sa = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       a2 += pow($a(), 2);
       sa += $a();
@@ -192,7 +192,7 @@ pp_def('var_unbiased',
   BadCode  => '
     $GENERIC(b) a2, sa;
     a2 = 0; sa = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         a2 += pow($a(), 2);
@@ -225,7 +225,7 @@ pp_def('se',
   Code      => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -235,7 +235,7 @@ pp_def('se',
   BadCode  => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
 	sa += $a();
@@ -276,7 +276,7 @@ pp_def('ss',
   Code      => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
       a2 += pow($a(), 2);
@@ -286,7 +286,7 @@ pp_def('ss',
   BadCode  => '
     $GENERIC(b) sa, a2;
     sa = 0; a2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
 	sa += $a();
@@ -319,7 +319,7 @@ pp_def('skew',
   Code      => '
     $GENERIC(b) sa, m, d, d2, d3;
     sa = 0; d2 = 0; d3 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -334,7 +334,7 @@ pp_def('skew',
   BadCode  => '
     $GENERIC(b) sa, m, d, d2, d3;
     sa = 0; m = 0; d=0; d2 = 0; d3 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -374,7 +374,7 @@ pp_def('skew_unbiased',
   Code      => '
     $GENERIC(b) sa, m, d, d2, d3;
     sa = 0; d2 = 0; d3 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -389,7 +389,7 @@ pp_def('skew_unbiased',
   BadCode  => '
     $GENERIC(b) sa, m, d, d2, d3;
     sa = 0; m = 0; d=0; d2 = 0; d3 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -429,7 +429,7 @@ pp_def('kurt',
   Code      => '
     $GENERIC(b) sa, m, d, d2, d4;
     sa = 0; d2 = 0; d4 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -444,7 +444,7 @@ pp_def('kurt',
   BadCode  => '
     $GENERIC(b) sa, m, d, d2, d4;
     sa = 0; m = 0; d=0; d2 = 0; d4 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -484,7 +484,7 @@ pp_def('kurt_unbiased',
   Code      => '
     $GENERIC(b) sa, m, d, d2, d4;
     sa = 0; d2 = 0; d4 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       sa += $a();
     %}
@@ -499,7 +499,7 @@ pp_def('kurt_unbiased',
   BadCode  => '
     $GENERIC(b) sa, m, d, d2, d4;
     sa = 0; m = 0; d=0; d2 = 0; d4 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         sa += $a();
@@ -540,7 +540,7 @@ pp_def('cov',
   Code      => '
     $GENERIC(c) ab, sa, sb;
     ab = 0; sa = 0; sb = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     loop (n) %{
       ab += $a() * $b();
       sa += $a();
@@ -551,7 +551,7 @@ pp_def('cov',
   BadCode  => '
     $GENERIC(c) ab, sa, sb;
     ab = 0; sa = 0; sb = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
@@ -584,13 +584,13 @@ pp_def('cov_table',
   HandleBad => 1,
   Code      => '
 
-long N, M;
+PDL_Indx N, M;
 N = $SIZE(n); M = $SIZE(m);
 $GENERIC(a) a_, b_;
 $GENERIC(c) ab, sa, sb, cov;
 
 if (N > 1 ) {
-  long i, j;
+  PDL_Indx i, j;
   for (i=0; i<M; i++) {
     for (j=i; j<M; j++) {
       ab = 0; sa = 0; sb = 0;
@@ -617,7 +617,7 @@ else {
 if ($SIZE(n) >= 2 ) {
   $GENERIC(a) a_, b_;
   $GENERIC(c) ab, sa, sb, cov;
-  long N, M, i, j;
+  PDL_Indx N, M, i, j;
   M = $SIZE(m);
   for (i=0; i<M; i++) {
     for (j=i; j<M; j++) {
@@ -701,7 +701,7 @@ pp_def('corr',
   Code      => '
     $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb;
     ab=0; sa=0; sb=0; a2=0; b2=0; cov=0; va=0; vb=0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     if (N > 1 ) {
       loop (n) %{
 	ab += $a() * $b();
@@ -723,7 +723,7 @@ pp_def('corr',
   BadCode  => '
     $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb;
     ab=0; sa=0; sb=0; a2=0; b2=0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
@@ -783,13 +783,13 @@ pp_def('corr_table',
   HandleBad => 1,
   Code      => '
 
-long N, M;
+PDL_Indx N, M;
 N = $SIZE(n); M = $SIZE(m);
 $GENERIC(a) a_, b_;
 $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb, r;
 
 if (N > 1 ) {
-  long i, j;
+  PDL_Indx i, j;
   for (i=0; i<M; i++) {
     for (j=i+1; j<M; j++) {
       ab = 0; sa = 0; sb = 0; a2 = 0; b2 = 0;
@@ -822,7 +822,7 @@ else {
 if ($SIZE(n) >= 2 ) {
   $GENERIC(a) a_, b_;
   $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb, r;
-  long N, M, i, j;
+  PDL_Indx N, M, i, j;
   M = $SIZE(m);
   for (i=0; i<M; i++) {
     for (j=i+1; j<M; j++) {
@@ -951,14 +951,14 @@ t significance test for Pearson correlations.
 );
 
 pp_def('n_pair',
-  Pars      => 'a(n); b(n); int [o]c()',
-  GenericTypes => [L],
+  Pars      => 'a(n); b(n); indx [o]c()',
+  GenericTypes => [qw/L Q/],
   HandleBad => 1,
   Code      => '
     $c() = $SIZE(n);
   ',
   BadCode   => '
-    long N = 0;
+    PDL_Indx N = 0;
     loop(n) %{
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
@@ -985,7 +985,7 @@ pp_def('corr_dev',
   Code      => '
     $GENERIC(c) ab, a2, b2, cov, va, vb;
     ab = 0; a2 = 0; b2 = 0;
-    long N = $SIZE(n);
+    PDL_Indx N = $SIZE(n);
     if (N > 1) {
       loop (n) %{
 	ab += $a() * $b();
@@ -1004,7 +1004,7 @@ pp_def('corr_dev',
   BadCode   => '
     $GENERIC(c) ab, a2, b2, cov, va, vb;
     ab = 0; a2 = 0; b2 = 0;
-    long N = 0;
+    PDL_Indx N = 0;
     loop (n) %{
       if ( $ISBAD($a()) || $ISBAD($b()) ) { }
       else {
