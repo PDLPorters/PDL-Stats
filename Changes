@@ -1,3 +1,13 @@
+0.74 Fri Dec 4 22:09:47 2015 -0500
+  - no change from 0.73_1
+
+0.73_1 Sun Nov 29 10:15:44 2015 -0500
+  - Improved support for 64bit indexing (kmx)
+  - PDL::GSL::CDF facelift (kmx)
+  - kmeans test workaround (kmx)
+  - messages for various tests (kaoru)
+  - doc-building improvements
+
 0.72 Mon Aug 31 18:54:08 BST 2015
   - changelog test in CI
   - remove erroneous dep on PDL::GSL::CDF
