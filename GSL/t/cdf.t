@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan tests => 90;
+    plan tests => 93;
 }
 
 use PDL::LiteF;
@@ -118,3 +118,8 @@ sub tapprox {
   ok(all(approx(gsl_cdf_hypergeometric_P     ($z, 25, 5, 11), pdl([ 0.00324196875921016, 0.0472401162056337, 0.24523177971454, 0.61921603300914, 0.918403435644814 ]))));
   ok(all(approx(gsl_cdf_hypergeometric_Q     ($z, 25, 5, 11), pdl([ 0.99675803124079, 0.952759883794366, 0.75476822028546, 0.38078396699086, 0.0815965643551856 ]))));
 }
+
+# ensure gsl_cdf_hypergeometric_P fails with error with negative first value
+ok all approx(gsl_cdf_hypergeometric_P(0, 2, 8, 6), 0.133333333);
+ok all approx(gsl_cdf_hypergeometric_P(18, 2, 8, 6), 1);
+ok all approx(gsl_cdf_hypergeometric_P(-1, 2, 8, 6), 0);
