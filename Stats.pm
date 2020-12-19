@@ -190,7 +190,7 @@ if the input is of 2D, say you want to compute the stdv for each of the 3 variab
     [ 1.2990381   1.118034   1.118034]
     PDL: Double D [3]
 
-Here the function was given an input with an extra dimension of size 3, so it repeates the stdv operation on the extra dimenion 3 times, and gives back a 1D pdl of size 3.
+Here the function was given an input with an extra dimension of size 3, so it repeates the stdv operation on the extra dimension 3 times, and gives back a 1D pdl of size 3.
 
 Threading works for arbitrary number of dimensions, but it's best to refrain from higher dim pdls unless you have already decided to become a PDL wiz / witch.
 
