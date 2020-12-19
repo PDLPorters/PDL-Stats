@@ -16,7 +16,6 @@ Makefile.PL
 MANIFEST			This list of files
 README.md
 Stats.pm
-t/01-checkmanifest.t
 t/stats_basic.t
 t/stats_glm.t
 t/stats_kmeans.t
