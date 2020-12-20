@@ -127,7 +127,7 @@ Here the function t_test can take two 1D pdls of unequal size (n==m is certainly
     
       Signature: (data(o,v); centroid(c,v); byte [o]cluster(o,c))
 
-Here is one of the most complicated signatures in the package. This is a function from Kmeans. assign takes data of observasion x variable dimensions, and a centroid of cluster x variable dimensions, and returns an observation x cluster membership pdl (indicated by 1s and 0s).
+Here is one of the most complicated signatures in the package. This is a function from Kmeans. assign takes data of observation x variable dimensions, and a centroid of cluster x variable dimensions, and returns an observation x cluster membership pdl (indicated by 1s and 0s).
 
 Got the idea? Then we can see how PDL does its magic :)
 
@@ -190,7 +190,7 @@ if the input is of 2D, say you want to compute the stdv for each of the 3 variab
     [ 1.2990381   1.118034   1.118034]
     PDL: Double D [3]
 
-Here the function was given an input with an extra dimension of size 3, so it repeates the stdv operation on the extra dimension 3 times, and gives back a 1D pdl of size 3.
+Here the function was given an input with an extra dimension of size 3, so it repeats the stdv operation on the extra dimension 3 times, and gives back a 1D pdl of size 3.
 
 Threading works for arbitrary number of dimensions, but it's best to refrain from higher dim pdls unless you have already decided to become a PDL wiz / witch.
 
@@ -198,17 +198,16 @@ Not all PDL::Stats methods thread. As a rule of thumb, if a function has a signa
 
 =head2 perldl
 
-Essentially a perl shell with "use PDL;" at start up. Comes with the PDL installation. Very handy to try out pdl operations, or just plain perl. print is shortened to p to avoid injury from exessive typing. my goes out of scope at the end of (multi)line input, so mostly you will have to drop the good practice of my here.
+Essentially a perl shell with "use PDL;" at start up. Comes with the PDL installation. Very handy to try out pdl operations, or just plain perl. print is shortened to p to avoid injury from excessive typing. C<my> goes out of scope at the end of (multi)line input, so mostly you will have to drop the good practice of my here.
 
 =head2 For more info
 
-PDL::Impatient
+L<PDL::Course>
 
 =cut
 
 use strict;
 use warnings;
-
 
 sub PDL::Stats::import {
 
