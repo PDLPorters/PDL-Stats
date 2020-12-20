@@ -1,12 +1,15 @@
 package PDL::Stats;
 
+use strict;
+use warnings;
+
 =head1 NAME
 
 PDL::Stats - a collection of statistics modules in Perl Data Language, with a quick-start guide for non-PDL people.
 
 =cut
 
-$VERSION = '0.76';
+our $VERSION = '0.76';
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
@@ -206,9 +209,6 @@ L<PDL::Course>
 
 =cut
 
-use strict;
-use warnings;
-
 sub PDL::Stats::import {
 
   my $pkg = (caller())[0];
@@ -216,7 +216,6 @@ sub PDL::Stats::import {
   
   if (grep {-e $_ . '/PDL/GSL/CDF.pm'} @INC) {
     $use = <<EOD;
-  
 package $pkg;
 
 use PDL::Stats::Basic;
@@ -230,7 +229,6 @@ EOD
   }
   else {
     $use = <<EOD;
-
 package $pkg;
 
 use PDL::Stats::Basic;
