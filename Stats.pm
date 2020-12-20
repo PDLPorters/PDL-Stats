@@ -3,36 +3,50 @@ package PDL::Stats;
 use strict;
 use warnings;
 
-=head1 NAME
-
-PDL::Stats - a collection of statistics modules in Perl Data Language, with a quick-start guide for non-PDL people.
-
-=cut
-
 our $VERSION = '0.76';
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
+
+sub import {
+  my $pkg = (caller())[0];
+  my $cdf = grep -e "$_/PDL/GSL/CDF.pm", @INC;
+  my $use = <<"EOD";
+package $pkg;
+use PDL::Stats::Basic;
+use PDL::Stats::GLM;
+use PDL::Stats::Kmeans;
+use PDL::Stats::TS;
+@{[ $cdf ? 'use PDL::Stats::Distr;' : '' ]}
+@{[ $cdf ? 'use PDL::GSL::CDF;' : '' ]}
+EOD
+  eval $use;
+  die $@ if $@;
+}
+
+=head1 NAME
+
+PDL::Stats - a collection of statistics modules in Perl Data Language, with a quick-start guide for non-PDL people.
 
 =head1 DESCRIPTION
 
 Loads modules named below, making the functions available in the current namespace.
 
 Properly formatted documentations online at http://pdl-stats.sf.net
- 
+
 =head1 SYNOPSIS
 
     use PDL::LiteF;        # loads less modules
-    use PDL::NiceSlice;    # preprocessor for easier pdl indexing syntax 
+    use PDL::NiceSlice;    # preprocessor for easier pdl indexing syntax
 
     use PDL::Stats;
- 
+
     # Is equivalent to the following:
 
     use PDL::Stats::Basic;
     use PDL::Stats::GLM;
     use PDL::Stats::Kmeans;
     use PDL::Stats::TS;
- 
+
     # and the following if installed;
 
     use PDL::Stats::Distr;
@@ -109,25 +123,25 @@ Come back to the perl reality from the PDL wonder land. list turns a pdl data ob
 This is not a function, but a concept. You will see something like this frequently in the pod:
 
     stdv
-    
+
       Signature: (a(n); float+ [o]b())
 
 The signature tells you what the function expects as input and what kind of output it produces. a(n) means it expects a 1D pdl with n elements; [o] is for output, b() means its a scalar. So stdv will take your 1D list and give back a scalar. float+ you can ignore; but if you insist, it means the output is at float or double precision. The name a or b or c is not important. What's important is the thing in the parenthesis.
 
     corr
-    
+
       Signature: (a(n); b(n); float+ [o]c())
 
 Here the function corr takes two inputs, two 1D pdl with the same numbers of elements, and gives back a scalar.
 
     t_test
-    
+
       Signature: (a(n); b(m); float+ [o]t(); [o]d())
 
 Here the function t_test can take two 1D pdls of unequal size (n==m is certainly fine), and give back two scalars, t-value and degrees of freedom. Yes we accommodate t-tests with unequal sample sizes.
 
     assign
-    
+
       Signature: (data(o,v); centroid(c,v); byte [o]cluster(o,c))
 
 Here is one of the most complicated signatures in the package. This is a function from Kmeans. assign takes data of observation x variable dimensions, and a centroid of cluster x variable dimensions, and returns an observation x cluster membership pdl (indicated by 1s and 0s).
@@ -166,7 +180,7 @@ The same function is repeated on each element in the list you provided. If you h
     print $p . "\n" . $p->info;
 
     # here's what you will get
-     
+
     [0.94973979 0.97141553 0.99042586]
     PDL: Double D [3]
 
@@ -175,7 +189,7 @@ The df's are automatically matched with the t's to give you the results.
 An example of threading thru extra dimension(s):
 
     stdv
-    
+
       Signature: (a(n); float+ [o]b())
 
 if the input is of 2D, say you want to compute the stdv for each of the 3 variables,
@@ -206,42 +220,6 @@ Essentially a perl shell with "use PDL;" at start up. Comes with the PDL install
 =head2 For more info
 
 L<PDL::Course>
-
-=cut
-
-sub PDL::Stats::import {
-
-  my $pkg = (caller())[0];
-  my $use;
-  
-  if (grep {-e $_ . '/PDL/GSL/CDF.pm'} @INC) {
-    $use = <<EOD;
-package $pkg;
-
-use PDL::Stats::Basic;
-use PDL::Stats::Distr;
-use PDL::Stats::GLM;
-use PDL::Stats::Kmeans;
-use PDL::Stats::TS;
-use PDL::GSL::CDF;
-
-EOD
-  }
-  else {
-    $use = <<EOD;
-package $pkg;
-
-use PDL::Stats::Basic;
-use PDL::Stats::GLM;
-use PDL::Stats::Kmeans;
-use PDL::Stats::TS;
-
-EOD
-  }
-  
-  eval $use;
-  die $@ if $@;
-}
 
 =head1 AUTHOR
 
