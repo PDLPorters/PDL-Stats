@@ -40,7 +40,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cpanm -n Devel::Cover::Report::Coveralls
-          HARNESS_OPTIONS='j4' cover -test -report Coveralls
+          cpanm git://github.com/mohawk2/Devel--Cover.git@deepdirs
+          HARNESS_OPTIONS='j4' cover -test -relative_only -gcov_chdir -report Coveralls
+
   non-linux:
     runs-on: ${{ matrix.os }}
     strategy:
