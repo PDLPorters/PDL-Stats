@@ -7,9 +7,6 @@ Distr/Makefile.PL
 Distr/t/stats_distr.t
 GLM/glm.pd
 GLM/Makefile.PL
-GSL/gsl_cdf.pd
-GSL/Makefile.PL
-GSL/t/cdf.t
 Kmeans/kmeans.pd
 Kmeans/Makefile.PL
 Makefile.PL

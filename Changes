@@ -1,3 +1,5 @@
+- moved the GSL CDF functions over to main PDL - thanks @maggiexyz!
+
 0.76 2020-12-19
 - spelling fixes - thanks @sebastic
 
