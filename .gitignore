@@ -14,11 +14,6 @@ GLM/GLM.c
 GLM/GLM.o
 GLM/GLM.pm
 GLM/GLM.xs
-GSL/CDF.bs
-GSL/CDF.c
-GSL/CDF.o
-GSL/CDF.pm
-GSL/CDF.xs
 Kmeans/Kmeans.bs
 Kmeans/Kmeans.c
 Kmeans/Kmeans.o
