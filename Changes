@@ -1,3 +1,4 @@
+0.79 2021-08-17
 - update now that PDL's ->sum etc return ndarrays, not Perl scalars
 
 0.78 2021-04-24

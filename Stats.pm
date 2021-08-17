@@ -3,7 +3,7 @@ package PDL::Stats;
 use strict;
 use warnings;
 
-our $VERSION = '0.78';
+our $VERSION = '0.79';
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
