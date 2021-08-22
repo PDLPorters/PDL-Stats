@@ -29,6 +29,8 @@ Implement a basic k-means procedure,
     use PDL::Stats;
 
     my ($data, $idv, $ido) = rtable( $file );
+    # or generate random data:
+    $data = grandom(200, 2); # two vars as below
 
     my ($cluster, $centroid, $ss_centroid, $cluster_last);
 
@@ -40,8 +42,7 @@ Implement a basic k-means procedure,
       $cluster_last = $cluster;
       ($centroid, $ss_centroid) = $data->centroid( $cluster );
       $cluster = $data->assign( $centroid );
-    }
-    while ( sum(abs($cluster - $cluster_last)) > 0 );
+    } while sum(abs($cluster - $cluster_last)) > 0;
 
 or, use the B<kmeans> function provided here,
 

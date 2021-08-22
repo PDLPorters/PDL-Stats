@@ -33,7 +33,8 @@ Parameter estimate is maximum likelihood estimate when there is closed form esti
     use PDL::LiteF;
     use PDL::Stats::Distr;
 
-      # do a frequency (probability) plot with fitted normal curve
+    # do a frequency (probability) plot with fitted normal curve
+    my $data = grandom(100)->abs;
 
     my ($xvals, $hist) = $data->hist;
 
