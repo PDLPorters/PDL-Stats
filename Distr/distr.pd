@@ -1268,21 +1268,20 @@ sub PDL::plot_distr {
     if grep { /(?:binomial)|(?:geo)|(?:nbd)|(?:poisson)/ } @distr;
 
   my ($range, $step, $step_int);
-  $range = $self->max - $self->min;
+  $range = $self->max->sclr - $self->min->sclr;
   $step  = $range / $opt{MAXBN};
   $step_int = ($range <= $opt{MAXBN})? 1 
             :                          PDL::ceil( $range / $opt{MAXBN} )
             ;
-    # use min to make it pure scalar for sequence()
-  $opt{MAXBN} = PDL::ceil( $range / $step )->min;
+  $opt{MAXBN} = PDL::ceil( $range / $step )->min->sclr;
 
-  my $hist = $self->double->histogram($step, $self->min, $opt{MAXBN});
+  my $hist = $self->double->histogram($step, $self->min->sclr, $opt{MAXBN});
     # turn fre into prob
   $hist /= $self->dim(0);
 
-  my $xvals = $self->min + sequence( $opt{MAXBN} ) * $step;
+  my $xvals = $self->min->sclr + sequence( $opt{MAXBN} ) * $step;
   my $xvals_int
-    = PDL::ceil($self->min) + sequence( $opt{MAXBN} ) * $step_int;
+    = PDL::ceil($self->min->sclr) + sequence( $opt{MAXBN} ) * $step_int;
   $xvals_int = $xvals_int->where( $xvals_int <= $xvals->max )->sever;
 
   my $win = $opt{WIN};
@@ -1330,7 +1329,7 @@ sub PDL::plot_distr {
     };
     carp $@ if $@;
   }
-  $win->legend(\@text, ($xvals->min + $xvals->max)/2, .95,
+  $win->legend(\@text, ($xvals->min->sclr + $xvals->max->sclr)/2, .95,
                {COLOR=>[$opt{COLOR}+1 .. $c], TextFraction=>.75} );
   $win->close
     unless defined $opt{WIN};

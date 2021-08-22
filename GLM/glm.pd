@@ -2319,7 +2319,7 @@ sub PDL::pca {
   $eigval = $eigval($ind_sorted)->sever;
 
     # var x axis
-  my $var     = $eigval / $eigval->sum;
+  my $var     = $eigval / $eigval->sum->sclr;
   my $loadings;
   if ($opt{CORR}) {
     $loadings = $eigvec * sqrt( $eigval->transpose );
@@ -2663,7 +2663,7 @@ sub PDL::plot_scores {
   $z = $z( ,$i)->sever;
 
   my $win = $opt{WIN};
-  my $max = pdl($z, $scores)->abs->ceil->max;
+  my $max = pdl($z, $scores)->abs->ceil->max->sclr;
   if (!$win) {
    $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(-$max, $max, -$max, $max,
@@ -2755,7 +2755,7 @@ sub PDL::plot_screes {
 
   $win->points(sequence($ncomp), $self(0:$ncomp-1, ),
         {CHARSIZE=>2, COLOR=>$opt{COLOR}, PLOTLINE=>1} );
-  $win->line( pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max+.05),
+  $win->line( pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max->sclr+.05),
         {COLOR=>15} )
     if $opt{CUT};
   $win->close

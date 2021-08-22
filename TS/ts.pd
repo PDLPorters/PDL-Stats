@@ -924,7 +924,7 @@ sub PDL::plot_dseason {
             {XTitle=>'T', YTitle=>'DV'} );
     }
 
-    my $missn = ushort $self->max + 1;   # ushort in case precision issue
+    my $missn = ushort $self->max->sclr + 1;   # ushort in case precision issue
     $w->line( sequence($self->dim(0)), $dsea->setbadtoval( $missn ),
              {COLOR=>$opt{COLOR}+1, MISSING=>$missn} );
     $w->points( sequence($self->dim(0)), $self, {COLOR=>$opt{COLOR}} );
