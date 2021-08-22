@@ -2106,6 +2106,9 @@ Usage:
     iter	12
     y_pred	[0.10715577 0.23683909 ... 0.76316091 0.89284423]
 
+    # to get the covariance out, supply a true value for the COV option:
+    perldl> %m = $y->logistic( $x, {COV=>1} )
+    perldl> p $m{cov};
 
 =cut
 
@@ -2147,6 +2150,7 @@ sub PDL::logistic {
   my $n0 = $self->where($self == 0)->nelem;
   my $n1 = $self->nelem - $n0;
 
+  $ret{cov} = $cov if $opt{COV};
   $ret{D0} = -2*($n0 * log($n0 / $self->nelem) + $n1 * log($n1 / $self->nelem));
   $ret{Dm} = sum( $self->dvrs( $yfit ) ** 2 );
   $ret{Dm_chisq} = $ret{D0} - $ret{Dm};

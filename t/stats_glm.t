@@ -218,6 +218,11 @@ SKIP: {
   skip 'no PDL::Fit::LM', 1 if $@;
 
   is( tapprox( t_logistic(), 0 ), 1, 'logistic' );
+
+  my $y = pdl( 0, 0, 0, 1, 1 );
+  my $x = pdl(2, 3, 5, 5, 5);
+  my %m = $y->logistic( $x, {COV=>1} );
+  isnt $m{cov}, undef, 'get cov from logistic if ask';
 };
 sub t_logistic {
   my $y = pdl( 0, 0, 0, 1, 1 );

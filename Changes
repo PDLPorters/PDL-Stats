@@ -1,3 +1,5 @@
+- add COV option to GLM::logistic - thanks David Myers for suggestion (in 2011)
+
 0.79 2021-08-17
 - update now that PDL's ->sum etc return ndarrays, not Perl scalars
 
