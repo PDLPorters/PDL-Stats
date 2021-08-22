@@ -5,8 +5,6 @@ use warnings;
 
 our $VERSION = '0.79';
 
-$PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
-
 sub import {
   my $pkg = (caller())[0];
   eval { require PDL::Core; require PDL::GSL::CDF; };

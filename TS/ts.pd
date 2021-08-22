@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 pp_addpm({At=>'Top'}, <<'EOD');
 
 =encoding utf8
@@ -29,8 +27,6 @@ use PDL::LiteF;
 use PDL::NiceSlice;
 use PDL::Stats::Basic;
 use PDL::Stats::Kmeans;
-
-$PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
 my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 

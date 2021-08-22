@@ -9,8 +9,6 @@ use PDL::LiteF;
 use PDL::NiceSlice;
 use Carp;
 
-$PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
-
 eval { require PDL::Core; require PDL::GSL::CDF; };
 my $CDF = 1 if !$@;
 
