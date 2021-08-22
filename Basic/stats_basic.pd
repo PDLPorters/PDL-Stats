@@ -1306,8 +1306,6 @@ Reads either file or file handle*. Returns observation x variable pdl and var an
 
 *If passed handle, it will not be closed here.
 
-*PDL::Bad::setvaltobad only works consistently with the default TYPE double before PDL-2.4.4_04.
-
 =for options
 
 Default options (case insensitive):
