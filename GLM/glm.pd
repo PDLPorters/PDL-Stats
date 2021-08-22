@@ -22,12 +22,6 @@ my $CDF = 1 if !$@;
 eval { require PDL::Slatec; };
 my $SLATEC = 1 if !$@;
 
-eval {
-  require PDL::Graphics::PGPLOT::Window;
-  PDL::Graphics::PGPLOT::Window->import( 'pgwin' );
-};
-my $PGPLOT = 1 if !$@;
-
 my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 =head1 NAME
@@ -2448,13 +2442,10 @@ Or like this:
 
 *plot_means = \&PDL::plot_means;
 sub PDL::plot_means {
+  require PDL::Graphics::PGPLOT::Window;
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
   my ($self, $se) = @_;
-  if (!$PGPLOT) {
-    carp "No PDL::Graphics::PGPLOT, no plot :(";
-    return;
-  }
   $self = $self->squeeze;
   if ($self->ndims > 4) {
     carp "Data is > 4D. No plot here.";
@@ -2492,7 +2483,7 @@ sub PDL::plot_means {
   
   my $w = $opt{WIN};
   if (!defined $w) {
-    $w = pgwin(DEV=>$opt{DEV}, NX=>$nx, NY=>$ny,
+    $w = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, NX=>$nx, NY=>$ny,
                  SIZE=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny], UNIT=>3);
   }
 
@@ -2569,10 +2560,7 @@ Default options (case insensitive):
 
 *plot_residuals = \&PDL::plot_residuals;
 sub PDL::plot_residuals {
-  if (!$PGPLOT) {
-    carp "No PDL::Graphics::PGPLOT, no plot :(";
-    return;
-  }
+  require PDL::Graphics::PGPLOT::Window;
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
   my ($y, $y_pred) = @_;
@@ -2592,7 +2580,7 @@ sub PDL::plot_residuals {
   my $win = $opt{WIN};
 
   if (!$win) {
-   $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
+   $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env( $y_pred->minmax, $residuals->minmax,
      {XTITLE=>'predicted value', YTITLE=>'residuals',
       AXIS=>['BCNT', 'BCNST'], Border=>1,} );
@@ -2639,10 +2627,7 @@ Usage:
 
 *plot_scores = \&PDL::plot_scores;
 sub PDL::plot_scores {
-  if (!$PGPLOT) {
-    carp "No PDL::Graphics::PGPLOT, no plot :(";
-    return;
-  }
+  require PDL::Graphics::PGPLOT::Window;
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
   my ($self, $eigvec) = @_;
@@ -2669,7 +2654,7 @@ sub PDL::plot_scores {
   my $win = $opt{WIN};
   my $max = pdl($z, $scores)->abs->ceil->max->sclr;
   if (!$win) {
-   $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
+   $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(-$max, $max, -$max, $max,
      {XTitle=>"Compoment $opt{COMP}->[0]", YTitle=>"Component $opt{COMP}->[1]",
      AXIS=>['ABCNST', 'ABCNST'], Border=>1, });
@@ -2721,10 +2706,7 @@ Or, because NCOMP is used so often, it is allowed a shortcut,
 *plot_scree = \&PDL::plot_screes;      # here for now for compatibility
 *plot_screes = \&PDL::plot_screes;
 sub PDL::plot_screes {
-  if (!$PGPLOT) {
-    carp "No PDL::Graphics::PGPLOT, no plot :(";
-    return;
-  }
+  require PDL::Graphics::PGPLOT::Window;
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
   my ($self, $ncomp) = @_;
@@ -2751,7 +2733,7 @@ sub PDL::plot_screes {
   my $win = $opt{WIN};
 
   if (!$win) {
-   $win = pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
+   $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(0, $ncomp-1, 0, 1,
      {XTitle=>'Compoment', YTitle=>'Proportion of Variance Accounted for',
      AXIS=>['BCNT', 'BCNST'], Border=>1, });

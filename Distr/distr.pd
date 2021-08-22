@@ -12,12 +12,6 @@ use PDL::LiteF;
 
 $PDL::onlinedoc->scan(__FILE__) if $PDL::onlinedoc;
 
-eval {
-  require PDL::Graphics::PGPLOT::Window;
-  PDL::Graphics::PGPLOT::Window->import( 'pgwin' );
-};
-my $PGPLOT = 1 if !$@;
-
 my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 =head1 NAME
@@ -1246,10 +1240,7 @@ Usage:
 
 *plot_distr = \&PDL::plot_distr;
 sub PDL::plot_distr {
-  if (!$PGPLOT) {
-    carp "No PDL::Graphics::PGPLOT, no plot :(";
-    return;
-  }
+  require PDL::Graphics::PGPLOT::Window;
   my ($self, @distr) = @_;
 
   my %opt = (
@@ -1287,7 +1278,7 @@ sub PDL::plot_distr {
 
   my $win = $opt{WIN};
   if (!$win) {
-    $win = pgwin( Dev=>$opt{DEV} );
+    $win = PDL::Graphics::PGPLOT::Window::pgwin( Dev=>$opt{DEV} );
     $win->env($xvals->minmax,0,1, {XTitle=>'xvals', YTitle=>'probability'});
   }
 
