@@ -890,7 +890,7 @@ Default options (case insensitive):
 
     V      => 1,          # carps if bad value in variables
     IVNM   => [],         # auto filled as ['IV_0', 'IV_1', ... ]
-    PLOT   => 1,          # plots highest order effect
+    PLOT   => 0,          # plots highest order effect
                           # can set plot_means options here
 
 =for usage
@@ -987,7 +987,7 @@ sub PDL::anova {
 
   my %opt = (
     IVNM   => [],      # auto filled as ['IV_0', 'IV_1', ... ]
-    PLOT   => 1,       # plots highest order effect
+    PLOT   => 0,       # plots highest order effect
     V      => 1,       # carps if bad value
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
@@ -1208,7 +1208,7 @@ Default options (case insensitive):
     V      => 1,    # carps if bad value in dv
     IVNM   => [],   # auto filled as ['IV_0', 'IV_1', ... ]
     BTWN   => [],   # indices of between-subject IVs (matches IVNM indices)
-    PLOT   => 1,    # plots highest order effect
+    PLOT   => 0,    # plots highest order effect
                     # see plot_means() for more options
 
 Usage:
@@ -1324,7 +1324,7 @@ sub PDL::anova_rptd {
     V      => 1,    # carps if bad value in dv
     IVNM   => [],   # auto filled as ['IV_0', 'IV_1', ... ]
     BTWN   => [],   # indices of between-subject IVs (matches IVNM indices)
-    PLOT   => 1,    # plots highest order effect
+    PLOT   => 0,    # plots highest order effect
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{IVNM} = [ map { "IV_$_" } 0 .. $#ivs_raw ]
@@ -1752,7 +1752,7 @@ IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the con
 Default options (case insensitive): 
 
     CONST  => 1,
-    PLOT   => 1,   # see plot_residuals() for plot options
+    PLOT   => 0,   # see plot_residuals() for plot options
 
 =for usage
 
@@ -1800,7 +1800,7 @@ sub PDL::ols {
   my ($y, $ivs, $opt) = @_;
   my %opt = (
     CONST => 1,
-    PLOT  => 1,
+    PLOT  => 0,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
@@ -2247,7 +2247,7 @@ Principal component analysis. Based on corr instead of cov (bad values are ignor
 Default options (case insensitive):
 
     CORR  => 1,     # boolean. use correlation or covariance
-    PLOT  => 1,     # calls plot_screes by default
+    PLOT  => 0,     # calls plot_screes by default
                     # can set plot_screes options here
 
 =for usage
@@ -2294,7 +2294,7 @@ sub PDL::pca {
 
   my %opt = (
     CORR  => 1,
-    PLOT  => 1,
+    PLOT  => 0,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 

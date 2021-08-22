@@ -795,7 +795,7 @@ Default options (case insensitive):
   ABS   => 1,     # high pos and neg loadings on a comp in same cluster
   NCOMP => undef, # max number of components to consider. determined by
                   # scree plot black magic if not specified
-  PLOT  => 1,     # pca scree plot with cutoff at NCOMP
+  PLOT  => 0,     # pca scree plot with cutoff at NCOMP
 
 Usage:
 
@@ -825,7 +825,7 @@ sub PDL::pca_cluster {
     ABS   => 1,     # high pos and neg loadings on a comp in same cluster
     NCOMP => undef, # max number of components to consider. determined by
                     # scree plot black magic if not specified
-    PLOT  => 1,     # pca scree plot with cutoff at NCOMP
+    PLOT  => 0,     # pca scree plot with cutoff at NCOMP
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 

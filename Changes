@@ -1,4 +1,5 @@
 - add COV option to GLM::logistic - thanks David Myers for suggestion (in 2011)
+- make all PLOT options default to off; only load PGPLOT when try to use
 
 0.79 2021-08-17
 - update now that PDL's ->sum etc return ndarrays, not Perl scalars

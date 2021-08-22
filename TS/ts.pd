@@ -803,7 +803,7 @@ Default options (case insensitive):
 
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
-    PLOT  => 1,              # boolean
+    PLOT  => 0,              # boolean
       # see PDL::Graphics::PGPLOT::Window for next options
     WIN   => undef,          # pass pgwin object for more plotting control
     DEV   => '/xs',          # open and close dev for plotting if no WIN
@@ -824,7 +824,7 @@ sub PDL::season_m {
   my %opt = (
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
-    PLOT  => 1,
+    PLOT  => 0,
     WIN   => undef,          # pass pgwin object for more plotting control
     DEV   => $DEV,           # see PDL::Graphics::PGPLOT for more info
     COLOR => 1,
