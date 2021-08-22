@@ -93,20 +93,19 @@ etc.
 You can also look for information at:
 
     Home
-      http://pdl-stats.sourceforge.net
+      https://github.com/PDLPorters/PDL-Stats
 
     Search CPAN
-      http://search.cpan.org/dist/PDL-Stats/
+      https://metacpan.org/dist/PDL-Stats
 
-    Mailing list
+    Mailing list (low traffic, open a GitHub issue instead)
       https://lists.sourceforge.net/lists/listinfo/pdl-stats-help
 
 If you notice a bug or have a request, please submit a report at
 
-      http://sourceforge.net/projects/pdl-stats/support
+[https://github.com/PDLPorters/PDL-Stats/issues](https://github.com/PDLPorters/PDL-Stats/issues)
 
 If you would like to help develop or maintain the package, please email me at the address below.
-
 
 ## COPYRIGHT AND LICENCE
 
