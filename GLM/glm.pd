@@ -888,6 +888,7 @@ Default options (case insensitive):
     IVNM   => [],         # auto filled as ['IV_0', 'IV_1', ... ]
     PLOT   => 0,          # plots highest order effect
                           # can set plot_means options here
+    WIN    => undef,      # for plotting
 
 =for usage
 
@@ -985,6 +986,7 @@ sub PDL::anova {
     IVNM   => [],      # auto filled as ['IV_0', 'IV_1', ... ]
     PLOT   => 0,       # plots highest order effect
     V      => 1,       # carps if bad value
+    WIN    => undef,   # for plotting
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{IVNM} = [ map { "IV_$_" } (0 .. $#ivs_raw) ]
@@ -1206,6 +1208,7 @@ Default options (case insensitive):
     BTWN   => [],   # indices of between-subject IVs (matches IVNM indices)
     PLOT   => 0,    # plots highest order effect
                     # see plot_means() for more options
+    WIN    => undef,      # for plotting
 
 Usage:
 
@@ -1321,6 +1324,7 @@ sub PDL::anova_rptd {
     IVNM   => [],   # auto filled as ['IV_0', 'IV_1', ... ]
     BTWN   => [],   # indices of between-subject IVs (matches IVNM indices)
     PLOT   => 0,    # plots highest order effect
+    WIN    => undef,      # for plotting
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{IVNM} = [ map { "IV_$_" } 0 .. $#ivs_raw ]
@@ -1749,6 +1753,7 @@ Default options (case insensitive):
 
     CONST  => 1,
     PLOT   => 0,   # see plot_residuals() for plot options
+    WIN    => undef,      # for plotting
 
 =for usage
 
@@ -1797,6 +1802,7 @@ sub PDL::ols {
   my %opt = (
     CONST => 1,
     PLOT  => 0,
+    WIN    => undef,      # for plotting
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
@@ -2245,6 +2251,7 @@ Default options (case insensitive):
     CORR  => 1,     # boolean. use correlation or covariance
     PLOT  => 0,     # calls plot_screes by default
                     # can set plot_screes options here
+    WIN    => undef,      # for plotting
 
 =for usage
 
@@ -2291,6 +2298,7 @@ sub PDL::pca {
   my %opt = (
     CORR  => 1,
     PLOT  => 0,
+    WIN    => undef,      # for plotting
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
