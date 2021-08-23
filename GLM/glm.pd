@@ -2469,7 +2469,7 @@ sub PDL::plot_means {
   $self = $self->reshape(@dims)->sever;
   $se = $se->reshape(@dims)->sever
     if defined $se;
-  @iD = reverse sort { $a<=>$b } @dims
+  @iD = reverse list qsorti pdl @dims
     if $opt{AUTO};
 
     # $iD[0] on x axis
