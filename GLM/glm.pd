@@ -2660,7 +2660,7 @@ sub PDL::plot_scores {
   if (!$win) {
    $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(-$max, $max, -$max, $max,
-     {XTitle=>"Compoment $opt{COMP}->[0]", YTitle=>"Component $opt{COMP}->[1]",
+     {XTitle=>"Component $opt{COMP}->[0]", YTitle=>"Component $opt{COMP}->[1]",
      AXIS=>['ABCNST', 'ABCNST'], Border=>1, });
   }
 
@@ -2739,7 +2739,7 @@ sub PDL::plot_screes {
   if (!$win) {
    $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(0, $ncomp-1, 0, 1,
-     {XTitle=>'Compoment', YTitle=>'Proportion of Variance Accounted for',
+     {XTitle=>'Component', YTitle=>'Proportion of Variance Accounted for',
      AXIS=>['BCNT', 'BCNST'], Border=>1, });
   }
 
