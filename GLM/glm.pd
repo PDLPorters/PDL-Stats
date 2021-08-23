@@ -872,6 +872,9 @@ Analysis of variance. Uses type III sum of squares for unbalanced data.
 
 Dependent variable should be a 1D pdl. Independent variables can be passed as 1D perl array ref or 1D pdl.
 
+Will only calculate p-value (C<F_p>) if there are more samples than the
+product of categories of all the IVs.
+
 Supports bad value (by ignoring missing or BAD values in dependent and independent variables list-wise).
 
 =for options
@@ -1083,6 +1086,9 @@ sub _combinations {
 =head2 anova_rptd
 
 Repeated measures and mixed model anova. Uses type III sum of squares. The standard error (se) for the means are based on the relevant mean squared error from the anova, ie it is pooled across levels of the effect.
+
+Will only calculate p-value (C<F_p>) if there are more samples than the
+product of categories of all the IVs.
 
 anova_rptd supports bad value in the dependent and independent variables. It automatically removes bad data listwise, ie remove a subject's data if there is any cell missing for the subject.
 
@@ -1336,7 +1342,7 @@ sub PDL::anova_rptd {
       $ret{ "| $idv->[$_] | F_p" }
         = 1 - $ret{ "| $idv->[$_] | F" }->gsl_cdf_fdist_P(
           $ret{ "| $idv->[$_] | df" }, $ret{ "| $idv->[$_] || err df" } )
-        if $CDF;
+        if $CDF and $ret{ "| $idv->[$_] || err df" } > 0;
     }
   } else {
     $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
@@ -1345,7 +1351,7 @@ sub PDL::anova_rptd {
     $ret{ms_residual} = $ret{ss_residual} / $ret{F_df}->(1);
     $ret{F} = $ret{ms_model} / $ret{ms_residual};
     $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $ret{F_df}->dog )
-      if $CDF;
+      if $CDF and $ret{F_df}->(1) > 0;
 
     # get IV ss from $ivs_ref instead of $ivs pdl
 
@@ -1371,7 +1377,7 @@ sub PDL::anova_rptd {
         = $ret{ "| $idv->[$k] | ms" } / $ret{ms_residual};
       $ret{ "| $idv->[$k] | F_p" }
         = 1 - $ret{ "| $idv->[$k] | F" }->gsl_cdf_fdist_P( $ret{ "| $idv->[$k] | F_df" }->dog )
-        if $CDF;
+        if $CDF and $ret{ "| $idv->[$k] | F_df" }->(1) > 0;
     }
   }
 
