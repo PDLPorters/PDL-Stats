@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 pp_add_exported('', 'random_cluster', 'iv_cluster');
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -72,7 +71,7 @@ pp_addhdr('
 );
 
 
-pp_addpm( <<'EOD' );
+pp_addpm pp_line_numbers(__LINE__, <<'EOD' );
 
 # my tmp var for PDL 2.007 slice upate
 my $_tmp;
@@ -429,7 +428,7 @@ Takes data dim [obs x var] and mask dim [obs x cluster], returns mean and ss (ms
 
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 sub _scree_ind {
   # use as scree cutoff the point with max distance to the line formed
@@ -492,7 +491,7 @@ pp_def('_d_p2l',
   Doc      => undef,
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 kmeans
 

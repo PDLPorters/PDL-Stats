@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'ols_rptd', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_residuals', 'plot_screes');
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -591,7 +589,7 @@ Deviance residual for logistic regression.
 
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 # my tmp var for PDL 2.007 slice upate
 my $_tmp;

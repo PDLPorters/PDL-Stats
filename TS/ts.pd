@@ -109,7 +109,7 @@ loop (h) %{
   Doc   => undef,
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 acf
 
@@ -359,7 +359,7 @@ Deseasonalize data using moving average filter the size of period d.
   ',
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 fill_ma
 
@@ -697,7 +697,7 @@ Usage:
   ',
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 pred_ar
 
@@ -787,7 +787,7 @@ loop (t) %{
 );
 
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 season_m
 

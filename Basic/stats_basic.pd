@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 pp_add_exported('', 'binomial_test', 'rtable', 'which_id', 
 );
 
@@ -1250,7 +1248,7 @@ Paired sample t-test.
   ',
 );
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 binomial_test
 

@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 pp_add_exported( );
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -1137,7 +1135,7 @@ Probability mass function for poisson distribution. Uses Stirling's formula for 
 
 
 
-pp_addpm(<<'EOD');
+pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 pmf_poisson_factorial
 
@@ -1199,7 +1197,7 @@ pp_def('_pmf_poisson_factorial',
 
 );
 
-pp_addpm({At=>'Bot'}, <<'EOD');
+pp_addpm {At=>'Bot'}, pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 plot_distr
 
