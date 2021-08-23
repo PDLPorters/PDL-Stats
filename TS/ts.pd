@@ -860,9 +860,6 @@ sub PDL::season_m {
       $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
                {COLOR=>$opt{COLOR}} );
     }
-    else {
-      carp "errb does not support multi dim pdl";
-    }
     $w->close
       unless $opt{WIN};
   }
@@ -939,15 +936,6 @@ sub PDL::filt_ma {
 sub PDL::dsea {
   print STDERR "dsea() deprecated since version 0.5.0. Please use dseason() instead\n";
   return dseason( @_ );
-}
-
-*plot_season = \&PDL::plot_season;
-sub PDL::plot_season {
-  print STDERR "plot_season() deprecated since version 0.5.0. Please use season_m() instead\n";
-  my ($self, $d, $opt) = @_;
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-  $opt->{PLOT} = 1;
-  return $self->season_m( $d, $opt );
 }
 
 =head1 METHODS
