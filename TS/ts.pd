@@ -901,7 +901,7 @@ sub PDL::plot_dseason {
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
-  $dsea = $self->dsea($d);
+  $dsea = $self->dseason($d);
 
   my $w = $opt{WIN};
   if (!$opt{WIN}) {
@@ -930,12 +930,6 @@ sub PDL::filt_exp {
 sub PDL::filt_ma {
   print STDERR "filt_ma() deprecated since version 0.5.0. Please use filter_ma() instead\n";
   return filter_ma( @_ );
-}
-
-*dsea = \&PDL::dsea;
-sub PDL::dsea {
-  print STDERR "dsea() deprecated since version 0.5.0. Please use dseason() instead\n";
-  return dseason( @_ );
 }
 
 =head1 METHODS
