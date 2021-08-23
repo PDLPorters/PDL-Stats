@@ -897,51 +897,51 @@ Usage:
 
     perldl> p $y = qsort ceil( random(12)*5 )
     [1 1 2 2 2 3 3 4 4 4 5 5]
-    
+
     # IV for types of apple
 
     perldl> p $a = sequence(12) % 3 + 1
     [1 2 3 1 2 3 1 2 3 1 2 3]
 
     # IV for whether we baked the apple
-    
+
     perldl> @b = qw( y y y y y y n n n n n n )
 
     perldl> %m = $y->anova( $a, \@b, { IVNM=>['apple', 'bake'] } )
-    
+
     perldl> p "$_\t$m{$_}\n" for (sort keys %m)
     # apple # m
     [
      [2.5   3 3.5]
     ]
-    
+
     # apple # se
     [
      [0.64549722 0.91287093 0.64549722]
     ]
-    
+
     # apple ~ bake # m
     [
      [1.5 1.5 2.5]
      [3.5 4.5 4.5]
     ]
-    
+
     # apple ~ bake # se
     [
      [0.5 0.5 0.5]
      [0.5 0.5 0.5]
     ]
-    
+
     # bake # m
     [
      [ 1.8333333  4.1666667]
     ]
-    
+
     # bake # se
     [
      [0.30731815 0.30731815]
     ]
-    
+
     F       7.6
     F_df    [5 6]
     F_p     0.0141586545851857
