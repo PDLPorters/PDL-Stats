@@ -974,6 +974,7 @@ sub PDL::anova {
   my $opt = pop @_
     if ref $_[-1] eq 'HASH';
   my ($y, @ivs_raw) = @_;
+  confess "Expected 1-D data, instead: ", $y->info if $y->ndims != 1;
   croak "Mismatched number of elements in DV and IV. Are you passing IVs the old-and-abandoned way?"
     if (ref $ivs_raw[0] eq 'ARRAY') and (@{ $ivs_raw[0] } != $y->nelem);
 
