@@ -1078,12 +1078,6 @@ sub PDL::anova {
   return %ret;
 }
 
-sub _old_interface_check {
-  my ($n, $ivs_ref) = @_;
-  return 1
-    if (ref $ivs_ref->[0][0] eq 'ARRAY') and (@{ $ivs_ref->[0][0] } != $n);
-}
-
 sub _effect_code_ivs {
   my $ivs = shift;
 
