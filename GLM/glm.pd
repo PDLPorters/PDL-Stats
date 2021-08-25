@@ -1041,9 +1041,8 @@ sub PDL::anova {
   # get IV ss from $ivs_ref instead of $ivs pdl
 
   for my $k (0 .. $#$ivs_ref) {
-    my (@G, $G, $b_G);
-    @G = grep { $_ != $k } (0 .. $#$ivs_ref);
- 
+    my ($G);
+    my @G = grep $_ != $k, 0 .. $#$ivs_ref;
     if (@G) {
       $G = PDL->null->glue( 1, @$ivs_ref[@G] );
       $G = $G->glue(1, ones $G->dim(0));
@@ -1051,7 +1050,7 @@ sub PDL::anova {
     else {
       $G = ones( $y->dim(0) );
     }
-    $b_G = $y->ols_t( $G, {CONST=>0} );
+    my $b_G = $y->ols_t( $G, {CONST=>0} );
 
     $ret{ "| $idv->[$k] | ss" }
       = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
@@ -1372,8 +1371,7 @@ sub PDL::anova_rptd {
     = _add_errors( $sj, $ivs_ref, $idv, \@pdl_ivs_raw, \%opt );
 
     # stitch together
-  my $ivs = PDL->null->glue( 1, @$ivs_ref );
-  $ivs = $ivs->glue(1, grep { defined($_) and ref($_) } @$err_ref);
+  my $ivs = PDL->null->glue( 1, @$ivs_ref, grep defined($_) && ref($_), @$err_ref);
   $ivs = $ivs->glue(1, ones $ivs->dim(0));
   my $b_full = $y->ols_t( $ivs, {CONST=>0} );
 
