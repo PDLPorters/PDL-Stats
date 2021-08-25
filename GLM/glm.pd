@@ -991,11 +991,7 @@ sub PDL::anova {
   my %ret;
 
   $y = $y->squeeze;
-    # create new vars here so we don't mess up original caller @
-  my @pdl_ivs_raw = map {
-    my $var = (ref $_ eq 'PDL')? [list $_] : $_;
-    scalar PDL::Stats::Basic::_array_to_pdl $var;
-  } @ivs_raw;
+  my @pdl_ivs_raw = map scalar PDL::Stats::Basic::_array_to_pdl($_), @ivs_raw;
 
   my $pdl_ivs_raw = pdl \@pdl_ivs_raw;
     # explicit set badflag if any iv had bad value because pdl() removes badflag
@@ -1321,11 +1317,8 @@ sub PDL::anova_rptd {
 
   my %ret;
 
-    # create new vars here so we don't mess up original caller @
-  my ($sj, @pdl_ivs_raw)
-    = map { my $var = (ref $_ eq 'PDL')? [list $_] : $_;
-            scalar PDL::Stats::Basic::_array_to_pdl $var;
-          } ( $subj, @ivs_raw );
+  my ($sj, @pdl_ivs_raw) = map scalar PDL::Stats::Basic::_array_to_pdl($_),
+    $subj, @ivs_raw;
 
     # delete bad data listwise ie remove subj if any cell missing
   $y = $y->squeeze;
@@ -1617,12 +1610,6 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 *effect_code = \&PDL::effect_code;
 sub PDL::effect_code {
   my ($var_ref) = @_;
-
-    # pdl->uniq sorts elems. so instead list it to maintain old order
-  if (ref $var_ref eq 'PDL') {
-    $var_ref = $var_ref->squeeze;
-    $var_ref = [ list $var_ref ];
-  }
 
   my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
   my $var_e = yvals( float, $var->nelem, $var->max ) == $var;

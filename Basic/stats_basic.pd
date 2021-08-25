@@ -1644,6 +1644,7 @@ sub which_id {
 
 sub _array_to_pdl {
   my ($var_ref) = @_;
+  $var_ref = [ $var_ref->list ] if UNIVERSAL::isa($var_ref, 'PDL');
 
   my (%level, $l);
   $l = 0;
