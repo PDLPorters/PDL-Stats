@@ -770,7 +770,7 @@ sub PDL::iv_cluster {
 
   for my $l (0 .. $var->max->sclr) {
     my $v = $var_a( ,$l);
-    ($_tmp = $v->index( which $var == $l )) .= 1;
+    ($_tmp = $v->where( $var == $l )) .= 1;
   }
 
   if ($var->badflag) {

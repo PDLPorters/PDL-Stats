@@ -1631,9 +1631,9 @@ sub PDL::effect_code {
 
   for my $l (0 .. $var->max - 1) {
     my $v = $var_e( ,$l);
-    ($_tmp = $v->index( which $var == $l )) .= 1;
-    ($_tmp = $v->index( which $var == $var->max )) .= -1;
+    ($_tmp = $v->where( $var == $l )) .= 1;
   }
+  ($_tmp = $var_e(which( $var == $var->max ), )) .= -1;
 
   if ($var->badflag) {
     my $ibad = which $var->isbad;
