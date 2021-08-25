@@ -1644,19 +1644,15 @@ sub PDL::effect_code_w {
 
   my ($var_e, $map_ref) = effect_code( $var_ref );
 
-  if ($var_e->sum == 0) {
-    return wantarray? ($var_e, $map_ref) : $var_e;
-  }
+  return wantarray ? ($var_e, $map_ref) : $var_e if $var_e->sum == 0;
 
-  for (0..$var_e->dim(1)-1) {
-    my $factor = $var_e( ,$_);
-    my $pos = which $factor == 1;
-    my $neg = which $factor == -1;
-    my $w = $pos->nelem / $neg->nelem;
-    ($_tmp = $factor($neg)) *= $w;
-  }
+  my $pos = $var_e == 1;
+  my $neg = $var_e == -1;
+  my $w = $pos->sumover / $neg->sumover;
+  my $neg_ind = $neg->whichND;
+  ($_tmp = $var_e->indexND($neg_ind)) *= $w($neg_ind((1)));
 
-  return wantarray? ($var_e, $map_ref) : $var_e;
+  return wantarray ? ($var_e, $map_ref) : $var_e;
 }
 
 =head2 interaction_code
