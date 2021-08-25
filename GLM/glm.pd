@@ -1621,8 +1621,6 @@ sub PDL::effect_code {
     # pdl->uniq sorts elems. so instead list it to maintain old order
   if (ref $var_ref eq 'PDL') {
     $var_ref = $var_ref->squeeze;
-    $var_ref->getndims > 1 and
-      croak "multidim pdl passed for single var!";
     $var_ref = [ list $var_ref ];
   }
 
