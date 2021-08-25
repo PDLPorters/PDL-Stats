@@ -1627,14 +1627,8 @@ sub PDL::effect_code {
   }
 
   my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
-  my $var_e = zeroes float, $var->nelem, $var->max;
-
-  for my $l (0 .. $var->max - 1) {
-    my $v = $var_e( ,$l);
-    ($_tmp = $v->where( $var == $l )) .= 1;
-  }
+  my $var_e = yvals( float, $var->nelem, $var->max ) == $var;
   ($_tmp = $var_e(which( $var == $var->max ), )) .= -1;
-
   $var_e = $var_e->setbadif( $var->isbad ) if $var->badflag;
 
   return wantarray? ($var_e, $map_ref) : $var_e;
