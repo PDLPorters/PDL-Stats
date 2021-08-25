@@ -1635,11 +1635,7 @@ sub PDL::effect_code {
   }
   ($_tmp = $var_e(which( $var == $var->max ), )) .= -1;
 
-  if ($var->badflag) {
-    my $ibad = which $var->isbad;
-    ($_tmp = $var_e($ibad, )) .= -99;
-    $var_e = $var_e->setvaltobad(-99);
-  }
+  $var_e = $var_e->setbadif( $var->isbad ) if $var->badflag;
 
   return wantarray? ($var_e, $map_ref) : $var_e;
 }

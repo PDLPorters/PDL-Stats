@@ -773,11 +773,7 @@ sub PDL::iv_cluster {
     ($_tmp = $v->where( $var == $l )) .= 1;
   }
 
-  if ($var->badflag) {
-    my $ibad = which $var->isbad;
-    ($_tmp = $var_a($ibad, )) .= -1;
-    $var_a->inplace->setvaltobad(-1);
-  }
+  $var_a = $var_a->setbadif( $var->isbad ) if $var->badflag;
 
   return wantarray? ($var_a, $map_ref) : $var_a;
 }
