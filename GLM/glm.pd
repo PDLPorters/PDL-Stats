@@ -1058,8 +1058,7 @@ sub PDL::anova {
   for (keys %ret) { $ret{$_} = $ret{$_}->squeeze };
 
   my $cm_ref = _cell_means( $y, $ivs_cm_ref, $i_cmo_ref, $idv, \@pdl_ivs_raw );
-    # sort bc we can't count on perl % internal key order implementation
-  @ret{ sort keys %$cm_ref } = @$cm_ref{ sort keys %$cm_ref };
+  @ret{ keys %$cm_ref } = values %$cm_ref;
 
   my $highest = join(' ~ ', @{ $opt{IVNM} });
   $cm_ref->{"# $highest # m"}->plot_means( $cm_ref->{"# $highest # se"}, {%opt, IVNM=>$idv} )
@@ -1431,8 +1430,7 @@ sub PDL::anova_rptd {
     = _fix_rptd_se( $cm_ref, \%ret, $opt{'IVNM'}, \@ls, $sj->uniq->nelem );
 
     # integrate mean and se into %ret
-    # sort bc we can't count on perl % internal key order implementation
-  @ret{ sort keys %$cm_ref } = @$cm_ref{ sort keys %$cm_ref };
+  @ret{ keys %$cm_ref } = values %$cm_ref;
 
   my $highest = join(' ~ ', @{ $opt{IVNM} });
   $cm_ref->{"# $highest # m"}->plot_means( $cm_ref->{"# $highest # se"}, 
