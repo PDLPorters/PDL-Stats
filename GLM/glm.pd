@@ -17,6 +17,7 @@ my $CDF = 1 if !$@;
 
 eval { require PDL::Slatec; };
 my $SLATEC = 1 if !$@;
+my $MATINV = $SLATEC ? \&PDL::Slatec::matinv : \&inv;
 
 my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
@@ -744,14 +745,7 @@ sub PDL::ols_t {
      
   my $Y = $ivs x $y2->dummy(0);
 
-  my $C;
-
-  if ( $SLATEC ) {
-    $C = PDL::Slatec::matinv( $ivs x $ivs->xchg(0,1) );
-  }
-  else {
-    $C = inv( $ivs x $ivs->xchg(0,1) );
-  }
+  my $C = &$MATINV( $ivs x $ivs->xchg(0,1) ); # avoid niceslice
 
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
@@ -1821,13 +1815,7 @@ sub PDL::ols {
      
   my $Y = $ivs x $y2->dummy(0);
 
-  my $C;
-  if ( $SLATEC ) {
-    $C = PDL::Slatec::matinv( $ivs x $ivs->xchg(0,1) );
-  }
-  else {
-    $C = inv( $ivs x $ivs->xchg(0,1) );
-  }
+  my $C = &$MATINV( $ivs x $ivs->xchg(0,1) ); # avoid niceslice
 
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
