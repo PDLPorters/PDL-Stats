@@ -737,7 +737,7 @@ sub PDL::ols_t {
 
   # Internally normalise data
   # (double) it or ushort y and sequence iv won't work right
-  my $ymean = $y->abs->sumover->double / $y->dim(0);
+  my $ymean = $y->abs->avgover->double;
   ($_tmp = $ymean->where( $ymean==0 )) .= 1;
   my $y2 = $y / $ymean->dummy(0);
  
@@ -1737,12 +1737,12 @@ sub PDL::ols {
 
   # Internally normalise data
   
-  my $ymean = (abs($y)->sum)/($y->nelem);
+  my $ymean = $y->abs->avgover->double;
   $ymean = 1 if $ymean == 0;
   my $y2 = $y / $ymean;
- 
+
   # Do the fit
-     
+
   my $Y = $ivs x $y2->dummy(0);
 
   my $C = &$MATINV( $ivs x $ivs->xchg(0,1) ); # avoid niceslice
