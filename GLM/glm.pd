@@ -724,13 +724,31 @@ Usage:
 
 *ols_t = \&PDL::ols_t;
 sub PDL::ols_t {
+  _ols_common(1, @_);
+}
+
+sub _ols_common {
+  my $threaded = shift;
+  my $opt = pop @_ if ref $_[-1] eq 'HASH';
     # y [n], ivs [n x attr] pdl
-  my ($y, $ivs, $opt) = @_;
-  my %opt = ( CONST => 1 );
+  my ($y, $ivs) = @_;
+  my %opt = (
+    CONST => 1,
+    PLOT  => 0,
+    WIN    => undef,      # for plotting
+  );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
-#  $y = $y->squeeze;
+  if (!$threaded) {
+    $y = $y->squeeze;
+    $y->getndims > 1 and
+      croak "use ols_t for threaded version";
+  }
+
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
+
+  ($y, $ivs) = _rm_bad_value( $y, $ivs ) if !$threaded;
+
     # set up ivs and const as ivs
   $opt{CONST} and
     $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
@@ -739,28 +757,27 @@ sub PDL::ols_t {
   # (double) it or ushort y and sequence iv won't work right
   my $ymean = $y->abs->avgover->double;
   ($_tmp = $ymean->where( $ymean==0 )) .= 1;
-  my $y2 = $y / $ymean->dummy(0);
- 
+  my $y2 = $y / ($threaded ? $ymean->dummy(0) : $ymean);
+
   # Do the fit
-     
+
   my $Y = $ivs x $y2->dummy(0);
 
   my $C = &$MATINV( $ivs x $ivs->xchg(0,1) ); # avoid niceslice
 
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
-
   $coeff = $coeff->dummy(0)
-    if $coeff->getndims == 1 and $y->getndims > 1;
-  $coeff *= $ymean->dummy(0);        # Un-normalise
-
-  return $coeff
-    unless wantarray; 
+    if $threaded and $coeff->getndims == 1 and $y->getndims > 1;
+  $coeff *= ($threaded ? $ymean->dummy(0) : $ymean); # Un-normalise
 
   my %ret;
 
     # ***$coeff x $ivs looks nice but produces nan on successive tries***
-  $ret{y_pred} = sumover( $coeff->dummy(1) * $ivs->xchg(0,1) );
+  $ret{y_pred} = sumover( ($threaded ? $coeff->dummy(1) : $coeff) * $ivs->transpose );
+  $opt{PLOT} and $y->plot_residuals( $ret{y_pred}, \%opt );
+  return $coeff unless wantarray;
+
   $ret{ss_total} = $opt{CONST}? $y->ss : sumover( $y ** 2 );
   $ret{ss_residual} = $y->sse( $ret{y_pred} );
   $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
@@ -768,10 +785,41 @@ sub PDL::ols_t {
 
   my $n_var = $opt{CONST}? $ivs->dim(1) - 1 : $ivs->dim(1);
   $ret{F_df} = pdl( $n_var, $y->dim(0) - $ivs->dim(1) );
-  $ret{F}
-    = $ret{ss_model} / $ret{F_df}->(0) / ($ret{ss_residual} / $ret{F_df}->(1));
+  $ret{F} = $ret{ss_model} / $ret{F_df}->(0)
+    / ($ret{ss_residual} / $ret{F_df}->(1));
   $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $ret{F_df}->dog )
     if $CDF;
+
+  if (!$threaded) {
+    my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
+
+    $opt{CONST} and
+      ($_tmp = $se_b(-1)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) * $C(-1,-1) );
+
+      # get the se for bs by successivly regressing each iv by the rest ivs
+    if ($ivs->dim(1) > 1) {
+      for my $k (0 .. $n_var-1) {
+        my @G = grep { $_ != $k } (0 .. $n_var-1);
+        my $G = $ivs->dice_axis(1, \@G);
+        $opt{CONST} and
+          $G = $G->glue( 1, ones($ivs->dim(0)) );
+        my $b_G = $ivs( ,$k)->ols( $G, {CONST=>0,PLOT=>0} );
+
+        my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
+
+        ($_tmp = $se_b($k)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / $ss_res_k );
+      }
+    }
+    else {
+      ($_tmp = $se_b(0))
+        .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / sum( $ivs( ,0)**2 ) );
+    }
+
+    $ret{b_se} = $se_b;
+    $ret{b_t} = $coeff / $ret{b_se};
+    $ret{b_p} = 2 * ( 1 - $ret{b_t}->abs->gsl_cdf_tdist_P( $ret{F_df}->(1) ) )
+      if $CDF;
+  }
 
   for (keys %ret) { ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze };
 
@@ -1714,98 +1762,7 @@ Usage:
 
 *ols = \&PDL::ols;
 sub PDL::ols {
-    # y [n], ivs [n x attr] pdl
-  my ($y, $ivs, $opt) = @_;
-  my %opt = (
-    CONST => 1,
-    PLOT  => 0,
-    WIN    => undef,      # for plotting
-  );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
-  $y = $y->squeeze;
-  $y->getndims > 1 and
-    croak "use ols_t for threaded version";
-
-  $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
-
-  ($y, $ivs) = _rm_bad_value( $y, $ivs );
-
-    # set up ivs and const as ivs
-  $opt{CONST} and
-    $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
-
-  # Internally normalise data
-  
-  my $ymean = $y->abs->avgover->double;
-  $ymean = 1 if $ymean == 0;
-  my $y2 = $y / $ymean;
-
-  # Do the fit
-
-  my $Y = $ivs x $y2->dummy(0);
-
-  my $C = &$MATINV( $ivs x $ivs->xchg(0,1) ); # avoid niceslice
-
-    # Fitted coefficients vector
-  my $coeff = PDL::squeeze( $C x $Y );
-     $coeff *= $ymean;        # Un-normalise
-
-  my %ret;
-
-    # ***$coeff x $ivs looks nice but produces nan on successive tries***
-  $ret{y_pred} = sumover( $coeff * $ivs->transpose );
-
-  $opt{PLOT} and $y->plot_residuals( $ret{y_pred}, \%opt );
-
-  return $coeff
-    unless wantarray;
-
-  $ret{b} = $coeff;
-  $ret{ss_total} = $opt{CONST}? $y->ss : sum( $y ** 2 );
-  $ret{ss_residual} = $y->sse( $ret{y_pred} );
-  $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
-  $ret{R2} = $ret{ss_model} / $ret{ss_total};
-
-  my $n_var = $opt{CONST}? $ivs->dim(1) - 1 : $ivs->dim(1);
-  $ret{F_df} = pdl( $n_var, $y->nelem - $ivs->dim(1) );
-  $ret{F} = $ret{ss_model} / $ret{F_df}->(0)
-          / ( $ret{ss_residual} / $ret{F_df}->(1) );
-  $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $ret{F_df}->dog )
-    if $CDF;
-
-  my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
-
-  $opt{CONST} and 
-    ($_tmp = $se_b(-1)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) * $C(-1,-1) );
-
-    # get the se for bs by successivly regressing each iv by the rest ivs
-  if ($ivs->dim(1) > 1) {
-    for my $k (0 .. $n_var-1) {
-      my @G = grep { $_ != $k } (0 .. $n_var-1);
-      my $G = $ivs->dice_axis(1, \@G);
-      $opt{CONST} and
-        $G = $G->glue( 1, ones($ivs->dim(0)) );
-      my $b_G = $ivs( ,$k)->ols( $G, {CONST=>0,PLOT=>0} );
-
-      my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
-
-      ($_tmp = $se_b($k)) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / $ss_res_k );
-    }
-  }
-  else {
-    ($_tmp = $se_b(0))
-      .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / sum( $ivs( ,0)**2 ) );
-  }
-
-  $ret{b_se} = $se_b;
-  $ret{b_t} = $ret{b} / $ret{b_se};
-  $ret{b_p} = 2 * ( 1 - $ret{b_t}->abs->gsl_cdf_tdist_P( $ret{F_df}->(1) ) )
-    if $CDF;
-
-  for (keys %ret) { ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze };
-
-  return %ret;
+  _ols_common(0, @_);
 }
 
 sub _rm_bad_value {
