@@ -6,9 +6,20 @@ on:
     tags-ignore:
       - '*'
   pull_request:
+  create:
 jobs:
-  ubuntu:
+  notify:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: ${{ always() }}
+    steps:
+      - uses: PDLPorters/devops/github-actions/irc-notifications@master
+        with:
+          target-notifications: true
+  ci:
     runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    needs: notify
     strategy:
       fail-fast: false
       matrix:
@@ -19,45 +30,38 @@ jobs:
             os: ubuntu-latest
             release-test: true
             coverage: true
-    container: perl:${{ matrix.perl-version }}
+          - perl-version: '5.30'
+            os: windows-latest
+          - perl-version: '5.30'
+            os: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cpanm -n --installdeps .
-      - run: perl -V
-      - name: Run release tests # before others as may install useful stuff
-        if: ${{ matrix.release-test }}
-        env:
-          RELEASE_TESTING: 1
-        run: |
-          cpanm -n --installdeps --with-develop .
-          prove -lr xt
-      - name: Run tests (no coverage)
-        if: ${{ !matrix.coverage }}
-        run: perl Makefile.PL && HARNESS_OPTIONS='j4' make test
-      - name: Run tests (with coverage)
-        if: ${{ matrix.coverage }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cpanm -n Devel::Cover::Report::Coveralls
-          cpanm git://github.com/mohawk2/Devel--Cover.git@deepdirs
-          HARNESS_OPTIONS='j4' cover -test -relative_only -gcov_chdir -report Coveralls
+      - name: 'ci-dist: target-setup-perl'
+        uses: PDLPorters/devops/github-actions/ci-dist@master
+        with:
+          target-setup-perl: true
+          perl-version: ${{ matrix.perl-version }}
+      - name: Install PDL dependencies
+        if: matrix.os == 'ubuntu-latest'
+        uses: PDLPorters/devops/github-actions/install-dep-pdl-dep@master
+      - name: 'ci-dist: target-all'
+        uses: PDLPorters/devops/github-actions/ci-dist@master
+        with:
+          target-setup-perl: false
+          target-install-dist-perl-deps: true
+          target-test-release-testing: true
+          target-test: true
+          test-enable-release-testing: ${{ matrix.release-test }}
+          test-enable-coverage: ${{ matrix.coverage }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  non-linux:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
+  build-status:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: ${{ always() }}
+    needs: [ 'ci' ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: shogo82148/actions-setup-perl@v1
+      - uses: PDLPorters/devops/github-actions/irc-notifications@master
         with:
-          distribution: strawberry # ignored non-windows
-      - uses: perl-actions/install-with-cpanm@v1
-        with:
-          args: -n --installdeps .
-          sudo: false
-      - run: perl -V
-      - run: perl Makefile.PL
-      - run: make test
+          target-build-status: true
+          needs: ${{ toJSON(needs) }}
