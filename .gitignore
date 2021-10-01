@@ -24,3 +24,4 @@ TS/TS.c
 TS/TS.o
 TS/TS.pm
 TS/TS.xs
+*/pp-*.[co]

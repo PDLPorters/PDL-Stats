@@ -2,6 +2,7 @@
 - make all PLOT options default to off; only load PGPLOT when try to use
 - remove plot_season and dsea deprecated since 0.5.0
 - effect_code and iv_cluster now don't croak on multi-dim inputs
+- opt in to upcoming PDL multi-C feature
 
 0.79 2021-08-17
 - update now that PDL's ->sum etc return ndarrays, not Perl scalars

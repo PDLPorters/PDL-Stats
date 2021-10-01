@@ -41,7 +41,7 @@
 \.prj$
 \.pui$
 
-^MYMETA\.
+MYMETA\.
 
 ^PDL-Stats-.*
 \.swp$
@@ -57,3 +57,4 @@
 \.o$
 /.*\.pm$
 \.xs$
+pp-.*\.c$
