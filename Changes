@@ -1,3 +1,5 @@
+- dodge false-negative on NiceSlice
+
 0.81 2022-01-11
 - fix Kmeans NiceSlice for PDL 2.066
 
