@@ -344,6 +344,54 @@ sub t_anova_bad_dv_iv {
   is( which($a->stddz == 0)->nelem, 6, 'stddz nan vs bad');
 }
 
+is( tapprox( t_anova_rptd_basic(), 0 ), 1, 'anova_rptd_basic' );
+sub t_anova_rptd_basic {
+  # data from https://www.youtube.com/watch?v=Fh73dAOMm9M
+  # Person,Before,After 2 weeks,After 4 weeks
+  # P1,102,97,95
+  # P2,79,77,75
+  # P3,83,77,75
+  # P4,92,93,87
+  # in Octave, statistics package 1.4.2:
+  # [p, table] = repanova([102 97 95; 79 77 75; 83 77 75; 92 93 87], 3, 'string')
+  # p = 7.3048e-03
+  # table =
+  # Source	SS	df	MS	F	Prob > F
+  # Subject	916.667	3	305.556
+  # Measure	72	2	36	12.4615	0.00730475
+  # Error	17.3333	6	2.88889
+  # turned into format for anova_rptd, then ($data, $idv, $subj) = rtable 'diet.txt', {SEP=>','}
+  # Person,Week,Weight
+  # P1,0,102
+  # P1,2,97
+  # P1,4,95
+  # P2,0,79
+  # P2,2,77
+  # P2,4,75
+  # P3,0,83
+  # P3,2,77
+  # P3,4,75
+  # P4,0,92
+  # P4,2,93
+  # P4,4,87
+  my ($data, $ivnm, $subj) = (
+    pdl( q[
+      [  0   2   4   0   2   4   0   2   4   0   2   4]
+      [102  97  95  79  77  75  83  77  75  92  93  87]
+    ] ),
+    [ qw(Week) ],
+    [ qw(P1 P1 P1 P2 P2 P2 P3 P3 P3 P4 P4 P4) ],
+  );
+  my ($w, $dv) = $data->dog;
+  my %m = $dv->anova_rptd($subj, $w, {ivnm=>$ivnm});
+  # diag "$_\t$m{$_}\n" for (sort keys %m);
+  my $ans_Week_F  = 12.4615384615385;
+  my $ans_Week_ms = 36;
+  return  ($m{'| Week | F'} - $ans_Week_F)
+        + ($m{'| Week | ms'} - $ans_Week_ms)
+  ;
+}
+
 is( tapprox( t_anova_rptd_1way(), 0 ), 1, 'anova_rptd_1w' );
 sub t_anova_rptd_1way {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
