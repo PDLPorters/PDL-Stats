@@ -1,3 +1,5 @@
+- effect_code exception if only one unique value
+
 0.83 2023-04-01
 - install pdldoc using PDL::Doc
 

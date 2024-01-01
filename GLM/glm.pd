@@ -1620,8 +1620,10 @@ sub PDL::effect_code {
   my ($var_ref) = @_;
 
   my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
-  my $var_e = yvals( float, $var->nelem, $var->max ) == $var;
-  ($_tmp = $var_e(which( $var == $var->max ), )) .= -1;
+  my $var_max = $var->max;
+  confess "effect_code called with only one unique value" if $var_max < 1;
+  my $var_e = yvals( float, $var->nelem, $var_max ) == $var;
+  ($_tmp = $var_e(which( $var == $var_max ), )) .= -1;
   $var_e = $var_e->setbadif( $var->isbad ) if $var->badflag;
 
   return wantarray? ($var_e, $map_ref) : $var_e;

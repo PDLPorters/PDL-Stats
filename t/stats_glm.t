@@ -242,6 +242,8 @@ is( tapprox( $b_bad->dm( ones(6) * .5 ), 6.93147180559945 ), 1, "model deviance 
 is( tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), 1, "deviance residual with bad values on $b_bad");
 
 {
+  eval { effect_code(['a']) };
+  isnt $@, '', 'effect_code with only one value dies';
   my @a = qw( a a a b b b b c c BAD );
   my $a = effect_code(\@a);
   my $ans = pdl [
@@ -255,6 +257,8 @@ is( tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), 1, "devia
 
 is( tapprox( t_effect_code_w(), 0 ), 1, 'effect_code_w' );
 sub t_effect_code_w {
+  eval { effect_code_w(['a']) };
+  isnt $@, '', 'effect_code_w with only one value dies';
   my @a = qw( a a a b b b b c c c );
   my $a = effect_code_w(\@a);
   return sum($a->sumover - pdl byte, (0, 0));
