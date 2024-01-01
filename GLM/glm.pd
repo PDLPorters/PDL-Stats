@@ -1085,6 +1085,7 @@ sub _cell_means {
   my %cm;
   my $i = 0;
   for (@$ivs_ref) {
+    confess "_cell_means passed empty ivs_ref ndarray at pos $i" if $_->isempty;
     my $last = zeroes $_->dim(0);
     my $i_neg = which $_( ,0) == -1;
     ($_tmp = $last($i_neg)) .= 1;
