@@ -344,7 +344,7 @@ sub t_anova_bad_dv_iv {
   is( which($a->stddz == 0)->nelem, 6, 'stddz nan vs bad');
 }
 
-is( tapprox( t_anova_rptd_basic(), 0 ), 1, 'anova_rptd_basic' );
+ok tapprox( t_anova_rptd_basic(), 0 ), 'anova_rptd_basic';
 sub t_anova_rptd_basic {
   # data from https://www.youtube.com/watch?v=Fh73dAOMm9M
   # Person,Before,After 2 weeks,After 4 weeks
@@ -384,11 +384,17 @@ sub t_anova_rptd_basic {
   );
   my ($w, $dv) = $data->dog;
   my %m = $dv->anova_rptd($subj, $w, {ivnm=>$ivnm});
-  # diag "$_\t$m{$_}\n" for (sort keys %m);
+  # diag "$_\t$m{$_}\n" for sort keys %m;
+  my $ans_Week_df = 2;
   my $ans_Week_F  = 12.4615384615385;
   my $ans_Week_ms = 36;
+  my $ans_Week_ss = 72;
+  my $ans_ss_subject = 916.666666;
   return  ($m{'| Week | F'} - $ans_Week_F)
+        + ($m{'| Week | df'} - $ans_Week_df)
         + ($m{'| Week | ms'} - $ans_Week_ms)
+        + ($m{'| Week | ss'} - $ans_Week_ss)
+        + ($m{ss_subject} - $ans_ss_subject)
   ;
 }
 
