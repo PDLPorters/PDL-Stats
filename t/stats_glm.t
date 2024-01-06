@@ -91,10 +91,7 @@ sub t_ols {
     ss_total => 10,
     ss_model => 7.5,
   );
-  my $sum = pdl 0;
-  $sum += sum(abs($a{$_} - $m{$_}))
-    for (keys %a);
-  return $sum;
+  test_stats_cmp(\%m, \%a);
 }
 
 ok tapprox( t_ols_bad(), 0 ), 'ols with bad value';
@@ -115,10 +112,7 @@ sub t_ols_bad {
     ss_total => 10,
     ss_model => 7.5,
   );
-  my $sum = pdl 0;
-  $sum += sum(abs($a{$_} - $m{$_}))
-    for (keys %a);
-  return $sum;
+  test_stats_cmp(\%m, \%a);
 }
 
 ok tapprox( t_r2_change(), 0 ), 'r2_change';
@@ -132,10 +126,7 @@ F_change  => pdl(3, 3),
 F_df      => pdl(1, 2),
 R2_change => pdl(.15, .15),
   );
-  my $sum = pdl 0;
-  $sum += sum($a{$_} - $m{$_})
-    for (keys %a);
-  return $sum;
+  test_stats_cmp(\%m, \%a);
 }
 
 { # pca
@@ -149,45 +140,41 @@ R2_change => pdl(.15, .15),
   my %a = (
 eigenvalue  => pdl( qw( 2.786684 0.18473727 0.028578689) ),
   # loadings in R
-eigenvector	=> pdl(
+eigenvector => [pdl(
     # v1       v2        v3
  [qw(  0.58518141   0.58668657   0.55978709)],  # comp1
  [qw( -0.41537629  -0.37601061   0.82829859)],  # comp2
  [qw( -0.69643754   0.71722722 -0.023661276)],  # comp3
-),
+), \&PDL::abs],
 
-loadings	=> pdl(
+loadings	=> [pdl(
  [qw(   0.97686463    0.97937725    0.93447296)],
  [qw(  -0.17853319    -0.1616134    0.35601163)],
  [qw(  -0.11773439    0.12124893 -0.0039999937)],
-),
+), \&PDL::abs],
 
 pct_var	=> pdl( qw(0.92889468 0.06157909 0.0095262297) ),
   );
-  for (keys %a) {
-    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-5), 1, $_);
-  }
+  test_stats_cmp(\%p, \%a, 1e-5);
 
   %p = $a->pca({CORR=>0, PLOT=>0});
   %a = (
-eigenvalue => pdl( qw[ 22.0561695 1.581758022 0.202065959 ] ),
-eigenvector => pdl(
+eigenvalue => [pdl(qw[ 22.0561695 1.581758022 0.202065959 ]), \&PDL::abs],
+eigenvector => [pdl(
  [qw(-0.511688 -0.595281 -0.619528)],
  [qw( 0.413568  0.461388  -0.78491)],
  [qw( 0.753085 -0.657846 0.0101023)],
-),
+), \&PDL::abs],
 
-loadings    => pdl(
+loadings    => [pdl(
  [qw(-0.96823408  -0.9739215 -0.94697802)],
  [qw( 0.20956865  0.20214966 -0.32129495)],
  [qw( 0.13639532 -0.10301693 0.001478041)],
-),
+), \&PDL::abs],
 
 pct_var => pdl( qw[0.925175 0.0663489 0.00847592] ),
   );
-  for (keys %a) {
-    is(tapprox(sum($a{$_}->abs - $p{$_}->abs),0, 1e-4), 1, "corr=>0, $_");
-  }
+  test_stats_cmp(\%p, \%a, 1e-4);
 }
 
 ok tapprox( t_pca_sorti(), 0 ), "pca_sorti - principal component analysis output sorted to find which vars a component is best represented";
@@ -272,12 +259,12 @@ sub t_anova {
   my $c = $d % 2;
   $d = lvalue_assign_detour( $d, 20, 10 );
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_F = pdl(165.252100840336, 0.0756302521008415);
-  my $ans_m = pdl([qw(8 18 38 53)], [qw(8 23 38 53)]);
-  return  sum( pdl( @m{'| A | F', '| A ~ B ~ C | F'} ) - $ans_F )
-        + sum( $m{'# A ~ B ~ C # m'}->(,2,)->squeeze - $ans_m )
-  ;
+  $m{'# A ~ B ~ C # m'} = $m{'# A ~ B ~ C # m'}->(,2,)->squeeze;
+  test_stats_cmp(\%m, {
+    '| A | F' => 165.252100840336,
+    '| A ~ B ~ C | F' => 0.0756302521008415,
+    '# A ~ B ~ C # m' => pdl([[qw(8 18 38 53)], [qw(8 23 38 53)]]),
+  });
 }
 
 ok tapprox( t_anova_1way(), 0 ), 'anova_1w';
@@ -285,13 +272,12 @@ sub t_anova_1way {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
   my $a = qsort sequence(15) % 3;
   my %m = $d->anova($a, {plot=>0});
-  my $ans_F  = 0.160919540229886;
-  my $ans_ms = 0.466666666666669;
-  my $ans_m = pdl(qw( 2.6 2.8 3.2 ));
-  return  ($m{F} - $ans_F)
-        + ($m{ms_model} - $ans_ms )
-        + sum( $m{'# IV_0 # m'}->squeeze - $ans_m )
-  ;
+  $m{$_} = $m{$_}->squeeze for '# IV_0 # m';
+  test_stats_cmp(\%m, {
+    F => 0.160919540229886,
+    ms_model => 0.466666666666669,
+    '# IV_0 # m' => pdl(qw( 2.6 2.8 3.2 )),
+  });
 }
 
 ok tapprox( t_anova_bad_dv(), 0 ), 'anova_3w bad dv';
@@ -304,14 +290,13 @@ sub t_anova_bad_dv {
   my $b = sequence(60) % 3;
   my $c = sequence(60) % 2;
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, v=>0});
-  my $ans_F = pdl( 150.00306433446, 0.17534855325553 );
-  my $ans_m = pdl([qw( 4 22 37 52 )], [qw( 10 22 37 52 )]);
-  my $ans_se = pdl([qw( 0 6 1.7320508 3.4641016 )], [qw( 3 3 3.4641016 1.7320508 )]);
-
-  return sum(abs(pdl( @m{'| A | F', '| A ~ B ~ C | F'} ) - $ans_F))
-       + sum(abs($m{'# A ~ B ~ C # m'}->(,1,)->squeeze - $ans_m))
-       + sum(abs($m{'# A ~ B ~ C # se'}->(,1,)->squeeze - $ans_se))
-  ;
+  $m{$_} = $m{$_}->(,1,)->squeeze for '# A ~ B ~ C # m', '# A ~ B ~ C # se';
+  test_stats_cmp(\%m, {
+    '| A | F' => 150.00306433446,
+    '| A ~ B ~ C | F' => 0.17534855325553,
+    '# A ~ B ~ C # m' => pdl([qw( 4 22 37 52 )], [qw( 10 22 37 52 )]),
+    '# A ~ B ~ C # se' => pdl([qw( 0 6 1.7320508 3.4641016 )], [qw( 3 3 3.4641016 1.7320508 )]),
+  });
 }
 
 ok tapprox( t_anova_bad_dv_iv(), 0 ), 'anova_3w bad dv iv';
@@ -325,12 +310,12 @@ sub t_anova_bad_dv_iv {
   $d->setbadat(62);
   $b->setbadat(61);
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_F = pdl(165.252100840336, 0.0756302521008415);
-  my $ans_m = pdl([qw(8 18 38 53)], [qw(8 23 38 53)]);
-  return  sum( pdl( @m{'| A | F', '| A ~ B ~ C | F'} ) - $ans_F )
-        + sum( $m{'# A ~ B ~ C # m'}->(,2,)->squeeze - $ans_m )
-  ;
+  $m{$_} = $m{$_}->(,2,)->squeeze for '# A ~ B ~ C # m';
+  test_stats_cmp(\%m, {
+    '| A | F' => 165.252100840336,
+    '| A ~ B ~ C | F' => 0.0756302521008415,
+    '# A ~ B ~ C # m' => pdl([qw(8 18 38 53)], [qw(8 23 38 53)]),
+  });
 }
 
 {
@@ -384,18 +369,13 @@ sub t_anova_rptd_basic {
   );
   my ($w, $dv) = $data->dog;
   my %m = $dv->anova_rptd($subj, $w, {ivnm=>$ivnm});
-  # diag "$_\t$m{$_}\n" for sort keys %m;
-  my $ans_Week_df = 2;
-  my $ans_Week_F  = 12.4615384615385;
-  my $ans_Week_ms = 36;
-  my $ans_Week_ss = 72;
-  my $ans_ss_subject = 916.666666;
-  return  ($m{'| Week | F'} - $ans_Week_F)
-        + ($m{'| Week | df'} - $ans_Week_df)
-        + ($m{'| Week | ms'} - $ans_Week_ms)
-        + ($m{'| Week | ss'} - $ans_Week_ss)
-        + ($m{ss_subject} - $ans_ss_subject)
-  ;
+  test_stats_cmp(\%m, {
+    '| Week | F' => 12.4615384615385,
+    '| Week | df' => 2,
+    '| Week | ms' => 36,
+    '| Week | ss' => 72,
+    ss_subject => 916.666666,
+  });
 }
 
 ok tapprox( t_anova_rptd_1way(), 0 ), 'anova_rptd_1w';
@@ -404,17 +384,21 @@ sub t_anova_rptd_1way {
   my $s = sequence(5)->dummy(1,3)->flat;
   my $a = qsort sequence(15) % 3;
   my %m = $d->anova_rptd($s, $a, {plot=>0});
-#print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_F  = 0.145077720207254;
-  my $ans_ms = 0.466666666666667;
-  my $ans_m = pdl(qw( 2.6 2.8 3.2 ));
-  return  ($m{'| IV_0 | F'} - $ans_F)
-        + ($m{'| IV_0 | ms'} - $ans_ms )
-        + sum( $m{'# IV_0 # m'}->squeeze - $ans_m )
-  ;
+  $m{$_} = $m{$_}->squeeze for '# IV_0 # m';
+  test_stats_cmp(\%m, {
+    '| IV_0 | F' => 0.145077720207254,
+    '| IV_0 | ms' => 0.466666666666667,
+    '# IV_0 # m' => pdl(qw( 2.6 2.8 3.2 )),
+  });
 }
 
 ok tapprox( t_anova_rptd_2way_bad_dv(), 0 ), 'anova_rptd_2w bad dv';
+my %anova_bad_a = (
+  '| a | F' => 0.351351351351351,
+  '| a | ms' => 0.722222222222222,
+  '| a ~ b | F' => 5.25,
+  '# a ~ b # m' => pdl(qw( 3  1.3333333  3.3333333 3.3333333  3.6666667  2.6666667  ))->reshape(3,2),
+);
 sub t_anova_rptd_2way_bad_dv {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
   $d = $d->setbadat(5);
@@ -425,16 +409,7 @@ sub t_anova_rptd_2way_bad_dv {
   my $b = (sequence(8) > 3)->dummy(1,3)->flat;
 # [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],plot=>0, v=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_a_F  = 0.351351351351351;
-  my $ans_a_ms = 0.722222222222222;
-  my $ans_ab_F = 5.25;
-  my $ans_ab_m = pdl(qw( 3  1.3333333  3.3333333 3.3333333  3.6666667  2.6666667  ))->reshape(3,2);
-  return  ($m{'| a | F'} - $ans_a_F)
-        + ($m{'| a | ms'} - $ans_a_ms)
-        + ($m{'| a ~ b | F'} - $ans_ab_F)
-        + sum( $m{'# a ~ b # m'} - $ans_ab_m )
-  ;
+  test_stats_cmp(\%m, \%anova_bad_a);
 }
 
 ok tapprox( t_anova_rptd_2way_bad_iv(), 0 ), 'anova_rptd_2w bad iv';
@@ -448,16 +423,7 @@ sub t_anova_rptd_2way_bad_iv {
   my $b = (sequence(8) > 3)->dummy(1,3)->flat;
 # [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],plot=>0, v=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_a_F  = 0.351351351351351;
-  my $ans_a_ms = 0.722222222222222;
-  my $ans_ab_F = 5.25;
-  my $ans_ab_m = pdl(qw( 3  1.3333333  3.3333333 3.3333333  3.6666667  2.6666667  ))->reshape(3,2);
-  return  ($m{'| a | F'} - $ans_a_F)
-        + ($m{'| a | ms'} - $ans_a_ms)
-        + ($m{'| a ~ b | F'} - $ans_ab_F)
-        + sum( $m{'# a ~ b # m'} - $ans_ab_m )
-  ;
+  test_stats_cmp(\%m, \%anova_bad_a);
 }
 
 ok tapprox( t_anova_rptd_3way(), 0 ), 'anova_rptd_3w';
@@ -470,22 +436,15 @@ sub t_anova_rptd_3way {
   my $b = sequence(2)->dummy(0,3)->flat->dummy(1,8)->flat;
   my $c = sequence(3)->dummy(1,16)->flat;
   my %m = $d->anova_rptd($s, $a, $b, $c, {ivnm=>['a','b', 'c'],plot=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_a_F  = 0.572519083969459;
-  my $ans_a_ms = 0.520833333333327;
-  my $ans_ac_F = 3.64615384615385;
-  my $ans_bc_ems = 2.63194444444445;
-  my $ans_abc_F = 1.71299093655589;
-  my $ans_abc_m = pdl(qw( 4 2.75 2.75 2.5 3.25 4.25 3.5 1.75 2 3.5 2.75 2.25 ))->reshape(2,2,3);
-  my $ans_ab_se = ones(2, 2) * 0.55014729;
-  return  ($m{'| a | F'} - $ans_a_F)
-        + ($m{'| a | ms'} - $ans_a_ms)
-        + ($m{'| a ~ c | F'} - $ans_ac_F)
-        + ($m{'| b ~ c || err ms'} - $ans_bc_ems)
-        + ($m{'| a ~ b ~ c | F'} - $ans_abc_F)
-        + sum( $m{'# a ~ b ~ c # m'} - $ans_abc_m )
-        + sum( $m{'# a ~ b # se'} - $ans_ab_se )
-  ;
+  test_stats_cmp(\%m, {
+    '| a | F' => 0.572519083969459,
+    '| a | ms' => 0.520833333333327,
+    '| a ~ c | F' => 3.64615384615385,
+    '| b ~ c || err ms' => 2.63194444444445,
+    '| a ~ b ~ c | F' => 1.71299093655589,
+    '# a ~ b ~ c # m' => pdl(qw( 4 2.75 2.75 2.5 3.25 4.25 3.5 1.75 2 3.5 2.75 2.25 ))->reshape(2,2,3),
+    '# a ~ b # se' => ones(2, 2) * 0.55014729,
+  });
 }
 
 ok tapprox( t_anova_rptd_mixed(), 0 ), 'anova_rptd mixed';
@@ -498,20 +457,14 @@ sub t_anova_rptd_mixed {
   my $b = (sequence(8) > 3)->dummy(1,3)->flat;
 # [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_a_F  = 0.0775862068965517;
-  my $ans_a_ms = 0.125;
-  my $ans_ab_F = 1.88793103448276;
-  my $ans_b_F  = 0.585657370517928;
-  my $ans_b_ems = 3.48611111111111;
-  my $ans_ab_se = ones(3,2) * 0.63464776;
-  return  ($m{'| a | F'} - $ans_a_F)
-        + ($m{'| a | ms'} - $ans_a_ms)
-        + ($m{'| a ~ b | F'} - $ans_ab_F)
-        + ($m{'| b | F'} - $ans_b_F)
-        + ($m{'| b || err ms'} - $ans_b_ems)
-        + sum( $m{'# a ~ b # se'} - $ans_ab_se )
-  ;
+  test_stats_cmp(\%m, {
+    '| a | F' => 0.0775862068965517,
+    '| a | ms' => 0.125,
+    '| a ~ b | F' => 1.88793103448276,
+    '| b | F' => 0.585657370517928,
+    '| b || err ms' => 3.48611111111111,
+    '# a ~ b # se' => ones(3,2) * 0.63464776,
+  });
 }
 
 # Tests for mixed anova thanks to Erich Greene
@@ -523,12 +476,28 @@ SKIP: {
     ok tapprox( t_anova_rptd_mixed_l3ord1(), 0, .001 ), 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var';
     ok tapprox( t_anova_rptd_mixed_l3ord2(), 0, .001 ), 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject';
 }
+sub test_stats_cmp {
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  my ($m, $ans, $eps) = @_;
+  $eps ||= 1e-6;
+  my $error = pdl 0;
+  foreach (sort keys %$ans) {
+    my $got = PDL->topdl($m->{$_});
+    my $exp = $ans->{$_};
+    if (ref $exp eq 'ARRAY') {
+      ($exp, my $func) = @$exp;
+      ($got, $exp) = map &$func($_), $got, $exp;
+    }
+    $exp = PDL->topdl($exp);
+    $error += my $this_diff = $got - $exp;
+    fail($_), diag "got $m->{$_}\nexpected $exp" if any($this_diff->abs > $eps);
+  }
+  return $error;
+}
 sub t_anova_rptd_mixed_backend {
     my ($d,$s,$w,$b,$ans) = @_;
     my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
-    my $error = pdl 0;
-    $error += $m{$_} - $$ans{$_} foreach keys %$ans;
-    return $error;
+    test_stats_cmp(\%m, $ans);
 }
 sub t_anova_rptd_mixed_l2_common {
     my ($d,$s,$w,$b) = @_;
@@ -638,20 +607,14 @@ sub t_anova_rptd_mixed_bad {
   # any missing value causes all data from the subject (4) to be dropped
   $b->setbadat(-1);
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
-# print "$_\t$m{$_}\n" for (sort keys %m);
-  my $ans_a_F  = 0.0775862068965517;
-  my $ans_a_ms = 0.125;
-  my $ans_ab_F = 1.88793103448276;
-  my $ans_b_F  = 0.585657370517928;
-  my $ans_b_ems = 3.48611111111111;
-  my $ans_ab_se = ones(3,2) * 0.63464776;
-  return  ($m{'| a | F'} - $ans_a_F)
-        + ($m{'| a | ms'} - $ans_a_ms)
-        + ($m{'| a ~ b | F'} - $ans_ab_F)
-        + ($m{'| b | F'} - $ans_b_F)
-        + ($m{'| b || err ms'} - $ans_b_ems)
-        + sum( $m{'# a ~ b # se'} - $ans_ab_se )
-  ;
+  test_stats_cmp(\%m, {
+    '| a | F' => 0.0775862068965517,
+    '| a | ms' => 0.125,
+    '| a ~ b | F' => 1.88793103448276,
+    '| b | F' => 0.585657370517928,
+    '| b || err ms' => 3.48611111111111,
+    '# a ~ b # se' => ones(3,2) * 0.63464776,
+  });
 }
 
 ok tapprox( t_anova_rptd_mixed_4w(), 0 ), 'anova_rptd_mixed_4w';
@@ -659,24 +622,15 @@ sub t_anova_rptd_mixed_4w {
   my ($data, $idv, $subj) = rtable \*DATA, {v=>0};
   my ($age, $aa, $beer, $wings, $dv) = $data->dog;
   my %m = $dv->anova_rptd( $subj, $age, $aa, $beer, $wings, { ivnm=>[qw(age aa beer wings)], btwn=>[0,1], v=>0, plot=>0 } );
-#  print STDERR "$_\t$m{$_}\n" for (sort keys %m);
-
-  my $ans_aa_F = 0.0829493087557666;
-  my $ans_age_aa_F = 2.3594470046083;
-  my $ans_beer_F = 0.00943396226415362;
-  my $ans_aa_beer_F = 0.235849056603778;
-  my $ans_age_beer_wings_F = 0.0303030303030338;
-  my $ans_beer_wings_F = 2.73484848484849;
-  my $ans_4w_F = 3.03030303030303;
-
-  return  ($m{'| aa | F'} - $ans_aa_F)
-        + ($m{'| age ~ aa | F'} - $ans_age_aa_F)
-        + ($m{'| beer | F'} - $ans_beer_F)
-        + ($m{'| aa ~ beer | F'} - $ans_aa_beer_F)
-        + ($m{'| age ~ beer ~ wings | F'} - $ans_age_beer_wings_F)
-        + ($m{'| beer ~ wings | F'} - $ans_beer_wings_F)
-        + ($m{'| age ~ aa ~ beer ~ wings | F'} - $ans_4w_F)
-  ;
+  test_stats_cmp(\%m, {
+    '| aa | F' => 0.0829493087557666,
+    '| age ~ aa | F' => 2.3594470046083,
+    '| beer | F' => 0.00943396226415362,
+    '| aa ~ beer | F' => 0.235849056603778,
+    '| age ~ beer ~ wings | F' => 0.0303030303030338,
+    '| beer ~ wings | F' => 2.73484848484849,
+    '| age ~ aa ~ beer ~ wings | F' => 3.03030303030303,
+  });
 }
 
 {
