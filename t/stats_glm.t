@@ -33,19 +33,19 @@ sub t_fill_rand {
   tapprox( $stdv, 1.01980390271856 ) || tapprox( $stdv, 1.16619037896906 );
 }
 
-is( tapprox( $a->dev_m->avg, 0 ), 1, "dev_m replaces values with deviations from the mean on $a");
-is( tapprox( $a->stddz->avg, 0 ), 1, "stddz standardizes data on $a");
+ok tapprox( $a->dev_m->avg, 0 ), "dev_m replaces values with deviations from the mean on $a";
+ok tapprox( $a->stddz->avg, 0 ), "stddz standardizes data on $a";
 
-is( tapprox( $a->sse($b), 18), 1, "sse gives sum of squared errors between actual and predicted values between $a and $b");
-is( tapprox( $a->mse($b), 3.6), 1, "mse gives mean of squared errors between actual and predicted values between $a and $b");
-is( tapprox( $a->rmse($b), 1.89736659610103 ), 1, "rmse gives root mean squared error, ie. stdv around predicted value between $a and $b");
+ok tapprox( $a->sse($b), 18), "sse gives sum of squared errors between actual and predicted values between $a and $b";
+ok tapprox( $a->mse($b), 3.6), "mse gives mean of squared errors between actual and predicted values between $a and $b";
+ok tapprox( $a->rmse($b), 1.89736659610103 ), "rmse gives root mean squared error, ie. stdv around predicted value between $a and $b";
 
-is( tapprox( $b->glue(1,ones(5))->pred_logistic(pdl(1,2))->sum, 4.54753948757851 ), 1, "pred_logistic calculates predicted probability value for logistic regression");
+ok tapprox( $b->glue(1,ones(5))->pred_logistic(pdl(1,2))->sum, 4.54753948757851 ), "pred_logistic calculates predicted probability value for logistic regression";
 
 my $y = pdl(0, 1, 0, 1, 0);
-is( tapprox( $y->d0(), 6.73011667009256 ), 1, 'd0');
-is( tapprox( $y->dm( ones(5) * .5 ), 6.93147180559945 ), 1, 'dm' );
-is( tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 1, 'dvrs' );
+ok tapprox( $y->d0(), 6.73011667009256 ), 'd0';
+ok tapprox( $y->dm( ones(5) * .5 ), 6.93147180559945 ), 'dm';
+ok tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 'dvrs';
 
 {
   my $a = pdl(ushort, [0,0,1,0,1], [0,0,0,1,1] );
@@ -67,16 +67,16 @@ is( tapprox( sum($y->dvrs(ones(5) * .5) ** 2), 6.93147180559945 ), 1, 'dvrs' );
     [qw(  0.0071428571    0.035714286   -0.057142857)],
    ],
   );
-  is( tapprox( sum( abs($m{R2} - $rsq) ), 0 ), 1, 'ols_t R2' );
-  is( tapprox( sum( abs($m{b} - $coeff) ), 0 ), 1, 'ols_t b' );
+  ok tapprox( sum( abs($m{R2} - $rsq) ), 0 ), 'ols_t R2';
+  ok tapprox( sum( abs($m{b} - $coeff) ), 0 ), 'ols_t b';
 
   my %m0 = $a->ols_t(sequence(5), {CONST=>0});
   my $b0 = pdl ([ 0.2 ], [ 0.23333333 ]);
 
-  is( tapprox( sum( abs($m0{b} - $b0) ), 0 ), 1, 'ols_t, const=>0' );
+  ok tapprox( sum( abs($m0{b} - $b0) ), 0 ), 'ols_t, const=>0';
 }
 
-is( tapprox( t_ols(), 0 ), 1, 'ols' );
+ok tapprox( t_ols(), 0 ), 'ols';
 sub t_ols {
   my $a = sequence 5;
   my $b = pdl(0,0,0,1,1);
@@ -97,14 +97,14 @@ sub t_ols {
   return $sum;
 }
 
-is( tapprox( t_ols_bad(), 0 ), 1, 'ols with bad value' );
+ok tapprox( t_ols_bad(), 0 ), 'ols with bad value';
 sub t_ols_bad {
   my $a = sequence 6;
   my $b = pdl(0,0,0,1,1,1);
   $a->setbadat(5);
   my %m = $a->ols($b, {plot=>0});
   is( $b->sumover, 3, "ols with bad value didn't change caller value" );
-  ok( $a->check_badflag, "ols with bad value didn't remove caller bad flag" );
+  ok $a->check_badflag, "ols with bad value didn't remove caller bad flag";
   my %a = (
     F    => 9,
     F_df => pdl(1,3),
@@ -121,7 +121,7 @@ sub t_ols_bad {
   return $sum;
 }
 
-is( tapprox( t_r2_change(), 0 ), 1, 'r2_change' );
+ok tapprox( t_r2_change(), 0 ), 'r2_change';
 sub t_r2_change {
   my $a = sequence 5, 2;
   my $b = pdl(0,0,0,1,1);
@@ -190,7 +190,7 @@ pct_var => pdl( qw[0.925175 0.0663489 0.00847592] ),
   }
 }
 
-is( tapprox( t_pca_sorti(), 0 ), 1, "pca_sorti - principal component analysis output sorted to find which vars a component is best represented");
+ok tapprox( t_pca_sorti(), 0 ), "pca_sorti - principal component analysis output sorted to find which vars a component is best represented";
 sub t_pca_sorti {
   my $a = sequence 10, 5;
   $a = lvalue_assign_detour( $a, which($a % 7 == 0), 0 );
@@ -206,7 +206,7 @@ SKIP: {
   eval { require PDL::Fit::LM; };
   skip 'no PDL::Fit::LM', 1 if $@;
 
-  is( tapprox( t_logistic(), 0 ), 1, 'logistic' );
+  ok tapprox( t_logistic(), 0 ), 'logistic';
 
   my $y = pdl( 0, 0, 0, 1, 1 );
   my $x = pdl(2, 3, 5, 5, 5);
@@ -228,18 +228,18 @@ $a_bad->setbadat(-1);
 my $b_bad = pdl(0, 0, 0, 0, 1, 1);
 $b_bad->setbadat(0);
 
-is( tapprox( $a_bad->dev_m->avg, 0 ), 1, "dev_m with bad values $a_bad");
-is( tapprox( $a_bad->stddz->avg, 0 ), 1, "stdz with bad values $a_bad");
+ok tapprox( $a_bad->dev_m->avg, 0 ), "dev_m with bad values $a_bad";
+ok tapprox( $a_bad->stddz->avg, 0 ), "stdz with bad values $a_bad";
 
-is( tapprox( $a_bad->sse($b_bad), 23), 1, "sse with bad values between $a_bad and $b_bad");
-is( tapprox( $a_bad->mse($b_bad), 5.75), 1, "mse with badvalues between $a_bad and $b_bad");
-is( tapprox( $a_bad->rmse($b_bad), 2.39791576165636 ), 1, "rmse with bad values between $a_bad and $b_bad");
+ok tapprox( $a_bad->sse($b_bad), 23), "sse with bad values between $a_bad and $b_bad";
+ok tapprox( $a_bad->mse($b_bad), 5.75), "mse with badvalues between $a_bad and $b_bad";
+ok tapprox( $a_bad->rmse($b_bad), 2.39791576165636 ), "rmse with bad values between $a_bad and $b_bad";
 
-is( tapprox( $b_bad->glue(1,ones(6))->pred_logistic(pdl(1,2))->sum, 4.54753948757851 ), 1, "pred_logistic with bad values");
+ok tapprox( $b_bad->glue(1,ones(6))->pred_logistic(pdl(1,2))->sum, 4.54753948757851 ), "pred_logistic with bad values";
 
-is( tapprox( $b_bad->d0(), 6.73011667009256 ), 1, "null deviance with bad values on $b_bad");
-is( tapprox( $b_bad->dm( ones(6) * .5 ), 6.93147180559945 ), 1, "model deviance with bad values on $b_bad");
-is( tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), 1, "deviance residual with bad values on $b_bad");
+ok tapprox( $b_bad->d0(), 6.73011667009256 ), "null deviance with bad values on $b_bad";
+ok tapprox( $b_bad->dm( ones(6) * .5 ), 6.93147180559945 ), "model deviance with bad values on $b_bad";
+ok tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), "deviance residual with bad values on $b_bad";
 
 {
   eval { effect_code(['a']) };
@@ -252,10 +252,10 @@ is( tapprox( sum($b_bad->dvrs(ones(6) * .5) ** 2), 6.93147180559945 ), 1, "devia
   ];
   $ans = $ans->setvaltobad(-99);
   is( sum(abs(which($a->isbad) - pdl(9,19))), 0, 'effect_code got bad value' );
-  is( tapprox( sum(abs($a - $ans)), 0 ), 1, 'effect_code coded with bad value' );
+  ok tapprox( sum(abs($a - $ans)), 0 ), 'effect_code coded with bad value';
 }
 
-is( tapprox( t_effect_code_w(), 0 ), 1, 'effect_code_w' );
+ok tapprox( t_effect_code_w(), 0 ), 'effect_code_w';
 sub t_effect_code_w {
   eval { effect_code_w(['a']) };
   isnt $@, '', 'effect_code_w with only one value dies';
@@ -264,7 +264,7 @@ sub t_effect_code_w {
   return sum($a->sumover - pdl byte, (0, 0));
 }
 
-is( tapprox( t_anova(), 0 ), 1, 'anova_3w' );
+ok tapprox( t_anova(), 0 ), 'anova_3w';
 sub t_anova {
   my $d = sequence 60;
   my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
@@ -280,7 +280,7 @@ sub t_anova {
   ;
 }
 
-is( tapprox( t_anova_1way(), 0 ), 1, 'anova_1w' );
+ok tapprox( t_anova_1way(), 0 ), 'anova_1w';
 sub t_anova_1way {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
   my $a = qsort sequence(15) % 3;
@@ -294,7 +294,7 @@ sub t_anova_1way {
   ;
 }
 
-is( tapprox( t_anova_bad_dv(), 0 ), 1, 'anova_3w bad dv' );
+ok tapprox( t_anova_bad_dv(), 0 ), 'anova_3w bad dv';
 sub t_anova_bad_dv {
   my $d = sequence 60;
   $d = lvalue_assign_detour( $d, 20, 10 );
@@ -314,7 +314,7 @@ sub t_anova_bad_dv {
   ;
 }
 
-is( tapprox( t_anova_bad_dv_iv(), 0 ), 1, 'anova_3w bad dv iv' );
+ok tapprox( t_anova_bad_dv_iv(), 0 ), 'anova_3w bad dv iv';
 sub t_anova_bad_dv_iv {
   my $d = sequence 63;
   my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
@@ -398,7 +398,7 @@ sub t_anova_rptd_basic {
   ;
 }
 
-is( tapprox( t_anova_rptd_1way(), 0 ), 1, 'anova_rptd_1w' );
+ok tapprox( t_anova_rptd_1way(), 0 ), 'anova_rptd_1w';
 sub t_anova_rptd_1way {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
   my $s = sequence(5)->dummy(1,3)->flat;
@@ -414,7 +414,7 @@ sub t_anova_rptd_1way {
   ;
 }
 
-is( tapprox( t_anova_rptd_2way_bad_dv(), 0 ), 1, 'anova_rptd_2w bad dv' );
+ok tapprox( t_anova_rptd_2way_bad_dv(), 0 ), 'anova_rptd_2w bad dv';
 sub t_anova_rptd_2way_bad_dv {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
   $d = $d->setbadat(5);
@@ -437,7 +437,7 @@ sub t_anova_rptd_2way_bad_dv {
   ;
 }
 
-is( tapprox( t_anova_rptd_2way_bad_iv(), 0 ), 1, 'anova_rptd_2w bad iv' );
+ok tapprox( t_anova_rptd_2way_bad_iv(), 0 ), 'anova_rptd_2w bad iv';
 sub t_anova_rptd_2way_bad_iv {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
   my $s = sequence(4)->dummy(1,6)->flat;
@@ -460,7 +460,7 @@ sub t_anova_rptd_2way_bad_iv {
   ;
 }
 
-is( tapprox( t_anova_rptd_3way(), 0 ), 1, 'anova_rptd_3w' );
+ok tapprox( t_anova_rptd_3way(), 0 ), 'anova_rptd_3w';
 sub t_anova_rptd_3way {
   my $d = pdl( qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 ),
                qw( 5 5 1 1 4 4 1 4 4 2 3 3 5 1 1 2 4 4 4 5 5 1 1 2 )
@@ -488,7 +488,7 @@ sub t_anova_rptd_3way {
   ;
 }
 
-is( tapprox( t_anova_rptd_mixed(), 0 ), 1, 'anova_rptd mixed' );
+ok tapprox( t_anova_rptd_mixed(), 0 ), 'anova_rptd mixed';
 sub t_anova_rptd_mixed {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
   my $s = sequence(4)->dummy(1,6)->flat;
@@ -516,13 +516,13 @@ sub t_anova_rptd_mixed {
 
 # Tests for mixed anova thanks to Erich Greene
 
-is( tapprox( t_anova_rptd_mixed_l2ord2(), 0,      ), 1, 'anova_rptd mixed with 2 btwn-subj var levels, data grouped by subject'    );
+ok tapprox( t_anova_rptd_mixed_l2ord2(), 0,      ), 'anova_rptd mixed with 2 btwn-subj var levels, data grouped by subject';
 SKIP: {
     skip "yet to be fixed", 3;
-    is( tapprox( t_anova_rptd_mixed_l2ord1(), 0,      ), 1, 'anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var' );
-    is( tapprox( t_anova_rptd_mixed_l3ord1(), 0, .001 ), 1, 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var' );
-    is( tapprox( t_anova_rptd_mixed_l3ord2(), 0, .001 ), 1, 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject'    );
-};
+    ok tapprox( t_anova_rptd_mixed_l2ord1(), 0,      ), 'anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var';
+    ok tapprox( t_anova_rptd_mixed_l3ord1(), 0, .001 ), 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var';
+    ok tapprox( t_anova_rptd_mixed_l3ord2(), 0, .001 ), 'anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject';
+}
 sub t_anova_rptd_mixed_backend {
     my ($d,$s,$w,$b,$ans) = @_;
     my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
@@ -622,7 +622,7 @@ sub t_anova_rptd_mixed_l3ord2 {
 }
 
 
-is( tapprox( t_anova_rptd_mixed_bad(), 0 ), 1, 'anova_rptd mixed bad' );
+ok tapprox( t_anova_rptd_mixed_bad(), 0 ), 'anova_rptd mixed bad';
 sub t_anova_rptd_mixed_bad {
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 1 1 1 1 );
   my $s = sequence(4)->dummy(1,6)->flat;
@@ -654,7 +654,7 @@ sub t_anova_rptd_mixed_bad {
   ;
 }
 
-is( tapprox( t_anova_rptd_mixed_4w(), 0 ), 1, 'anova_rptd_mixed_4w' );
+ok tapprox( t_anova_rptd_mixed_4w(), 0 ), 'anova_rptd_mixed_4w';
 sub t_anova_rptd_mixed_4w {
   my ($data, $idv, $subj) = rtable \*DATA, {v=>0};
   my ($age, $aa, $beer, $wings, $dv) = $data->dog;
