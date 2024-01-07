@@ -1,3 +1,5 @@
+- fix anova_rptd problem depending on grouping of IVs (part of RT#97925)
+
 0.853 2025-01-03
 - uses PDL 2.096+ lib/*.pd format for quicker builds
 

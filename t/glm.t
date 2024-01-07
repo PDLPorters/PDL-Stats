@@ -473,7 +473,7 @@ $anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| w
 
 # Tests for mixed anova thanks to Erich Greene
 
-if (0) { # FIXME
+{
   # anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var
   my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
   my $s = pdl '[0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7]';
@@ -510,13 +510,14 @@ if (0) { # FIXME
   test_stats_cmp(\%m, \%anova_ans_l3_common);
 }
 
+# these are still not right, see R output below
 my %ans_mixed = (
-  '| a | F' => 0.0775862068965517,
+  '| a | F' => 0.0633802816901399,
   '| a | ms' => 0.125,
-  '| a ~ b | F' => 1.88793103448276,
-  '| b | F' => 0.585657370517928,
-  '| b || err ms' => 3.48611111111111,
-  '# a ~ b # se' => ones(3,2) * 0.63464776,
+  '| a ~ b | F' => 1.54225352112676,
+  '| b | F' => 0.738693467336681,
+  '| b || err ms' => 2.76388888888889,
+  '# a ~ b # se' => ones(3,2) * 0.70217915,
 );
 { # anova_rptd mixed
   my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
@@ -526,8 +527,33 @@ my %ans_mixed = (
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
   test_stats_cmp(\%m, \%ans_mixed);
 }
-
 { # anova_rptd mixed bad
+  # with the "bad" ie removed subject and data removed, in R:
+  # library(tidyverse)
+  # library(data.table)
+  # library(rstatix)
+  # tdata <- data.frame(
+  #  stringsAsFactors = FALSE,
+  #  dv = c(3.0,2.0,1.0,5.0,2.0,1.0,5.0,3.0,1.0,4.0,1.0,2.0,3.0,5.0,5.0,3.0,4.0,2.0,1.0,5.0,4.0,3.0,2.0,2),
+  #  id = c(0L,1L,2L,3L,0L,1L,2L,3L,0L,1L,2L,3L,0L,1L,2L,3L,0L,1L,2L,3L,0L,1L,2L,3L),
+  #  a = c(0L,0L,0L,0L,0L,0L,0L,0L,1L,1L,1L,1L,1L,1L,1L,1L,2L,2L,2L,2L,2L,2L,2L,2L),
+  #  b = c(0L,0L,0L,0L,1L,1L,1L,1L,0L,0L,0L,0L,1L,1L,1L,1L,0L,0L,0L,0L,1L,1L,1L,1L)
+  # )
+  # as.data.table(tdata)
+  # typeof(tdata)
+  # class(tdata)
+  # tdata <- tdata %>% convert_as_factor(id, a, b)
+  # as.data.table(tdata)
+  # res.aov <- anova_test(
+  #   data = tdata, dv = dv, wid = id,
+  #   within = c(a, b), detailed = TRUE
+  #   )
+  # get_anova_table(res.aov, correction = "none")
+  #        Effect DFn DFd     SSn    SSd       F        p p<.05   ges
+  # 1 (Intercept)   1   3 198.375  2.125 280.059 0.000465     * 0.831
+  # 2           a   2   6   0.250 18.750   0.040 0.961000       0.006
+  # 3           b   1   3   2.042 14.458   0.424 0.562000       0.048
+  # 4         a:b   2   6   6.083  4.917   3.712 0.089000       0.131
   my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 1 1 1 1]';
   my $s = pdl '[0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 4 4 4 4]';
   my $a = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 0 0 0 0]';
