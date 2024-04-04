@@ -539,21 +539,14 @@ if (0) { # FIXME
 }
 
 { # anova_rptd mixed bad
-  my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 1 1 1 1 );
-  my $s = sequence(4)->dummy(1,6)->flat;
-# [0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]
-# add subj 4 at the end
-  $s = $s->append(ones(4) * 4);
-  my $a = qsort sequence(24) % 3;
-# [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]
-  $a = $a->append(zeroes(4));
-  my $b = (sequence(8) > 3)->dummy(1,3)->flat;
-# [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
-  $b = $b->append(zeroes(4));
+  my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2 1 1 1 1]';
+  my $s = pdl '[0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 4 4 4 4]';
+  my $a = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 0 0 0 0]';
+  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 BAD]';
   # any missing value causes all data from the subject (4) to be dropped
-  $b->setbadat(-1);
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
   test_stats_cmp(\%m, {
+    '| a | df' => 2,
     '| a | F' => 0.0775862068965517,
     '| a | ms' => 0.125,
     '| a ~ b | F' => 1.88793103448276,
