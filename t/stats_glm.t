@@ -489,7 +489,7 @@ sub test_stats_cmp {
       ($got, $exp) = map &$func($_), $got, $exp;
     }
     $exp = PDL->topdl($exp);
-    $error += my $this_diff = $got - $exp;
+    $error = $error + (my $this_diff = $got - $exp);
     fail($_), diag "got $m->{$_}\nexpected $exp" if any($this_diff->abs > $eps);
   }
   return $error;
