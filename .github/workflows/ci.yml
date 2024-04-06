@@ -33,7 +33,7 @@ jobs:
           - perl-version: '5.30'
             os: windows-latest
           - perl-version: '5.30'
-            os: macos-11
+            os: macos-latest
     steps:
       - uses: actions/checkout@v2
       - name: 'ci-dist: target-setup-perl'
