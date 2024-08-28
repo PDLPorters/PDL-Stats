@@ -8,7 +8,7 @@ PDL::Stats::TS -- basic time series functions
 
 =head1 DESCRIPTION
 
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are threadable and methods that are NOT threadable, respectively. Plots require PDL::Graphics::PGPLOT.
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are broadcastable and methods that are NOT broadcastable, respectively. Plots require L<PDL::Graphics::PGPLOT>.
 
 ***EXPERIMENTAL!*** In particular, bad value support is spotty and may be shaky. USE WITH DISCRETION! 
 
@@ -1002,7 +1002,7 @@ sub PDL::plot_acf {
 
 =head1 	REFERENCES
 
-Brockwell, P.J., & Davis, R.A. (2002). Introcution to Time Series and Forecasting (2nd ed.). New York, NY: Springer.
+Brockwell, P.J., & Davis, R.A. (2002). Introduction to Time Series and Forecasting (2nd ed.). New York, NY: Springer.
 
 Schütz, W., & Kolassa, S. (2006). Foresight: advantages of the MAD/Mean ratio over the MAPE. Retrieved Jan 28, 2010, from http://www.saf-ag.com/226+M5965d28cd19.html
 
