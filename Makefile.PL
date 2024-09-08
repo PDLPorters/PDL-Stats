@@ -24,16 +24,15 @@ WriteMakefile(
       ? ('LICENSE'=> 'perl')
       : ()),
     PREREQ_PM => {
-        'PDL'  => '2.057', # ->sum etc return ndarray not Perl scalar
+        'PDL'  => '2.073', # PDL_IF_BAD
     },
     CONFIGURE_REQUIRES => {
-        'PDL::Core'  => 2.008,
+        'PDL'  => '2.073',
     },
     BUILD_REQUIRES => {
-        'PDL::Core'  => 2.008,
+        'PDL'  => '2.073',
     },
     TEST_REQUIRES => {
-        'PDL::Core'  => 2.008,
         'Test::More' => '0.88', # done_testing
     },
     $got_PDL ? () : (DIR => []), # just write MYMETA if no PDL

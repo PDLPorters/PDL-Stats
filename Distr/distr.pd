@@ -64,43 +64,22 @@ pp_def('mme_beta',
   Pars      => 'a(n); float+ [o]alpha(); float+ [o]beta()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(alpha) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(alpha) sa = 0, a2 = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       a2 += pow($a(), 2);
+      PDL_IF_BAD(N++;,)
     %}
-    m = sa / N;
-    v = a2 / N - pow(m, 2);
+    if (N < 1) { $SETBAD(alpha()); $SETBAD(beta()); continue; }
+    $GENERIC(alpha) m = sa / N;
+    $GENERIC(alpha) v = a2 / N - pow(m, 2);
     $alpha() = m * ( m * (1 - m) / v - 1 ); 
     $beta()  = (1 - m) * ( m * (1 - m) / v - 1 );
   ',
-  BadCode   => '
-    $GENERIC(alpha) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-	a2 += pow($a(), 2);
-        N ++;
-      }
-    %}
-    if (N) {
-      m = sa / N;
-      v = a2 / N - pow(m, 2);
-      $alpha() = m * ( m * (1 - m) / v - 1 ); 
-      $beta()  = (1 - m) * ( m * (1 - m) / v - 1 );
-    }
-    else {
-      $SETBAD(alpha());
-      $SETBAD(beta());
-    }
-  ',
   Doc      => '
-
 =for usage
 
     my ($a, $b) = $data->mme_beta();
@@ -110,8 +89,7 @@ pp_def('mme_beta',
 beta distribution. pdf: f(x; a,b) = 1/B(a,b) x^(a-1) (1-x)^(b-1)
 
 =cut
-
-  ',
+',
 
 );
 
@@ -119,87 +97,43 @@ pp_def('pdf_beta',
   Pars      => 'x(); a(); b(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  if ($x()>=0 && $x()<=1) {
-    double B_1 = 1 / gsl_sf_beta( $a(), $b() );
-    $p() = B_1 * pow($x(), $a()-1) * pow(1-$x(), $b()-1);
-  }
-  else {
-    $CROAK("x out of range [0,1]");
-  }
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($a()) || $ISBAD($b()) ) {
-  $SETBAD( $p() );
-}
-else {
-  if ($x()>=0 && $x()<=1) {
-    double B_1 = 1 / gsl_sf_beta( $a(), $b() );
-    $p() = B_1 * pow($x(), $a()-1) * pow(1-$x(), $b()-1);
-  }
-  else {
-    $CROAK("x out of range [0,1]");
-  }
-}
-
-  ',
+  Code   => '
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($a()) || $ISBAD($b())) { $SETBAD($p()); continue; },)
+if (!($x()>=0 && $x()<=1)) $CROAK("x out of range [0,1]");
+double B_1 = 1 / gsl_sf_beta( $a(), $b() );
+$p() = B_1 * pow($x(), $a()-1) * pow(1-$x(), $b()-1);
+',
   Doc      => '
-
 =for ref
 
 probability density function for beta distribution. x defined on [0,1].
 
 =cut
-
-  ',
-
+',
 );
 
 pp_def('mme_binomial',
   Pars      => 'a(n); int [o]n_(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
+  Code   => '
     $GENERIC(p) sa, a2, m, v;
     sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       a2 += pow($a(), 2);
+      PDL_IF_BAD(N++;,)
     %}
+    if (N < 1) { $SETBAD(n_()); $SETBAD(p()); continue; }
     m = sa / N;
     v = a2 / N - pow(m, 2);
     $p()  = 1 - v/m;
     $n_() = m / $p() >= 0? (int) (m / $p() + .5) : (int) (m / $p() - .5);
-    $p()  = m / $n_(); 
-  ',
-  BadCode   => '
-    $GENERIC(p) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-	a2 += pow($a(), 2);
-        N ++;
-      }
-    %}
-    if (N) {
-      m = sa / N;
-      v = a2 / N - pow(m, 2);
-      $p()  = 1 - v/m;
-      $n_() = m / $p() >= 0? (int) (m / $p() + .5) : (int) (m / $p() - .5);
-      $p()  = m / $n_();
-    }
-    else {
-      $SETBAD(n_());
-      $SETBAD(p());
-    }
+    $p()  = m / $n_();
   ',
   Doc      => '
-
 =for usage
 
     my ($n, $p) = $data->mme_binomial;
@@ -207,42 +141,26 @@ pp_def('mme_binomial',
 =for ref
 
 binomial distribution. pmf: f(k; n,p) = (n k) p^k (1-p)^(n-k) for k = 0,1,2..n 
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pmf_binomial',
   Pars      => 'ushort x(); ushort n(); p(); float+ [o]out()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-    $GENERIC(out) bc = gsl_sf_choose($n(), $x());
-    $out() = bc * pow($p(), $x()) * pow(1-$p(), $n() - $x());
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($n()) || $ISBAD($p()) ) {
+  Code   => '
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($n()) || $ISBAD($p())) {
   $SETBAD( $out() );
-}
-else {
-  $GENERIC(out) bc = gsl_sf_choose($n(), $x());
-  $out() = bc * pow($p(), $x()) * pow(1-$p(), $n() - $x());
-}
-
-  ',
+  continue;
+},)
+$GENERIC(out) bc = gsl_sf_choose($n(), $x());
+$out() = bc * pow($p(), $x()) * pow(1-$p(), $n() - $x());
+',
   Doc      => '
-
 =for ref
 
 probability mass function for binomial distribution.
-
-=cut
-
-  ',
+',
 
 );
 
@@ -250,28 +168,18 @@ pp_def('mle_exp',
   Pars      => 'a(n); float+ [o]l()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
+  Code   => '
     $GENERIC(l) sa = 0;
-    PDL_Indx N = $SIZE(n);
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
+      PDL_IF_BAD(N++;,)
     %}
+    PDL_IF_BAD(if (sa <= 0) { $SETBAD(l()); continue; },)
     $l() = N / sa;
-  ',
-  BadCode   => '
-    $GENERIC(l) sa = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-        N ++;
-      }
-    %}
-    if (sa > 0) {  $l() = N / sa;  }
-    else        {  $SETBAD(l());   }
-  ',
+',
   Doc      => '
-
 =for usage
 
     my $lamda = $data->mle_exp;
@@ -279,85 +187,44 @@ pp_def('mle_exp',
 =for ref
 
 exponential distribution. mle same as method of moments estimate.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pdf_exp',
   Pars      => 'x(); l(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  $p() = $l() * exp( -1 * $l() * $x() );
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($l()) ) {
-  $SETBAD( $p() );
-}
-else {
-  $p() = $l() * exp( -1 * $l() * $x() );
-}
-
-  ',
+  Code   => '
+PDL_IF_BAD(if ( $ISBAD($x()) || $ISBAD($l()) ) { $SETBAD( $p() ); continue; },)
+$p() = $l() * exp( -1 * $l() * $x() );
+',
   Doc      => '
-
 =for ref
 
 probability density function for exponential distribution.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mme_gamma',
   Pars      => 'a(n); float+ [o]shape(); float+ [o]scale()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(shape) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(shape) sa = 0, a2 = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       a2 += pow($a(), 2);
+      PDL_IF_BAD(N++;,)
     %}
-    m = sa / N;
-    v = a2 / N - pow(m, 2);
+    PDL_IF_BAD(if (N < 1) { $SETBAD(shape()); $SETBAD(scale()); continue; },)
+    $GENERIC(shape) m = sa / N;
+    $GENERIC(shape) v = a2 / N - pow(m, 2);
     $shape() = pow(m, 2) / v; 
     $scale() = v / m;
-  ',
-  BadCode   => '
-    $GENERIC(shape) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-	a2 += pow($a(), 2);
-        N ++;
-      }
-    %}
-    if (N) {
-      m = sa / N;
-      v = a2 / N - pow(m, 2);
-      $shape() = pow(m, 2) / v; 
-      $scale() = v / m;
-    }
-    else {
-      $SETBAD(shape());
-      $SETBAD(scale());
-    }
-  ',
+',
   Doc      => '
-
 =for usage
 
     my ($shape, $scale) = $data->mme_gamma();
@@ -365,83 +232,43 @@ pp_def('mme_gamma',
 =for ref
 
 two-parameter gamma distribution
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pdf_gamma',
   Pars      => 'x(); a(); t(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  double g = gsl_sf_gamma( $a() );
-  $p() = pow($x(), $a()-1) * exp(-1*$x() / $t()) / (pow($t(), $a()) * g);
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($a()) || $ISBAD($t()) ) {
-  $SETBAD( $p() );
-}
-else {
-  double g = gsl_sf_gamma( $a() );
-  $p() = pow($x(), $a()-1) * exp(-1*$x() / $t()) / (pow($t(), $a()) * g);
-}
-
-  ',
+  Code   => '
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($a()) || $ISBAD($t())) { $SETBAD( $p() ); continue; },)
+double g = gsl_sf_gamma( $a() );
+$p() = pow($x(), $a()-1) * exp(-1*$x() / $t()) / (pow($t(), $a()) * g);
+',
   Doc      => '
-
 =for ref
 
 probability density function for two-parameter gamma distribution.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mle_gaussian',
   Pars      => 'a(n); float+ [o]m(); float+ [o]v()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(m) sa, a2;
-    sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(m) sa = 0, a2 = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       a2 += pow($a(), 2);
+      PDL_IF_BAD(N++;,)
     %}
+    if (N < 1) { $SETBAD(m()); $SETBAD(v()); continue; }
     $m()  = sa / N;
     $v() = a2 / N - pow($m(),2);
-  ',
-  BadCode   => '
-    $GENERIC(m) sa, a2;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-	a2 += pow($a(), 2);
-        N ++;
-      }
-    %}
-    if (N) {
-      $m()  = sa / N;
-      $v() = a2 / N - pow($m(),2);
-    }
-    else {
-      $SETBAD(m());
-      $SETBAD(v());
-    }
-  ',
+',
   Doc      => '
-
 =for usage
 
     my ($m, $v) = $data->mle_gaussian();
@@ -449,80 +276,45 @@ pp_def('mle_gaussian',
 =for ref
 
 gaussian aka normal distribution. same results as $data->average and $data->var. mle same as method of moments estimate.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pdf_gaussian',
   Pars      => 'x(); m(); v(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  $p() = 1 / sqrt($v() * 2 * M_PI)
-       * exp( -1 * pow($x() - $m(), 2) / (2*$v()) );
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($m()) || $ISBAD($v()) ) {
-  $SETBAD( $p() );
-}
-else {
-  $p() = 1 / sqrt($v() * 2 * M_PI)
-       * exp( -1 * pow($x() - $m(), 2) / (2*$v()) );
-}
-
-  ',
+  Code   => '
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($m()) || $ISBAD($v())) { $SETBAD( $p() ); continue; },)
+$p() = 1 / sqrt($v() * 2 * M_PI)
+     * exp( -1 * pow($x() - $m(), 2) / (2*$v()) );
+',
   Doc      => '
-
 =for ref
 
 probability density function for gaussian distribution.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mle_geo',
   Pars      => 'a(n); float+ [o]p();',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
+  Code   => '
     $GENERIC(p) sa = 0;
-    PDL_Indx N = $SIZE(n);
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
+      PDL_IF_BAD(N++;,)
     %}
+    if (N < 1) { $SETBAD(p()); continue; }
     $p()  = 1 / (1 + sa/N);
-  ',
-  BadCode   => '
-    $GENERIC(p) sa = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-        N ++;
-      }
-    %}
-    if (N) {  $p()  = 1 / (1 + sa/N);  }
-    else   {  $SETBAD(p());  }
-  ',
+',
   Doc      => '
-
 =for ref
 
 geometric distribution. mle same as method of moments estimate.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pmf_geo',
@@ -530,152 +322,75 @@ pp_def('pmf_geo',
   GenericTypes => [F,D],
   HandleBad => 1,
   Code      => '
-
-  $out() = pow(1-$p(), $x()) * $p();
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($p()) ) {
-  $SETBAD( $out() );
-}
-else {
-  $out() = pow(1-$p(), $x()) * $p();
-}
-
-  ',
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($p())) { $SETBAD( $out() ); continue; },)
+$out() = pow(1-$p(), $x()) * $p();
+',
   Doc      => '
-
 =for ref
 
 probability mass function for geometric distribution. x >= 0.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mle_geosh',
   Pars      => 'a(n); float+ [o]p();',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
+  Code   => '
     $GENERIC(p) sa = 0;
-    PDL_Indx N = $SIZE(n);
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
+      PDL_IF_BAD(N++;,)
     %}
+    if (sa <= 0) { $SETBAD(p()); continue; }
     $p()  = N / sa;
   ',
-  BadCode   => '
-    $GENERIC(p) sa = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-        N ++;
-      }
-    %}
-    if (sa > 0) { $p()  = N / sa; }
-    else        { $SETBAD(p()); }
-  ',
   Doc      => '
-
 =for ref
 
 shifted geometric distribution. mle same as method of moments estimate.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pmf_geosh',
   Pars      => 'ushort x(); p(); float+ [o]out()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-  if ( $x() >= 1 ) {
-    $out() = pow(1-$p(), $x()-1) * $p();
-  }
-  else {
-    $CROAK( "x >= 1 please" );
-  }
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($p()) ) {
-  $SETBAD( $out() );
-}
-else {
-  if ( $x() >= 1 ) {
-    $out() = pow(1-$p(), $x()-1) * $p();
-  }
-  else {
-    $CROAK( "x >= 1 please" );
-  }
-}
-
-  ',
+  Code   => '
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($p())) { $SETBAD( $out() ); continue; },)
+if ( $x() < 1 ) { $CROAK( "x >= 1 please" ); }
+$out() = pow(1-$p(), $x()-1) * $p();
+',
   Doc      => '
-
 =for ref
 
 probability mass function for shifted geometric distribution. x >= 1.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mle_lognormal',
   Pars      => 'a(n); float+ [o]m(); float+ [o]v()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(m) sa, a2;
-    sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(m) sa = 0, a2 = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += log($a());
+      PDL_IF_BAD(N++;,)
     %}
+    if (N < 1) { $SETBAD(m()); $SETBAD(v()); continue; }
     $m() = sa / N;
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       a2 += pow(log($a()) - $m(), 2);
     %}
     $v() = a2 / N;
-  ',
-  BadCode   => '
-    $GENERIC(m) sa, a2;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-        sa += log($a());
-        N ++;
-      }
-    %}
-    if (N) {
-      $m() = sa / N;
-      loop (n) %{
-        if ($ISGOOD( $a() )) {
-          a2 += pow(log($a()) - $m(), 2);
-        }
-      %}
-      $v() = a2 / N;
-    }
-    else {
-      $SETBAD(m());
-      $SETBAD(v());
-    }
-    
-  ',
+',
   Doc      => '
-
 =for usage
 
     my ($m, $v) = $data->mle_lognormal();
@@ -683,50 +398,27 @@ pp_def('mle_lognormal',
 =for ref
 
 lognormal distribution. maximum likelihood estimation.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mme_lognormal',
   Pars      => 'a(n); float+ [o]m(); float+ [o]v()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(m) sa, a2;
-    sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(m) sa = 0, a2 = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       a2 += pow($a(), 2);
+      PDL_IF_BAD(N++;,)
     %}
+    if (N < 1) { $SETBAD(m()); $SETBAD(v()); continue; }
     $m()  = 2 * log(sa / N) - 1/2 * log( a2 / N );
     $v() = log( a2 / N ) - 2 * log( sa / N );
   ',
-  BadCode   => '
-    $GENERIC(m) sa, a2;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-	a2 += pow($a(), 2);
-        N ++;
-      }
-    %}
-    if (N) {
-      $m()  = 2 * log(sa / N) - 1/2 * log( a2 / N );
-      $v() = log( a2 / N ) - 2 * log( sa / N );
-    }
-    else {
-      $SETBAD(m());
-      $SETBAD(v());
-    }
-  ',
   Doc      => '
-
 =for usage
 
     my ($m, $v) = $data->mme_lognormal();
@@ -734,98 +426,49 @@ pp_def('mme_lognormal',
 =for ref
 
 lognormal distribution. method of moments estimation.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pdf_lognormal',
   Pars      => 'x(); m(); v(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  if ( $x() > 0 && $v() > 0 ) {
-    $p() = 1 / ($x() * sqrt($v() * 2 * M_PI))
-	 * exp( -1 * pow(log($x()) - $m(), 2) / (2*$v()) );
-  }
-  else {
-    $CROAK( "x and v > 0 please" );
-  }
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($m()) || $ISBAD($v()) ) {
+  Code   => '
+PDL_IF_BAD(if ( $ISBAD($x()) || $ISBAD($m()) || $ISBAD($v()) ) {
   $SETBAD( $p() );
-}
-else {
-  if ( $x() > 0 && $v() > 0 ) {
-    $p() = 1 / ($x() * sqrt($v() * 2 * M_PI))
-	 * exp( -1 * pow(log($x()) - $m(), 2) / (2*$v()) );
-  }
-  else {
-    $CROAK( "x and v > 0 please" );
-  }
-}
-
-  ',
+  continue;
+},)
+if (!($x() > 0 && $v() > 0)) $CROAK( "x and v > 0 please" );
+$p() = 1 / ($x() * sqrt($v() * 2 * M_PI))
+     * exp( -1 * pow(log($x()) - $m(), 2) / (2*$v()) );
+',
   Doc      => '
-
 =for ref
 
 probability density function for lognormal distribution. x > 0. v > 0.
-
-=cut
-
-  ',
-
+',
 );
-
 
 pp_def('mme_nbd',
   Pars      => 'a(n); float+ [o]r(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(p) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(p) sa = 0, a2 = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       a2 += pow($a(), 2);
+      PDL_IF_BAD(N++;,)
     %}
-    m = sa / N;
-    v = a2 / N - pow(m, 2);
+    PDL_IF_BAD(if (N < 1) { $SETBAD(r()); $SETBAD(p()); continue; },)
+    $GENERIC(p) m = sa / N;
+    $GENERIC(p) v = a2 / N - pow(m, 2);
     $r() = pow(m, 2) / (v - m);
     $p() = m / v; 
-  ',
-  BadCode   => '
-    $GENERIC(p) sa, a2, m, v;
-    sa = 0; a2 = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISGOOD( $a() )) {
-	sa += $a();
-	a2 += pow($a(), 2);
-        N ++;
-      }
-    %}
-    if (N) {
-      m = sa / N;
-      v = a2 / N - pow(m, 2);
-      $r() = pow(m, 2) / (v - m);
-      $p() = m / v; 
-    }
-    else {
-      $SETBAD(r());
-      $SETBAD(p());
-    }
-  ',
+',
   Doc      => '
-
 =for usage
 
     my ($r, $p) = $data->mme_nbd();
@@ -833,92 +476,48 @@ pp_def('mme_nbd',
 =for ref
 
 negative binomial distribution. pmf: f(x; r,p) = (x+r-1  r-1) p^r (1-p)^x for x=0,1,2...
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pmf_nbd',
   Pars      => 'ushort x(); r(); p(); float+ [o]out()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  $GENERIC(out) nbc
-    = gsl_sf_gamma($x()+$r()) / (gsl_sf_fact($x()) * gsl_sf_gamma($r()));
-  $out() = nbc * pow($p(),$r()) * pow(1-$p(), $x());
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($r()) || $ISBAD($p()) ) {
+  Code   => '
+PDL_IF_BAD(if ( $ISBAD($x()) || $ISBAD($r()) || $ISBAD($p()) ) {
   $SETBAD( $out() );
-}
-else {
+  continue;
+},)
   $GENERIC(out) nbc
     = gsl_sf_gamma($x()+$r()) / (gsl_sf_fact($x()) * gsl_sf_gamma($r()));
   $out() = nbc * pow($p(),$r()) * pow(1-$p(), $x());
-}
-
-  ',
+',
   Doc      => '
-
 =for ref
 
 probability mass function for negative binomial distribution.
-
-=cut
-
-  ',
-
+',
 );
-
 
 pp_def('mme_pareto',
   Pars      => 'a(n); float+ [o]k(); float+ [o]xm()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(xm) sa, min;
-    sa = 0; min = $a(n=>0);
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(xm) sa = 0, min = $a(n=>0);
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
       if (min > $a())
         min = $a();
+      PDL_IF_BAD(N++;,)
     %}
-    if (min > 0) {
-      $k()  = (sa - min) / ( N*( sa/N - min ) );
-      $xm() = (N * $k() - 1) * min / ( N * $k() );
-    }
-    else {
-      $CROAK("min <= 0!");
-    }
-  ',
-  BadCode   => '
-    $GENERIC(xm) sa, min;
-    sa = 0; min = $a(n=>0);
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ( $ISGOOD($a()) ) {
-        sa += $a();
-	if (min > $a())
-	  min = $a();
-        N ++;
-      }
-    %}
-    if (min > 0) {
-      $k()  = (sa - min) / ( N*( sa/N - min ) );
-      $xm() = (N * $k() - 1) * min / ( N * $k() );
-    }
-    else {
-      $CROAK("min <= 0!");
-    }
-  ',
+    if (min <= 0) $CROAK("min <= 0!");
+    $k()  = (sa - min) / ( N*( sa/N - min ) );
+    $xm() = (N * $k() - 1) * min / ( N * $k() );
+',
   Doc      => '
-
 =for usage
 
     my ($k, $xm) = $data->mme_pareto();
@@ -926,82 +525,44 @@ pp_def('mme_pareto',
 =for ref
 
 pareto distribution. pdf: f(x; k,xm) = k xm^k / x^(k+1) for x >= xm > 0.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pdf_pareto',
   Pars      => 'x(); k(); xm(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-
-  if ( $xm() > 0 && $x() >= $xm() ) {
-    $p() = $k() * pow($xm(),$k()) / pow($x(), $k()+1);
-  }
-  else {
-    $CROAK("x >= xm > 0 please");
-  }
-
-  ',
-  BadCode   => '
-
-if ( $ISBAD($x()) || $ISBAD($k()) || $ISBAD($xm()) ) {
+  Code   => '
+PDL_IF_BAD(if ( $ISBAD($x()) || $ISBAD($k()) || $ISBAD($xm()) ) {
   $SETBAD( $p() );
-}
-else {
-  if ( $xm() > 0 && $x() >= $xm() ) {
-    $p() = $k() * pow($xm(),$k()) / pow($x(), $k()+1);
-  }
-  else {
-    $CROAK("x >= xm > 0 please");
-  }
-}
-
-  ',
+  continue;
+},)
+if (!($xm() > 0 && $x() >= $xm() )) $CROAK("x >= xm > 0 please");
+$p() = $k() * pow($xm(),$k()) / pow($x(), $k()+1);
+',
   Doc      => '
-
 =for ref
 
 probability density function for pareto distribution. x >= xm > 0.
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('mle_poisson',
   Pars      => 'a(n); float+ [o]l();',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => '
-    $GENERIC(l) sa;
-    sa = 0;
-    PDL_Indx N = $SIZE(n);
+  Code   => '
+    $GENERIC(l) sa = 0;
+    PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
+      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
+      PDL_IF_BAD(N++;,)
     %}
+    if (N < 1) { $SETBAD(l()); continue; }
     $l()  = sa / N;
-  ',
-  BadCode   => '
-    $GENERIC(l) sa;
-    sa = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ( $ISGOOD($a()) ) {
-        sa += $a();
-        N ++;
-      }
-    %}
-    if (N) { $l()  = sa / N; }
-    else   { $SETBAD(l()); }
-  ',
+',
   Doc      => '
-
 =for usage
 
     my $lamda = $data->mle_poisson();
@@ -1009,132 +570,67 @@ pp_def('mle_poisson',
 =for ref
 
 poisson distribution. pmf: f(x;l) = e^(-l) * l^x / x!
-
-=cut
-
-  ',
-
+',
 );
 
 pp_def('pmf_poisson',
   Pars      => 'x(); l(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => q{
-
-  if ($x() < 0) {
-    $p() = 0;
-  }
-  else if ($x() < GSL_SF_FACT_NMAX / 2) {
-    /* Exact formula */
-    $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( (unsigned int) $x() );
-  }
-  else {
-    /* Use Stirling's approximation. See
-     * http://en.wikipedia.org/wiki/Stirling%27s_approximation
-     */
-    double log_p = $x() - $l() + $x() * log($l() / $x())
-      - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
-      + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
-    $p() = exp(log_p);
-  }
-
-  },
-  BadCode   => q{
-
-  if ( $ISBAD($x()) || $ISBAD($l()) ) {
-    $SETBAD( $p() );
-  }
-  else {
-    if ($x() < 0) {
-      $p() = 0;
-    }
-    else if ($x() < GSL_SF_FACT_NMAX / 2) {
-      /* Exact formula */
-      $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( (unsigned int) $x() );
-    }
-    else {
-      /* Use Stirling's approximation. See
-       * http://en.wikipedia.org/wiki/Stirling%27s_approximation
-       */
-      double log_p = $x() - $l() + $x() * log($l() / $x())
-        - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
-        + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
-      $p() = exp(log_p);
-    }
-  }
-
-  },
+  Code   => q{
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($l())) { $SETBAD($p()); continue; },)
+if ($x() < 0) {
+  $p() = 0;
+}
+else if ($x() < GSL_SF_FACT_NMAX / 2) {
+  /* Exact formula */
+  $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( (unsigned int) $x() );
+}
+else {
+  /* Use Stirling's approximation. See
+   * http://en.wikipedia.org/wiki/Stirling%27s_approximation
+   */
+  double log_p = $x() - $l() + $x() * log($l() / $x())
+    - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
+    + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
+  $p() = exp(log_p);
+}
+},
   Doc      => q{
-
 =for ref
 
 Probability mass function for poisson distribution. Uses Stirling's formula for x > 85.
-
-=cut
-
-  },
-
+},
 );
 
 pp_def('pmf_poisson_stirling',
   Pars      => 'x(); l(); [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => q{
-
-  if ($x() < 0) {
-    $p() = 0;
-  }
-  else if ($x() == 0) {
-    $p() = exp(-$l());
-  }
-  else {
-    /* Use Stirling's approximation. See
-     * http://en.wikipedia.org/wiki/Stirling%27s_approximation
-     */
-    double log_p = $x() - $l() + $x() * log($l() / $x())
-      - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
-      + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
-    $p() = exp(log_p);
-  }
-
-  },
-  BadCode   => q{
-
-  if ( $ISBAD($x()) || $ISBAD($l()) ) {
-    $SETBAD( $p() );
-  }
-  else if ($x() < 0) {
-    $p() = 0;
-  }
-  else if ($x() == 0) {
-    $p() = exp(-$l());
-  }
-  else {
-    /* Use Stirling's approximation. See
-     * http://en.wikipedia.org/wiki/Stirling%27s_approximation
-     */
-    double log_p = $x() - $l() + $x() * log($l() / $x())
-      - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
-      + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
-    $p() = exp(log_p);
-  }
-
-  },
+  Code   => q{
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($l())) { $SETBAD($p()); continue; },)
+if ($x() < 0) {
+  $p() = 0;
+}
+else if ($x() == 0) {
+  $p() = exp(-$l());
+}
+else {
+  /* Use Stirling's approximation. See
+   * http://en.wikipedia.org/wiki/Stirling%27s_approximation
+   */
+  double log_p = $x() - $l() + $x() * log($l() / $x())
+    - 0.5 * log(2*M_PI * $x()) - 1. / 12. / $x()
+    + 1 / 360. / $x()/$x()/$x() - 1. / 1260. / $x()/$x()/$x()/$x()/$x();
+  $p() = exp(log_p);
+}
+},
   Doc      => q{
-
 =for ref
 
 Probability mass function for poisson distribution. Uses Stirling's formula for all values of the input. See http://en.wikipedia.org/wiki/Stirling's_approximation for more info.
-
-=cut
-
-  },
-
+},
 );
-
-
 
 pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
@@ -1168,34 +664,16 @@ pp_def('_pmf_poisson_factorial',
   Pars      => 'ushort x(); l(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
-  Code      => q{
-
-  if ($x() < GSL_SF_FACT_NMAX) {
-    $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
-  }
-  else {
-    /* bail out */
-    $p() = 0;
-  }
-
-  },
-  BadCode   => q{
-
-  if ( $ISBAD($x()) || $ISBAD($l()) ) {
-    $SETBAD( $p() );
-  }
-  else {
-    if ($x() < GSL_SF_FACT_NMAX) {
-      $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
-    }
-    else {
-      $p() = 0;
-    }
-  }
-
-  },
+  Code   => q{
+PDL_IF_BAD(if ($ISBAD($x()) || $ISBAD($l())) { $SETBAD($p()); continue; },)
+if ($x() < GSL_SF_FACT_NMAX) {
+  $p() = exp( -1 * $l()) * pow($l(),$x()) / gsl_sf_fact( $x() );
+} else {
+  /* bail out */
+  $p() = 0;
+}
+},
   Doc      => undef,
-
 );
 
 pp_addpm {At=>'Bot'}, pp_line_numbers(__LINE__, <<'EOD');

@@ -237,126 +237,63 @@ Integration. Opposite of differencing. IX(t) = X(t) + X(t-1), IX(0) = X(0). Can 
 ',
 );
 
-
 pp_def('dseason',
   Pars  => 'x(t); indx d(); [o]xd(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
-$GENERIC(x) xc, sum;
-PDL_Indx i, q, max;
-q = ($d() % 2)? ($d() - 1) / 2 : $d() / 2;
-max = $SIZE(t) - 1;
-
-if ($d() % 2) {
-  loop(t) %{
-    sum = 0;
-    for (i=-q; i<=q; i++) {
-      sum += (t+i < 0)?    $x(t=>0)
-           : (t+i > max)?  $x(t=>max)
-           :               $x(t=>t+i)
-           ;
-    }
-    $xd() = sum / $d();
-  %}
-}
-else {
-  loop(t) %{
-    sum = 0;
-    for (i=-q; i<=q; i++) {
-      xc = (t+i < 0)?    $x(t=>0)
-         : (t+i > max)?  $x(t=>max)
-         :               $x(t=>t+i)
-         ;
-      sum += (i==-q || i==q)?   .5 * xc : xc;
-    } 
-    $xd() = sum / $d();
-  %}
-}
-
-  ',
-  BadCode  => '
-$GENERIC(x) sum;
-PDL_Indx i, q, min, max, ti, dd;
-min = -1; max = -1;
-q = ($d() % 2)? ($d() - 1) / 2 : $d() / 2;
-
+PDL_Indx i, max = PDL_IF_BAD(,$SIZE(t))-1, min = PDL_IF_BAD(-1,0);
+PDL_Indx q = ($d() % 2)? ($d() - 1) / 2 : $d() / 2;
 /*find good min and max ind*/
 loop (t) %{
-  if ( $ISGOOD(x()) ) {
-    if (min < 0) {
-      min = t;
-    }
-    max = t;
-  }
+  PDL_IF_BAD(if ($ISBAD($x())) continue;,)
+  if (min < 0) min = t;
+  max = t;
 %}
-
 if ($d() % 2) {
   loop(t) %{
-    if (t < min || t > max) {
-      $SETBAD(xd());
+    PDL_IF_BAD(if (t < min || t > max) { $SETBAD(xd()); continue; },)
+    $GENERIC(x) sum = 0; PDL_IF_BAD(PDL_Indx dd = 0;,)
+    for (i=-q; i<=q; i++) {
+      PDL_Indx ti = (t+i < min)?  min
+         : (t+i > max)?  max
+         :               t+i
+         ;
+      PDL_IF_BAD(if ($ISBAD($x(t=>ti))) continue;,)
+      sum += $x(t=>ti);
+      PDL_IF_BAD(dd++;,)
     }
-    else {
-      sum = 0; dd = 0;
-      for (i=-q; i<=q; i++) {
-        ti = (t+i < min)?  min
-           : (t+i > max)?  max
-           :               t+i
-           ;
-        if ( $ISGOOD($x(t=>ti)) ) {
-          sum += $x(t=>ti);
-          dd ++;
-        }
-      }
-      if (dd) {
-        $xd() = sum / dd;
-      }
-      else {
-        $SETBAD(xd());
-      }
-    }
+    PDL_IF_BAD(if (!dd) { $SETBAD(xd()); continue; },)
+    $xd() = sum / PDL_IF_BAD(dd,$d());
   %}
-}
-else {
+} else {
   loop(t) %{
-    if (t < min || t > max) {
-      $SETBAD(xd());
+    PDL_IF_BAD(if (t < min || t > max) { $SETBAD(xd()); continue; },)
+    $GENERIC(x) sum = 0; PDL_IF_BAD(PDL_Indx dd = 0;,)
+    for (i=-q; i<=q; i++) {
+      PDL_Indx ti = (t+i < min)?  min
+         : (t+i > max)?  max
+         :               t+i
+         ;
+      PDL_IF_BAD(if ($ISBAD($x(t=>ti))) continue;,)
+      sum += (i == q || i == -q)? .5 * $x(t=>ti) : $x(t=>ti);
+      PDL_IF_BAD(dd++;,)
     }
-    else {
-      sum = 0; dd = 0;
-      for (i=-q; i<=q; i++) {
-        ti = (t+i < min)?  min
-           : (t+i > max)?  max
-           :               t+i
-           ;
-        if ( $ISGOOD($x(t=>ti)) ) {
-          sum += (i == q || i == -q)? .5 * $x(t=>ti) : $x(t=>ti);
-          dd ++;
-        }
-      }
-      if (dd) {
-        dd --;
-        if (  ($ISBAD(x(t=>t-q)) && $ISGOOD(x(t=>t+q)) )
-           || ($ISBAD(x(t=>t+q)) && $ISGOOD(x(t=>t-q)) ) )
-          dd += .5;
-        $xd() = sum / dd;
-      }
-      else {
-        $SETBAD(xd());
-      }
-    }
+    PDL_IF_BAD(if (!dd) { $SETBAD(xd()); continue; }
+    dd--;
+    if (  ($ISBAD(x(t=>t-q)) && $ISGOOD(x(t=>t+q)) )
+       || ($ISBAD(x(t=>t+q)) && $ISGOOD(x(t=>t-q)) ) )
+      dd += .5;
+    ,)
+    $xd() = sum / PDL_IF_BAD(dd,$d());
   %}
 }
-
-  ',
+',
   Doc   => '
 =for ref
 
 Deseasonalize data using moving average filter the size of period d.
-
-=cut
-
-  ',
+',
 );
 
 pp_addpm pp_line_numbers(__LINE__, <<'EOD');
@@ -398,18 +335,11 @@ pp_def('_fill_ma',
   Pars  => 'x(t); indx q(); [o]xf(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
-  Code     => '
-loop(t) %{
-  $xf() = $x();
-%}
-
-  ',
-  BadCode  => '
+  Code  => '
 $GENERIC(x) sum, xx;
-PDL_Indx i, n, max;
-max = $SIZE(t) - 1;
+PDL_Indx i, n, max = $SIZE(t) - 1;
 loop(t) %{
-  if ($ISBAD(x())) {
+  PDL_IF_BAD(if ($ISBAD(x())) {
     n=0; sum=0;
     for (i=-$q(); i<=$q(); i++) {
       xx = (t+i < 0)?    $x(t=>0)
@@ -427,14 +357,11 @@ loop(t) %{
     else {
       $SETBAD(xf());
     }
-  }
-  else {
-    $xf() = $x();
-  }
+    continue;
+  },)
+  $xf() = $x();
 %}
-
-  ',
-
+',
   Doc   => undef,
 );
 
@@ -453,18 +380,12 @@ loop(t) %{
   }
   $xf() = m;
 %}
-
-  ',
+',
   Doc   => '
 =for ref
 
 Filter, exponential smoothing. xf(t) = a * x(t) + (1-a) * xf(t-1)
-
-=for usage
-
-=cut
-
-  ',
+',
 );
 
 pp_def('filter_ma',
@@ -485,16 +406,12 @@ loop(t) %{
   }
   $xf() = sum / n;
 %}
-
-  ',
+',
   Doc   => '
 =for ref
 
 Filter, moving average. xf(t) = sum(x(t-q .. t+q)) / (2q + 1)
-
-=cut
-
-  ',
+',
 );
 
 pp_def('mae',
@@ -502,38 +419,18 @@ pp_def('mae',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
-
 $GENERIC(c) sum;
 sum = 0;
-PDL_Indx N = $SIZE(n);
+PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
 loop(n) %{
+  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue;,)
   sum += fabs( $a() - $b() );
+  PDL_IF_BAD(N++;,)
 %}
+if (N < 1) { $SETBAD(c()); continue; }
 $c() = sum / N;
-
-',
-  BadCode  => '
-
-$GENERIC(c) sum;
-sum = 0;
-PDL_Indx N = 0;
-loop(n) %{
-  if ($ISBAD(a()) || $ISBAD(b())) { }
-  else {
-    sum += fabs( $a() - $b() );
-    N ++;
-  }
-%}
-if (N) {
-  $c() = sum / N;
-}
-else {
-  $SETBAD(c());
-}
-
 ',
   Doc   => '
-
 =for ref
 
 Mean absolute error. MAE = 1/n * sum( abs(y - y_pred) )
@@ -543,9 +440,6 @@ Mean absolute error. MAE = 1/n * sum( abs(y - y_pred) )
 Usage:
 
     $mae = $y->mae( $y_pred );
-
-=cut
-
 ',
 );
 
@@ -554,39 +448,18 @@ pp_def('mape',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
-
 $GENERIC(c) sum;
 sum = 0;
-PDL_Indx N = $SIZE(n);
+PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
 loop(n) %{
+  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue;,)
   sum += fabs( ($a() - $b()) / $a() );
+  PDL_IF_BAD(N++;,)
 %}
+if (N < 1) { $SETBAD(c()); continue; }
 $c() = sum / N;
-
-',
-
-  BadCode  => '
-
-$GENERIC(c) sum;
-sum = 0;
-PDL_Indx N = 0;
-loop(n) %{
-  if ($ISBAD(a()) || $ISBAD(b())) { }
-  else {
-    sum += fabs( ($a() - $b()) / $a() );
-    N ++;
-  }
-%}
-if (N) {
-  $c() = sum / N;
-}
-else {
-  $SETBAD(c());
-}
-
 ',
   Doc   => '
-
 =for ref
 
 Mean absolute percent error. MAPE = 1/n * sum(abs((y - y_pred) / y))
@@ -596,9 +469,6 @@ Mean absolute percent error. MAPE = 1/n * sum(abs((y - y_pred) / y))
 Usage:
 
     $mape = $y->mape( $y_pred );
-
-=cut
-
 ',
 );
 
@@ -607,38 +477,16 @@ pp_def('wmape',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
-
-$GENERIC(c) sum_e, sum;
-sum_e=0; sum=0;
+$GENERIC(c) sum_e=0, sum=0;
 loop(n) %{
+  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue;,)
   sum_e += fabs( $a() - $b() );
   sum += fabs( $a() );
 %}
+if (!sum) { $SETBAD(c()); continue; }
 $c() = sum_e / sum;
-
-',
-
-  BadCode  => '
-
-$GENERIC(c) sum_e, sum;
-sum_e=0; sum=0;
-loop(n) %{
-  if ($ISBAD(a()) || $ISBAD(b())) { }
-  else {
-    sum_e += fabs( $a() - $b() );
-    sum += fabs( $a() );
-  }
-%}
-if (sum) {
-  $c() = sum_e / sum;
-}
-else {
-  $SETBAD(c());
-}
-
 ',
   Doc   => '
-
 =for ref
 
 Weighted mean absolute percent error. avg(abs(error)) / avg(abs(data)). Much more robust compared to mape with division by zero error (cf. Schütz, W., & Kolassa, 2006).
@@ -648,27 +496,21 @@ Weighted mean absolute percent error. avg(abs(error)) / avg(abs(data)). Much mor
 Usage:
 
     $wmape = $y->wmape( $y_pred );
-
-=cut
-
 ',
 );
-
 
 pp_def('portmanteau',
   Pars  => 'r(h); longlong t(); [o]Q()',
   GenericTypes => [F,D],
   Code  => '
 $GENERIC(r) sum;
-
 sum = 0;
 loop(h) %{
   if (h)
     sum += pow($r(), 2) / ($t() - h);
 %}
 $Q() = $t() * ($t()+2) * sum;
-
-  ',
+',
   Doc   => '
 =for ref
 
@@ -691,9 +533,6 @@ Usage:
     perldl> use PDL::GSL::CDF
     perldl> p 1 - gsl_cdf_chisq_P( $chisq, 5 )
     0.0480112934306748
-
-=cut
-
   ',
 );
 
@@ -785,7 +624,6 @@ loop (t) %{
   Doc   => undef
   ,
 );
-
 
 pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
