@@ -126,7 +126,7 @@ pp_def('pdf_beta',
     $p() = B_1 * pow($x(), $a()-1) * pow(1-$x(), $b()-1);
   }
   else {
-    barf("x out of range [0,1]");
+    $CROAK("x out of range [0,1]");
   }
   ',
   BadCode   => '
@@ -140,7 +140,7 @@ else {
     $p() = B_1 * pow($x(), $a()-1) * pow(1-$x(), $b()-1);
   }
   else {
-    barf("x out of range [0,1]");
+    $CROAK("x out of range [0,1]");
   }
 }
 
@@ -601,7 +601,7 @@ pp_def('pmf_geosh',
     $out() = pow(1-$p(), $x()-1) * $p();
   }
   else {
-    barf( "x >= 1 please" );
+    $CROAK( "x >= 1 please" );
   }
 
   ',
@@ -615,7 +615,7 @@ else {
     $out() = pow(1-$p(), $x()-1) * $p();
   }
   else {
-    barf( "x >= 1 please" );
+    $CROAK( "x >= 1 please" );
   }
 }
 
@@ -752,7 +752,7 @@ pp_def('pdf_lognormal',
 	 * exp( -1 * pow(log($x()) - $m(), 2) / (2*$v()) );
   }
   else {
-    barf( "x and v > 0 please" );
+    $CROAK( "x and v > 0 please" );
   }
 
   ',
@@ -767,7 +767,7 @@ else {
 	 * exp( -1 * pow(log($x()) - $m(), 2) / (2*$v()) );
   }
   else {
-    barf( "x and v > 0 please" );
+    $CROAK( "x and v > 0 please" );
   }
 }
 
@@ -894,7 +894,7 @@ pp_def('mme_pareto',
       $xm() = (N * $k() - 1) * min / ( N * $k() );
     }
     else {
-      barf("min <= 0!");
+      $CROAK("min <= 0!");
     }
   ',
   BadCode   => '
@@ -914,7 +914,7 @@ pp_def('mme_pareto',
       $xm() = (N * $k() - 1) * min / ( N * $k() );
     }
     else {
-      barf("min <= 0!");
+      $CROAK("min <= 0!");
     }
   ',
   Doc      => '
@@ -943,7 +943,7 @@ pp_def('pdf_pareto',
     $p() = $k() * pow($xm(),$k()) / pow($x(), $k()+1);
   }
   else {
-    barf("x >= xm > 0 please");
+    $CROAK("x >= xm > 0 please");
   }
 
   ',
@@ -957,7 +957,7 @@ else {
     $p() = $k() * pow($xm(),$k()) / pow($x(), $k()+1);
   }
   else {
-    barf("x >= xm > 0 please");
+    $CROAK("x >= xm > 0 please");
   }
 }
 

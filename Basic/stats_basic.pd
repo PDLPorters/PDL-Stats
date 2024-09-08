@@ -578,76 +578,61 @@ Sample covariance. see B<corr> for ways to call
 pp_def('cov_table',
   Pars      => 'a(n,m); float+ [o]c(m,m)',
   HandleBad => 1,
+  RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code      => '
-
 PDL_Indx N, M;
 N = $SIZE(n); M = $SIZE(m);
 $GENERIC(a) a_, b_;
 $GENERIC(c) ab, sa, sb, cov;
-
-if (N > 1 ) {
-  PDL_Indx i, j;
-  for (i=0; i<M; i++) {
-    for (j=i; j<M; j++) {
-      ab = 0; sa = 0; sb = 0;
-      loop (n) %{
+PDL_Indx i, j;
+for (i=0; i<M; i++) {
+  for (j=i; j<M; j++) {
+    ab = 0; sa = 0; sb = 0;
+    loop (n) %{
+      a_ = $a(n=>n,m=>i);
+      b_ = $a(n=>n,m=>j);
+      ab += a_ * b_;
+      sa += a_;
+      sb += b_;
+    %}
+    cov = ab - (sa * sb) / N;
+    $c(m0=>i, m1=>j) =
+    $c(m0=>j, m1=>i) = cov / N;
+  }
+}
+  ',
+  BadCode  => '
+$GENERIC(a) a_, b_;
+$GENERIC(c) ab, sa, sb, cov;
+PDL_Indx N, M, i, j;
+M = $SIZE(m);
+for (i=0; i<M; i++) {
+  for (j=i; j<M; j++) {
+    ab=0; sa=0; sb=0; N=0;
+    loop (n) %{
+      if ($ISBAD($a(n=>n, m=>i)) || $ISBAD($a(n=>n, m=>j))) { }
+      else { 
         a_ = $a(n=>n,m=>i);
         b_ = $a(n=>n,m=>j);
-    	ab += a_ * b_;
-    	sa += a_;
-    	sb += b_;
-      %}
+        ab += a_ * b_;
+        sa += a_;
+        sb += b_;
+        N ++;
+      }
+    %}
+    if (N > 1) {
       cov = ab - (sa * sb) / N;
       $c(m0=>i, m1=>j) =
       $c(m0=>j, m1=>i) = cov / N;
     }
-  }
-}
-else {
-  barf( "too few N" );
-}
-
-  ',
-  BadCode  => '
-
-if ($SIZE(n) >= 2 ) {
-  $GENERIC(a) a_, b_;
-  $GENERIC(c) ab, sa, sb, cov;
-  PDL_Indx N, M, i, j;
-  M = $SIZE(m);
-  for (i=0; i<M; i++) {
-    for (j=i; j<M; j++) {
-      ab=0; sa=0; sb=0; N=0;
-      loop (n) %{
-        if ($ISBAD($a(n=>n, m=>i)) || $ISBAD($a(n=>n, m=>j))) { }
-        else { 
-          a_ = $a(n=>n,m=>i);
-          b_ = $a(n=>n,m=>j);
-          ab += a_ * b_;
-          sa += a_;
-          sb += b_;
-          N ++;
-        }
-      %}
-      if (N > 1) {
-        cov = ab - (sa * sb) / N;
-        $c(m0=>i, m1=>j) =
-        $c(m0=>j, m1=>i) = cov / N;
-      }
-      else {
-        $SETBAD($c(m0=>i, m1=>j));
-        $SETBAD($c(m0=>j, m1=>i));
-      }
+    else {
+      $SETBAD($c(m0=>i, m1=>j));
+      $SETBAD($c(m0=>j, m1=>i));
     }
   }
 }
-else {
-  barf( "too few N" );
-}
-
   ',
   Doc      => '
-
 =for ref
 
 Square covariance table. Gives the same result as threading using B<cov> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
@@ -694,27 +679,23 @@ pp_def('corr',
   Pars      => 'a(n); b(n); float+ [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
+  RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code      => '
     $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb;
     ab=0; sa=0; sb=0; a2=0; b2=0; cov=0; va=0; vb=0;
     PDL_Indx N = $SIZE(n);
-    if (N > 1 ) {
-      loop (n) %{
-	ab += $a() * $b();
-	sa += $a();
-	sb += $b();
-	a2 += pow($a(), 2);
-	b2 += pow($b(), 2);
-      %}
+    loop (n) %{
+      ab += $a() * $b();
+      sa += $a();
+      sb += $b();
+      a2 += pow($a(), 2);
+      b2 += pow($b(), 2);
+    %}
 /*  in fact cov * N, va * N, and vb * N  */
-      cov = ab - (sa * sb) / N;
-      va  = a2 - pow(sa,2) / N;
-      vb  = b2 - pow(sb,2) / N;
-      $c() = cov / sqrt( va * vb );
-    }
-    else {
-      barf( "too few N" );
-    }
+    cov = ab - (sa * sb) / N;
+    va  = a2 - pow(sa,2) / N;
+    vb  = b2 - pow(sb,2) / N;
+    $c() = cov / sqrt( va * vb );
   ',
   BadCode  => '
     $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb;
@@ -777,27 +758,57 @@ but it is easier and faster to use B<corr_table>.
 pp_def('corr_table',
   Pars      => 'a(n,m); float+ [o]c(m,m)',
   HandleBad => 1,
+  RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code      => '
-
 PDL_Indx N, M;
 N = $SIZE(n); M = $SIZE(m);
 $GENERIC(a) a_, b_;
 $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb, r;
-
-if (N > 1 ) {
-  PDL_Indx i, j;
-  for (i=0; i<M; i++) {
-    for (j=i+1; j<M; j++) {
-      ab = 0; sa = 0; sb = 0; a2 = 0; b2 = 0;
-      loop (n) %{
+PDL_Indx i, j;
+for (i=0; i<M; i++) {
+  for (j=i+1; j<M; j++) {
+    ab = 0; sa = 0; sb = 0; a2 = 0; b2 = 0;
+    loop (n) %{
+      a_ = $a(n=>n,m=>i);
+      b_ = $a(n=>n,m=>j);
+      ab += a_ * b_;
+      sa += a_;
+      sb += b_;
+      a2 += pow(a_, 2);
+      b2 += pow(b_, 2);
+    %}
+    cov = ab - (sa * sb) / N;
+    va  = a2 - pow(sa,2) / N;
+    vb  = b2 - pow(sb,2) / N;
+    r   = cov / sqrt( va * vb );
+    $c(m0=>i, m1=>j) =
+    $c(m0=>j, m1=>i) = r;
+  }
+  $c(m0=>i, m1=>i) = 1.0;
+}
+  ',
+  BadCode  => '
+$GENERIC(a) a_, b_;
+$GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb, r;
+PDL_Indx N, M, i, j;
+M = $SIZE(m);
+for (i=0; i<M; i++) {
+  for (j=i+1; j<M; j++) {
+    ab=0; sa=0; sb=0; a2=0; b2=0; N=0;
+    loop (n) %{
+      if ($ISBAD($a(n=>n, m=>i)) || $ISBAD($a(n=>n, m=>j))) { }
+      else { 
         a_ = $a(n=>n,m=>i);
         b_ = $a(n=>n,m=>j);
-    	ab += a_ * b_;
-    	sa += a_;
-    	sb += b_;
-    	a2 += pow(a_, 2);
-    	b2 += pow(b_, 2);
-      %}
+        ab += a_ * b_;
+        sa += a_;
+        sb += b_;
+        a2 += pow(a_, 2);
+        b2 += pow(b_, 2);
+        N ++;
+      }
+    %}
+    if (N > 1) {
       cov = ab - (sa * sb) / N;
       va  = a2 - pow(sa,2) / N;
       vb  = b2 - pow(sb,2) / N;
@@ -805,68 +816,23 @@ if (N > 1 ) {
       $c(m0=>i, m1=>j) =
       $c(m0=>j, m1=>i) = r;
     }
-    $c(m0=>i, m1=>i) = 1.0;
-  }
-}
-else {
-  barf( "too few N" );
-}
-
-  ',
-  BadCode  => '
-
-if ($SIZE(n) >= 2 ) {
-  $GENERIC(a) a_, b_;
-  $GENERIC(c) ab, sa, sb, a2, b2, cov, va, vb, r;
-  PDL_Indx N, M, i, j;
-  M = $SIZE(m);
-  for (i=0; i<M; i++) {
-    for (j=i+1; j<M; j++) {
-      ab=0; sa=0; sb=0; a2=0; b2=0; N=0;
-      loop (n) %{
-        if ($ISBAD($a(n=>n, m=>i)) || $ISBAD($a(n=>n, m=>j))) { }
-        else { 
-          a_ = $a(n=>n,m=>i);
-          b_ = $a(n=>n,m=>j);
-          ab += a_ * b_;
-          sa += a_;
-          sb += b_;
-          a2 += pow(a_, 2);
-          b2 += pow(b_, 2);
-          N ++;
-        }
-      %}
-      if (N > 1) {
-        cov = ab - (sa * sb) / N;
-        va  = a2 - pow(sa,2) / N;
-        vb  = b2 - pow(sb,2) / N;
-        r   = cov / sqrt( va * vb );
-        $c(m0=>i, m1=>j) =
-        $c(m0=>j, m1=>i) = r;
-      }
-      else {
-        $SETBAD($c(m0=>i, m1=>j));
-        $SETBAD($c(m0=>j, m1=>i));
-      }
+    else {
+      $SETBAD($c(m0=>i, m1=>j));
+      $SETBAD($c(m0=>j, m1=>i));
     }
-    N=0;
-    loop (n) %{
-      if ($ISGOOD($a(n=>n,m=>i)))
-        N ++;
-      if (N > 1)
-        break;
-    %}
-    if (N > 1) {  $c(m0=>i, m1=>i) = 1.0;  }
-    else       {  $SETBAD($c(m0=>i, m1=>i)); }
   }
+  N=0;
+  loop (n) %{
+    if ($ISGOOD($a(n=>n,m=>i)))
+      N ++;
+    if (N > 1)
+      break;
+  %}
+  if (N > 1) {  $c(m0=>i, m1=>i) = 1.0;  }
+  else       {  $SETBAD($c(m0=>i, m1=>i)); }
 }
-else {
-  barf( "too few N" );
-}
-
   ',
   Doc      => '
-
 =for ref
 
 Square Pearson correlation table. Gives the same result as threading using B<corr> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
@@ -978,24 +944,20 @@ pp_def('corr_dev',
   Pars      => 'a(n); b(n); float+ [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
+  RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code      => '
     $GENERIC(c) ab, a2, b2, cov, va, vb;
     ab = 0; a2 = 0; b2 = 0;
     PDL_Indx N = $SIZE(n);
-    if (N > 1) {
-      loop (n) %{
-	ab += $a() * $b();
-	a2 += pow($a(), 2);
-	b2 += pow($b(), 2);
-      %}
-      cov = ab / N;
-      va  = a2 / N;
-      vb  = b2 / N;
-      $c() = cov / sqrt( va * vb );
-    }
-    else {
-      barf( "too few N" );
-    }
+    loop (n) %{
+      ab += $a() * $b();
+      a2 += pow($a(), 2);
+      b2 += pow($b(), 2);
+    %}
+    cov = ab / N;
+    va  = a2 / N;
+    vb  = b2 / N;
+    $c() = cov / sqrt( va * vb );
   ',
   BadCode   => '
     $GENERIC(c) ab, a2, b2, cov, va, vb;
@@ -1038,31 +1000,30 @@ pp_def('t_test',
   Pars      => 'a(n); b(m); float+ [o]t(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
+  RedoDimsCode => '
+    if ($SIZE(n) < 2) $CROAK("too few N");
+    if ($SIZE(m) < 2) $CROAK("too few M");
+  ',
   Code      => '
     $GENERIC(t) N, M, sa, sb, a2, b2, va, vb, sdiff;
     sa = 0; sb = 0; a2 = 0; b2 = 0;
     N = $SIZE(n);
     M = $SIZE(m);
-    if (N < 2 || M < 2) {
-      barf( "too few N" );
-    }
-    else {
-      loop (n) %{
-        sa += $a();
-	a2 += pow($a(), 2);
-      %}
-      loop (m) %{
-        sb += $b();
-	b2 += pow($b(), 2);
-      %}
+    loop (n) %{
+      sa += $a();
+      a2 += pow($a(), 2);
+    %}
+    loop (m) %{
+      sb += $b();
+      b2 += pow($b(), 2);
+    %}
 
-      $d() = N + M - 2;
+    $d() = N + M - 2;
 
-      va = (a2 - pow(sa/N, 2) * N) / (N-1);
-      vb = (b2 - pow(sb/M, 2) * M) / (M-1);
-      sdiff = sqrt( (1/N + 1/M) * ((N-1)*va + (M-1)*vb) / $d() );
-      $t() = (sa/N - sb/M) / sdiff;
-    }
+    va = (a2 - pow(sa/N, 2) * N) / (N-1);
+    vb = (b2 - pow(sb/M, 2) * M) / (M-1);
+    sdiff = sqrt( (1/N + 1/M) * ((N-1)*va + (M-1)*vb) / $d() );
+    $t() = (sa/N - sb/M) / sdiff;
   ',
   BadCode   => '
     $GENERIC(t) N, M, sa, sb, a2, b2, va, vb, sdiff;
@@ -1118,33 +1079,32 @@ pp_def('t_test_nev',
   Pars      => 'a(n); b(m); float+ [o]t(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
+  RedoDimsCode => '
+    if ($SIZE(n) < 2) $CROAK("too few N");
+    if ($SIZE(m) < 2) $CROAK("too few M");
+  ',
   Code      => '
     $GENERIC(t) N, M, sa, sb, a2, b2, se_a_2, se_b_2, sdiff;
     sa = 0; sb = 0; a2 = 0; b2 = 0;
     N = $SIZE(n);
     M = $SIZE(m);
-    if (N < 2 || M < 2) {
-      barf( "too few N" );
-    }
-    else {
-      loop (n) %{
-        sa += $a();
-	a2 += pow($a(), 2);
-      %}
-      loop (m) %{
-        sb += $b();
-	b2 += pow($b(), 2);
-      %}
+    loop (n) %{
+      sa += $a();
+      a2 += pow($a(), 2);
+    %}
+    loop (m) %{
+      sb += $b();
+      b2 += pow($b(), 2);
+    %}
 
-      se_a_2 = (a2 - pow(sa/N,2)*N) / (N*(N-1));
-      se_b_2 = (b2 - pow(sb/M,2)*M) / (M*(M-1));
-      sdiff = sqrt( se_a_2 + se_b_2 );
+    se_a_2 = (a2 - pow(sa/N,2)*N) / (N*(N-1));
+    se_b_2 = (b2 - pow(sb/M,2)*M) / (M*(M-1));
+    sdiff = sqrt( se_a_2 + se_b_2 );
 
-      $t() = (sa/N - sb/M) / sdiff;
-      $d() = pow(se_a_2 + se_b_2, 2)
-           / ( pow(se_a_2,2) / (N-1) + pow(se_b_2,2) / (M-1) )
-           ;
-    }
+    $t() = (sa/N - sb/M) / sdiff;
+    $d() = pow(se_a_2 + se_b_2, 2)
+         / ( pow(se_a_2,2) / (N-1) + pow(se_b_2,2) / (M-1) )
+         ;
   ',
   BadCode   => '
     $GENERIC(t) N, M, sa, sb, a2, b2, se_a_2, se_b_2, sdiff;
@@ -1198,23 +1158,18 @@ pp_def('t_test_paired',
   Pars      => 'a(n); b(n); float+ [o]t(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
+  RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code      => '
     $GENERIC(t) N, diff, s_dif, diff2;
     s_dif = 0; diff2 = 0;
     N = $SIZE(n);
-    if (N > 1) {
-      loop (n) %{
-        diff = $a() - $b();
-        s_dif += diff;
-	diff2 += pow(diff, 2);
-      %}
-
-      $d() = N - 1;
-      $t() = s_dif / sqrt( N * ( diff2 - pow(s_dif/N,2)*N ) / (N-1) );
-    }
-    else {
-      barf( "too few N" );
-    }
+    loop (n) %{
+      diff = $a() - $b();
+      s_dif += diff;
+      diff2 += pow(diff, 2);
+    %}
+    $d() = N - 1;
+    $t() = s_dif / sqrt( N * ( diff2 - pow(s_dif/N,2)*N ) / (N-1) );
   ',
   BadCode   => '
     $GENERIC(t) N, diff, s_dif, diff2;

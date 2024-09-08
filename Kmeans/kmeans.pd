@@ -109,9 +109,8 @@ pp_def('_random_cluster',
   Pars  => 'short a(o,c); short [o]b(o,c)',
   Inplace   => 1,
   GenericTypes => [U],
+  RedoDimsCode => 'if ($SIZE(c) > $SIZE(o)) $CROAK("more cluster than obs!");',
   Code  => '
-if ($SIZE(c) > $SIZE(o))
-  barf("more cluster than obs!");
 /* threading w time only srand produces identical clusters */
 long r;
 srand( time( NULL ) + r++);
@@ -122,11 +121,8 @@ loop (o) %{
     $b() = (c == cl)? 1 : 0;
   %}
 %}
-
   ',
-
   Doc   => undef,
-
 );
 
 pp_def('which_cluster',
@@ -340,7 +336,7 @@ loop (c) %{
       $m() = 0;
       $ss() = 0;
     %}
-/*    barf("please make sure there is no empty cluster!");  */
+/*    $CROAK("please make sure there is no empty cluster!");  */
   }
 %}
 
