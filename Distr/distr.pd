@@ -632,35 +632,7 @@ Probability mass function for poisson distribution. Uses Stirling's formula for 
 },
 );
 
-pp_addpm pp_line_numbers(__LINE__, <<'EOD');
-
-=head2 pmf_poisson_factorial
-
-=for sig
-
-  Signature: ushort x(); l(); float+ [o]p()
-
-=for ref
-
-Probability mass function for poisson distribution. Input is limited to x < 170 to avoid gsl_sf_fact() overflow.
-
-=cut
-
-*pmf_poisson_factorial = \&PDL::pmf_poisson_factorial;
-sub PDL::pmf_poisson_factorial {
-	my ($x, $l) = @_;
-
-	my $pdlx = pdl($x);
-	if (any( $pdlx >= 170 )) {
-		croak "Does not support input greater than 170. Please use pmf_poisson or pmf_poisson_stirling instead.";
-	} else {
-		return _pmf_poisson_factorial(@_);
-	}
-}
-
-EOD
-
-pp_def('_pmf_poisson_factorial',
+pp_def('pmf_poisson_factorial',
   Pars      => 'ushort x(); l(); float+ [o]p()',
   GenericTypes => [F,D],
   HandleBad => 1,
@@ -673,7 +645,21 @@ if ($x() < GSL_SF_FACT_NMAX) {
   $p() = 0;
 }
 },
-  Doc      => undef,
+  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
+sub PDL::pmf_poisson_factorial {
+  my ($x, $l) = @_;
+  my $pdlx = PDL->topdl($x);
+  croak "Does not support input greater than 170. Please use pmf_poisson or pmf_poisson_stirling instead."
+    if any($pdlx >= 170);
+  PDL::_pmf_poisson_factorial_int($pdlx, $l, my $p = PDL->null);
+  $p;
+}
+EOF
+  Doc => <<'EOD',
+=for ref
+
+Probability mass function for poisson distribution. Input is limited to x < 170 to avoid gsl_sf_fact() overflow.
+EOD
 );
 
 pp_addpm {At=>'Bot'}, pp_line_numbers(__LINE__, <<'EOD');

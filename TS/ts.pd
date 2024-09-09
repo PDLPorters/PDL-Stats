@@ -42,24 +42,21 @@ pp_addhdr('
 '
 );
 
-pp_def('_acf',
+pp_def('acf',
   Pars  => 'x(t); [o]r(h)',
   OtherPars => 'IV lag=>h',
   GenericTypes => [F,D],
   Code  => '
-
 $GENERIC(x) s, s2, m, cov0, covh;
 s=0; s2=0; m=0; cov0=0; covh=0;
 PDL_Indx  T, i;
 T = $SIZE(t);
-
 loop(t) %{
   s += $x();
   s2 += pow($x(), 2);
 %}
 m = s/T;
 cov0 = s2 - T * pow(m, 2);
-
 loop (h) %{
   if (h) {
     covh = 0;
@@ -72,51 +69,16 @@ loop (h) %{
     $r() = 1;
   }
 %}
-  ',
-  Doc   => undef,
-);
-
-pp_def('_acvf',
-  Pars  => 'x(t); [o]v(h)',
-  OtherPars => 'IV lag=>h;',
-  GenericTypes => [F,D],
-  Code  => '
-
-$GENERIC(x) s, s2, m, covh;
-s=0; s2=0; m=0; covh=0;
-long T, i;
-T = $SIZE(t);
-
-loop(t) %{
-  s += $x();
-  s2 += pow($x(), 2);
-%}
-m = s/T;
-
-loop (h) %{
-  if (h) {
-    covh = 0;
-    for (i=0; i<T-h; i++) {
-      covh += ($x(t=>i) - m) * ($x(t=>i+h) - m);
-    }
-    $v() = covh;
-  }
-  else {
-    $v() = s2 - T * pow(m, 2);
-  }
-%}
-  ',
-  Doc   => undef,
-);
-
-pp_addpm pp_line_numbers(__LINE__, <<'EOD');
-
-=head2 acf
-
-=for sig
-
-  Signature: (x(t); int h(); [o]r(h+1))
-
+',
+  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
+sub PDL::acf {
+  my ($self, $h) = @_;
+  $h ||= $self->dim(0) - 1;
+  PDL::_acf_int($self, my $r = PDL->null, $h+1);
+  $r;
+}
+EOF
+ Doc => <<'EOD',
 =for ref
 
 Autocorrelation function for up to lag h. If h is not specified it's set to t-1 by default.
@@ -133,22 +95,45 @@ usage:
 
     perldl> p $a->acf(5)
     [1 0.7 0.41212121 0.14848485 -0.078787879 -0.25757576]
+EOD
+);
 
-=cut
-
-*acf = \&PDL::acf;
-sub PDL::acf {
+pp_def('acvf',
+  Pars  => 'x(t); [o]v(h)',
+  OtherPars => 'IV lag=>h;',
+  GenericTypes => [F,D],
+  Code  => '
+$GENERIC(x) s, s2, m, covh;
+s=0; s2=0; m=0; covh=0;
+long T, i;
+T = $SIZE(t);
+loop(t) %{
+  s += $x();
+  s2 += pow($x(), 2);
+%}
+m = s/T;
+loop (h) %{
+  if (h) {
+    covh = 0;
+    for (i=0; i<T-h; i++) {
+      covh += ($x(t=>i) - m) * ($x(t=>i+h) - m);
+    }
+    $v() = covh;
+  }
+  else {
+    $v() = s2 - T * pow(m, 2);
+  }
+%}
+',
+  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
+sub PDL::acvf {
   my ($self, $h) = @_;
   $h ||= $self->dim(0) - 1;
-  return $self->_acf($h+1);
+  PDL::_acvf_int($self, my $v = PDL->null, $h+1);
+  $v;
 }
-
-=head2 acvf
-
-=for sig
-
-  Signature: (x(t); int h(); [o]v(h+1))
-
+EOF
+ Doc => <<'EOD',
 =for ref
 
 Autocovariance function for up to lag h. If h is not specified it's set to t-1 by default.
@@ -170,17 +155,8 @@ usage:
     
     perldl> p $a->acvf(5) / $a->acvf(0)
     [1 0.7 0.41212121 0.14848485 -0.078787879 -0.25757576]
-
-=cut
-
-*acvf = \&PDL::acvf;
-sub PDL::acvf {
-  my ($self, $h) = @_;
-  $h ||= $self->dim(0) - 1;
-  return $self->_acvf($h+1);
-}
-
 EOD
+);
 
 pp_def('diff',
   Pars  => 'x(t); [o]dx(t)',
@@ -296,42 +272,7 @@ Deseasonalize data using moving average filter the size of period d.
 ',
 );
 
-pp_addpm pp_line_numbers(__LINE__, <<'EOD');
-
-=head2 fill_ma
-
-=for sig
-
-  Signature: (x(t); int q(); [o]xf(t))
-
-=for ref
-
-Fill missing value with moving average. xf(t) = sum(x(t-q .. t-1, t+1 .. t+q)) / 2q.
-
-fill_ma does handle bad values. Output pdl bad flag is cleared unless the specified window size q is too small and there are still bad values.
- 
-=for usage
-
-  my $x_filled = $x->fill_ma( $q );
-
-=cut
-
-*fill_ma = \&PDL::fill_ma;
-sub PDL::fill_ma {
-  my ($x, $q) = @_;
-
-  my $x_filled = $x->_fill_ma($q);
-  $x_filled->check_badflag;
-
-#  carp "ma window too small, still has bad value"
-#    if $x_filled->badflag;
-
-  return $x_filled;
-}
-
-EOD
-
-pp_def('_fill_ma',
+pp_def('fill_ma',
   Pars  => 'x(t); indx q(); [o]xf(t)',
   GenericTypes => [F,D],
   HandleBad    => 1,
@@ -362,7 +303,27 @@ loop(t) %{
   $xf() = $x();
 %}
 ',
-  Doc   => undef,
+  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
+sub PDL::fill_ma {
+  my ($x, $q) = @_;
+  PDL::_fill_ma_int($x, $q, my $x_filled = PDL->null);
+  $x_filled->check_badflag;
+#  carp "ma window too small, still has bad value"
+#    if $x_filled->badflag;
+  return $x_filled;
+}
+EOF
+  Doc => <<'EOD',
+=for ref
+
+Fill missing value with moving average. xf(t) = sum(x(t-q .. t-1, t+1 .. t+q)) / 2q.
+
+fill_ma does handle bad values. Output pdl bad flag is cleared unless the specified window size q is too small and there are still bad values.
+
+=for usage
+
+  my $x_filled = $x->fill_ma( $q );
+EOD
 );
 
 pp_def('filter_exp',
@@ -536,14 +497,48 @@ Usage:
   ',
 );
 
-pp_addpm pp_line_numbers(__LINE__, <<'EOD');
-
-=head2 pred_ar
-
-=for sig
-
-  Signature: (x(d); b(p|p+1); int t(); [o]pred(t))
-
+pp_def('pred_ar',
+  Pars  => 'x(p); b(p); [o]pred(t)',
+  OtherPars => 'IV end=>t;',
+  GenericTypes => [F,D],
+  Code  => '
+PDL_Indx ord = $SIZE(p);
+$GENERIC(x) xt, xp[ord];
+loop (t) %{
+  if (t < ord) {
+    xp[t] = $x(p=>t);
+    $pred() = xp[t];
+  }
+  else {
+    xt = 0;
+    loop(p) %{
+      xt += xp[p] * $b(p=>ord-p-1);
+      xp[p] = (p < ord - 1)?  xp[p+1] : xt;
+    %}
+    $pred() = xt;
+  }
+%}
+',
+  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
+sub PDL::pred_ar {
+  my ($x, $b, $t, $opt) = @_;
+  my %opt = ( CONST => 1 );
+  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  $b = PDL->topdl($b); # allows passing simple number
+  my $ext;
+  if ($opt{CONST}) {
+    my $t_ = $t - ( $x->dim(0) - $b->dim(0) + 1 );
+    PDL::_pred_ar_int($x(-$b->dim(0)+1:-1, ), $b(0:-2), $ext = PDL->null, $t_);
+    $ext($b->dim(0)-1:-1) += $b(-1);
+    return $x->append( $ext( $b->dim(0)-1 : -1 ) );
+  } else {
+    my $t_ = $t - ( $x->dim(0) - $b->dim(0) );
+    PDL::_pred_ar_int($x(-$b->dim(0):-1, ), $b, $ext = PDL->null, $t_);
+    return $x->append($ext($b->dim(0) : -1));
+  }
+}
+EOF
+  Doc => <<'EOD',
 =for ref
 
 Calculates predicted values up to period t (extend current series up to period t) for autoregressive series, with or without constant. If there is constant, it is the last element in b, as would be returned by ols or ols_t.
@@ -569,60 +564,7 @@ Usage:
       # no constant
     perldl> p $x->pred_ar($b(0:1), 7, {const=>0})
     [0       1     0.8    0.44   0.192  0.0656 0.01408]
-
-=cut
-
-sub PDL::pred_ar {
-  my ($x, $b, $t, $opt) = @_;
-  my %opt = ( CONST => 1 );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
-  $b = pdl $b
-    unless ref $b eq 'PDL';        # allows passing simple number
-
-  my $ext;
-  if ($opt{CONST}) {
-    my $t_ = $t - ( $x->dim(0) - $b->dim(0) + 1 );
-    $ext = $x(-$b->dim(0)+1:-1, )->_pred_ar($b(0:-2), $t_);
-    $ext($b->dim(0)-1:-1) += $b(-1);
-    return $x->append( $ext( $b->dim(0)-1 : -1 ) );
-  }
-  else {
-    my $t_ = $t - ( $x->dim(0) - $b->dim(0) );
-    $ext = $x(-$b->dim(0):-1, )->_pred_ar($b, $t_);
-    return $x->append($ext($b->dim(0) : -1));
-  }
-}
-
 EOD
-
-pp_def('_pred_ar',
-  Pars  => 'x(p); b(p); [o]pred(t)',
-  OtherPars => 'IV end=>t;',
-  GenericTypes => [F,D],
-  Code  => '
-
-PDL_Indx ord = $SIZE(p);
-$GENERIC(x) xt, xp[ord];
-
-loop (t) %{
-  if (t < ord) {
-    xp[t] = $x(p=>t);
-    $pred() = xp[t];
-  }
-  else {
-    xt = 0;
-    loop(p) %{
-      xt += xp[p] * $b(p=>ord-p-1);
-      xp[p] = (p < ord - 1)?  xp[p+1] : xt;
-    %}
-    $pred() = xt;
-  }
-%}
-
-  ',
-  Doc   => undef
-  ,
 );
 
 pp_addpm pp_line_numbers(__LINE__, <<'EOD');
