@@ -1,6 +1,5 @@
 use PDL::Core::Dev;
 use ExtUtils::MakeMaker;
-PDL::Core::Dev->import();
 
 $package = ["distr.pd",Distr,PDL::Stats::Distr,undef,1];
 %hash = pdlpp_stdargs($package);
@@ -11,7 +10,7 @@ chomp( my $cflags = `gsl-config --cflags` );
 if ($libgsl) {
   unshift @{ $hash{'LIBS'} }, $libgsl;
   $hash{'INC'} .= " $cflags";
-  WriteMakefile( %hash );
+  WriteMakefile( %hash, NO_MYMETA => 1 );
   sub MY::postamble {pdlpp_postamble($package)};
 }
 else {
