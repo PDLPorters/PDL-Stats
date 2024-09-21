@@ -52,11 +52,6 @@ sub tapprox {
 }
 
 {
-  my $a = sequence 5;
-  is( tapprox( sum( $a->diff - pdl(0, 1, 1, 1, 1) ), 0 ), 1, "difference data on $a - DX(t) = X(t) - X(t-1)");
-}
-
-{
   my $x = sequence 2;
   my $b = pdl(.8, -.2, .3);
   my $xp = $x->pred_ar($b, 7);

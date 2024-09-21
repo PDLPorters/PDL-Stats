@@ -1,4 +1,5 @@
-- removed TS::inte which is identical to cumusumover
+- removed TS::inte (identical to cumusumover)
+- moved TS::diff (unused here) to Ufunc
 
 0.84 2024-05-27
 - effect_code exception if only one unique value
