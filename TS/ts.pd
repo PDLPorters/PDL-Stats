@@ -163,11 +163,8 @@ pp_def('diff',
   Inplace   => 1,
   GenericTypes => [U,L,Q,F,D],
   Code  => '
-
 long tr;
-
 /* do it in reverse so inplace works */
-
 for (tr = $SIZE(t) - 1; tr >= 0; tr --) {
   if (tr) {
     $dx(t=>tr) = $x(t=>tr) - $x(t=>tr-1);
@@ -176,40 +173,11 @@ for (tr = $SIZE(t) - 1; tr >= 0; tr --) {
     $dx(t=>tr) = $x(t=>tr);
   }
 }
-
-  ',
+',
   Doc   => '
 =for ref
 
 Differencing. DX(t) = X(t) - X(t-1), DX(0) = X(0). Can be done inplace.
-
-=cut
-
-',
-);
-
-pp_def('inte',
-  Pars  => 'x(n); [o]ix(n)',
-  Inplace   => 1,
-  GenericTypes => [L,Q,F,D],
-  Code  => '
-
-$GENERIC(x) tmp;
-tmp = 0;
-
-loop(n) %{
-  tmp += $x();
-  $ix() = tmp;
-%}
-
-  ',
-  Doc   => '
-=for ref
-
-Integration. Opposite of differencing. IX(t) = X(t) + X(t-1), IX(0) = X(0). Can be done inplace.
-
-=cut
-
 ',
 );
 

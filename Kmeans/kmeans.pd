@@ -204,17 +204,14 @@ Takes data pdl dim [obs x var] and centroid pdl dim [cluster x var] and returns 
 
 =for usage
 
-    perldl> $centroid = ones 2, 3
-    perldl> $centroid(0,) .= 0
-    perldl> p $centroid
+    perldl> p $centroid = xvals 2, 3
     [
      [0 1]
      [0 1]
      [0 1]
     ]
 
-    perldl> $b = qsort( random 4, 3 )
-    perldl> p $b
+    perldl> p $b = qsort( random 4, 3 )
     [
      [0.022774068 0.032513883  0.13890034  0.30942479]
      [ 0.16943853  0.50262636  0.56251531   0.7152271]

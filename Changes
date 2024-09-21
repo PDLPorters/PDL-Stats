@@ -1,3 +1,5 @@
+- removed TS::inte which is identical to cumusumover
+
 0.84 2024-05-27
 - effect_code exception if only one unique value
 - fix for Distr so M_PI found - thanks @shawnlaffan

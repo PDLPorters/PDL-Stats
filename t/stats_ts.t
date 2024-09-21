@@ -54,7 +54,6 @@ sub tapprox {
 {
   my $a = sequence 5;
   is( tapprox( sum( $a->diff - pdl(0, 1, 1, 1, 1) ), 0 ), 1, "difference data on $a - DX(t) = X(t) - X(t-1)");
-  is( tapprox( sum( $a->diff->inte - $a ), 0 ), 1, "add data on $a - IX(t) = X(t) + X(t-1)");
 }
 
 {
