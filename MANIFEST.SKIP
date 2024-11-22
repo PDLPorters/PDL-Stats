@@ -55,6 +55,6 @@ MYMETA\.
 \.bs$
 \.c$
 \.o$
-/.*\.pm$
+/(Basic|Kmeans|GLM|TS)\.pm$
 \.xs$
 pp-.*\.c$
