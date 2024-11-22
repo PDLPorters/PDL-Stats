@@ -32,6 +32,7 @@ WriteMakefile(
     },
     TEST_REQUIRES => {
         'Test::More' => '0.88', # done_testing
+        'Test::PDL' => '0.21',
     },
     $got_PDL ? () : (DIR => []), # just write MYMETA if no PDL
     dist                => { PREOP => 'gsl-config --version && $(PERL) -MPDL::Core::Dev -e pdlpp_mkgen $(DISTVNAME)' },
