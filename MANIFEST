@@ -1,9 +1,6 @@
 Basic/Makefile.PL
 Basic/stats_basic.pd
 Changes
-Distr/distr.pd
-Distr/Makefile.PL
-Distr/t/stats_distr.t
 GLM/glm.pd
 GLM/Makefile.PL
 Kmeans/kmeans.pd

@@ -4,11 +4,6 @@ Basic/Basic.c
 Basic/Basic.o
 Basic/Basic.pm
 Basic/Basic.xs
-Distr/Distr.bs
-Distr/Distr.c
-Distr/Distr.o
-Distr/Distr.pm
-Distr/Distr.xs
 GLM/GLM.bs
 GLM/GLM.c
 GLM/GLM.o

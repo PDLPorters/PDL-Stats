@@ -1,5 +1,6 @@
 - removed TS::inte (identical to cumusumover)
 - moved TS::diff (unused here) to Ufunc
+- move PDL::Stats::Distr into PDL::GSL since needs GSL
 
 0.84 2024-05-27
 - effect_code exception if only one unique value

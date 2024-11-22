@@ -9,7 +9,7 @@ my $force;
 my $result = GetOptions("force"=>\$force);
 
 if ($] >= 5.015000 and $] < 5.015009 and !$force) {
-    warn "Perl version bewteen 5.15.0 and 5.15.8 detected. Sheepishly bailing out of installation because of perl and PDL :lvalue subroutine issue. Use --force with 'perl Makefile.PL' to attemp a build anyways. For more information, please see perl bug ticket #107366 https://rt.perl.org/rt3//Public/Bug/Display.html?id=107366\n";
+    warn "Perl version between 5.15.0 and 5.15.8 detected. Sheepishly bailing out of installation because of perl and PDL :lvalue subroutine issue. Use --force with 'perl Makefile.PL' to attemp a build anyways. For more information, please see perl bug ticket #107366 https://rt.perl.org/rt3//Public/Bug/Display.html?id=107366\n";
     exit;
 }
 
@@ -20,9 +20,7 @@ WriteMakefile(
     AUTHOR              => 'Maggie J. Xiong  <maggiexyz users.sourceforge.net>',
     VERSION_FROM        => 'Stats.pm',
     ABSTRACT_FROM       => 'Stats.pm',
-    ($ExtUtils::MakeMaker::VERSION >= 6.3002
-      ? ('LICENSE'=> 'perl')
-      : ()),
+    LICENSE=> 'perl',
     PREREQ_PM => {
         'PDL'  => '2.073', # PDL_IF_BAD
     },
@@ -49,6 +47,7 @@ WriteMakefile(
         runtime => {
           recommends => {
             'PDL::Graphics::PGPLOT' => 0,
+            'PDL::GSL' => 0,
             'PDL::Slatec' => 0,
           },
         },
