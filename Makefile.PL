@@ -3,16 +3,6 @@ use warnings;
 use ExtUtils::MakeMaker;
 use PDL::Core::Dev;
 
-use Getopt::Long;
-
-my $force;
-my $result = GetOptions("force"=>\$force);
-
-if ($] >= 5.015000 and $] < 5.015009 and !$force) {
-    warn "Perl version between 5.15.0 and 5.15.8 detected. Sheepishly bailing out of installation because of perl and PDL :lvalue subroutine issue. Use --force with 'perl Makefile.PL' to attemp a build anyways. For more information, please see perl bug ticket #107366 https://rt.perl.org/rt3//Public/Bug/Display.html?id=107366\n";
-    exit;
-}
-
 my $got_PDL = eval { require PDL::Core::Dev };
 
 WriteMakefile(
@@ -20,6 +10,7 @@ WriteMakefile(
     AUTHOR              => 'Maggie J. Xiong  <maggiexyz users.sourceforge.net>',
     VERSION_FROM        => 'Stats.pm',
     ABSTRACT_FROM       => 'Stats.pm',
+    MIN_PERL_VERSION => '5.016', # https://github.com/Perl/perl5/issues/11835
     LICENSE=> 'perl',
     PREREQ_PM => {
         'PDL'  => '2.073', # PDL_IF_BAD
