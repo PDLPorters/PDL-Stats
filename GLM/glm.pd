@@ -1979,7 +1979,7 @@ sub PDL::pca {
   else {
     ($eigvec, $eigval) = $var_var->eigens_sym;
       # compatibility with PDL::Slatec::eigsys
-    $eigvec = $eigvec->inplace->transpose->sever;
+    $eigvec = $eigvec->transpose;
   }
 
     # ind is sticky point for threading
