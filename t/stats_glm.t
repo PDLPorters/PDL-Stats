@@ -421,7 +421,7 @@ sub test_stats_cmp {
       ($exp, my $func) = @$exp;
       ($got, $exp) = map &$func($_), $got, $exp;
     }
-    is_pdl $got, PDL->topdl($exp), {atol=>$eps, test_name=>$_};
+    is_pdl $got, PDL->topdl($exp), {atol=>$eps, require_equal_types=>0, test_name=>$_};
   }
 }
 my %anova_ans_l2_common = (

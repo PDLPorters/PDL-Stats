@@ -1,3 +1,5 @@
+- relax the tests' type requirement
+
 0.850 2024-12-27
 - removed TS::inte (identical to cumusumover)
 - moved TS::diff (unused here) to Ufunc
