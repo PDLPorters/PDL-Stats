@@ -61,7 +61,7 @@ pp_addhdr('
 );
 
 pp_def('fill_m',
-  Pars      => 'a(n); float+ [o]b(n)',
+  Pars      => 'a(n); [o]b(n)',
   Inplace   => 1,
   GenericTypes => [F, D],
   HandleBad => 1,
@@ -165,7 +165,7 @@ The output pdl badflag is cleared.
 );
 
 pp_def('dev_m',
-  Pars      => 'a(n); float+ [o]b(n)',
+  Pars      => 'a(n); [o]b(n)',
   Inplace   => 1,
   GenericTypes => [F, D],
   HandleBad => 1,
@@ -191,7 +191,7 @@ Replaces values with deviations from the mean. Can be done inplace.
 );
 
 pp_def('stddz',
-  Pars      => 'a(n); float+ [o]b(n)',
+  Pars      => 'a(n); [o]b(n)',
   Inplace   => 1,
   GenericTypes => [F, D],
   HandleBad => 1,
@@ -221,7 +221,7 @@ Standardize ie replace values with z_scores based on sample standard deviation f
 );
 
 pp_def('sse',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -240,7 +240,7 @@ Sum of squared errors between actual and predicted values.
 );
 
 pp_def('mse',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -262,7 +262,7 @@ Mean of squared errors between actual and predicted values, ie variance around p
 );
 
 pp_def('rmse',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -284,7 +284,7 @@ Root mean squared error, ie stdv around predicted value.
 );
 
 pp_def('pred_logistic',
-  Pars      => 'a(n,m); b(m); float+ [o]c(n)',
+  Pars      => 'a(n,m); b(m); [o]c(n)',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -312,7 +312,7 @@ Calculates predicted prob value for logistic regression.
 );
 
 pp_def('d0',
-  Pars      => 'a(n); float+ [o]c()',
+  Pars      => 'a(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -343,7 +343,7 @@ Null deviance for logistic regression.
 );
 
 pp_def('dm',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -370,7 +370,7 @@ Model deviance for logistic regression.
 );
 
 pp_def('dvrs',
-  Pars      => 'a(); b(); float+ [o]c()',
+  Pars      => 'a(); b(); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
