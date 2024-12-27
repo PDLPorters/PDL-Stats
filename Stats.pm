@@ -3,7 +3,7 @@ package PDL::Stats;
 use strict;
 use warnings;
 
-our $VERSION = '0.850';
+our $VERSION = '0.851';
 
 sub import {
   my $pkg = (caller())[0];
