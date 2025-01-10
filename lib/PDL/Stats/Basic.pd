@@ -1,4 +1,4 @@
-pp_add_exported('', 'binomial_test', 'rtable', 'which_id', 
+pp_add_exported('', 'binomial_test', 'rtable', 'which_id',
 );
 
 pp_addpm({At=>'Top'}, <<'EOD');
@@ -30,7 +30,7 @@ Does not have mean or median function here. see SEE ALSO.
 
 or
 
-    my $stdv = stdv( $data );  
+    my $stdv = stdv( $data );
 
 =cut
 
@@ -38,7 +38,6 @@ EOD
 
 pp_addhdr('
 #include <math.h>
-
 '
 );
 
@@ -58,15 +57,7 @@ pp_def('stdv',
     if (N < 1) { $SETBAD(b()); continue; }
     $b() = sqrt( a2 / N - pow(sa/N,2) );
   ',
-  Doc      => '
-
-=for ref
-
-Sample standard deviation.
-
-=cut
-  ',
-
+  Doc      => 'Sample standard deviation.',
 );
 
 pp_def('stdv_unbiased',
@@ -85,15 +76,7 @@ pp_def('stdv_unbiased',
     if (N < 2) { $SETBAD(b()); continue; }
     $b() = pow( a2/(N-1) - pow(sa/N,2) * N/(N-1), .5 );
   ',
-  Doc      => '
-
-=for ref
-
-Unbiased estimate of population standard deviation.
-
-=cut
-  ',
-
+  Doc      => 'Unbiased estimate of population standard deviation.',
 );
 
 pp_def('var',
@@ -112,15 +95,7 @@ pp_def('var',
     if (N < 1) { $SETBAD(b()); continue; }
     $b() = a2 / N - pow(sa/N, 2);
   ',
-  Doc      => '
-
-=for ref
-
-Sample variance.
-
-=cut
-  ',
-
+  Doc      => 'Sample variance.',
 );
 
 pp_def('var_unbiased',
@@ -139,15 +114,7 @@ pp_def('var_unbiased',
     if (N < 2) { $SETBAD(b()); continue; }
     $b() = (a2 - pow(sa/N, 2) * N) / (N-1);
   ',
-  Doc      => '
-
-=for ref
-
-Unbiased estimate of population variance.
-
-=cut
-  ',
-
+  Doc      => 'Unbiased estimate of population variance.',
 );
 
 pp_def('se',
@@ -167,22 +134,16 @@ pp_def('se',
     $b() = sqrt( (a2/(N-1) - pow(sa/N,2) * N/(N-1)) / N );
   ',
   Doc      => '
-
 =for ref
 
 Standard error of the mean. Useful for calculating confidence intervals.
 
-=for usage
+=for example
 
     # 95% confidence interval for samples with large N
-
     $ci_95_upper = $data->average + 1.96 * $data->se;
     $ci_95_lower = $data->average - 1.96 * $data->se;
-
-=cut
-
   ',
-
 );
 
 pp_def('ss',
@@ -201,15 +162,7 @@ pp_def('ss',
     if (N < 1) { $SETBAD(b()); continue; }
     $b() = a2 - N * pow(sa/N,2);
   ',
-  Doc      => '
-
-=for ref
-
-Sum of squared deviations from the mean.
-
-=cut
-  ',
-
+  Doc      => 'Sum of squared deviations from the mean.',
 );
 
 pp_def('skew',
@@ -235,15 +188,7 @@ pp_def('skew',
     %}
     $b() = d3/N / pow(d2/N, 1.5);
   ',
-  Doc      => '
-
-=for ref
-
-Sample skewness, measure of asymmetry in data. skewness == 0 for normal distribution.
-
-=cut
-  ',
-
+  Doc      => 'Sample skewness, measure of asymmetry in data. skewness == 0 for normal distribution.',
 );
 
 pp_def('skew_unbiased',
@@ -268,15 +213,7 @@ pp_def('skew_unbiased',
     %}
     $b() = sqrt(N*(N-1)) / (N-2) * d3/N / pow(d2/N, 1.5);
   ',
-  Doc      => '
-
-=for ref
-
-Unbiased estimate of population skewness. This is the number in GNumeric Descriptive Statistics.
-
-=cut
-  ',
-
+  Doc      => 'Unbiased estimate of population skewness. This is the number in GNumeric Descriptive Statistics.',
 );
 
 pp_def('kurt',
@@ -301,15 +238,7 @@ pp_def('kurt',
     %}
     $b() = N * d4 / pow(d2,2) - 3;
   ',
-  Doc      => '
-
-=for ref
-
-Sample kurtosis, measure of "peakedness" of data. kurtosis == 0 for normal distribution. 
-
-=cut
-  ',
-
+  Doc      => 'Sample kurtosis, measure of "peakedness" of data. kurtosis == 0 for normal distribution.',
 );
 
 pp_def('kurt_unbiased',
@@ -334,15 +263,7 @@ pp_def('kurt_unbiased',
     %}
     $b() = ((N-1)*N*(N+1) * d4 / pow(d2,2) - 3 * pow(N-1,2)) / ((N-2)*(N-3));
   ',
-  Doc      => '
-
-=for ref
-
-Unbiased estimate of population kurtosis. This is the number in GNumeric Descriptive Statistics.
-
-=cut
-  ',
-
+  Doc      => 'Unbiased estimate of population kurtosis. This is the number in GNumeric Descriptive Statistics.',
 );
 
 pp_def('cov',
@@ -362,15 +283,7 @@ pp_def('cov',
     if (N < 1) { $SETBAD(c()); continue; }
     $c() = ab / N - (sa/N) * (sb/N);
   ',
-  Doc      => '
-
-=for ref
-
-Sample covariance. see B<corr> for ways to call
-
-=cut
-  ',
-
+  Doc      => 'Sample covariance. see B<corr> for ways to call',
 );
 
 pp_def('cov_table',
@@ -407,7 +320,7 @@ for (i=0; i<M; i++) {
 
 Square covariance table. Gives the same result as threading using B<cov> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
 
-=for usage
+=for example
 
 Usage:
 
@@ -437,10 +350,7 @@ Usage:
 
 for the same cov matrix table using B<cov>,
 
-    perldl> p $a->dummy(2)->cov($a->dummy(1)) 
-
-=cut
-
+    perldl> p $a->dummy(2)->cov($a->dummy(1))
   ',
 
 );
@@ -474,7 +384,7 @@ pp_def('corr',
 
 Pearson correlation coefficient. r = cov(X,Y) / (stdv(X) * stdv(Y)).
 
-=for usage 
+=for example
 
 Usage:
 
@@ -495,10 +405,7 @@ for square corr table
     ]
 
 but it is easier and faster to use B<corr_table>.
-
-=cut
   ',
-
 );
 
 pp_def('corr_table',
@@ -550,14 +457,14 @@ for (i=0; i<M; i++) {
 
 Square Pearson correlation table. Gives the same result as threading using B<corr> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
 
-=for usage
+=for example
 
 Usage:
 
     # 5 obs x 3 var, 2 such data tables
- 
+
     perldl> $a = random 5, 3, 2
-    
+
     perldl> p $a->corr_table
     [
      [
@@ -574,14 +481,10 @@ Usage:
 
 for the same result using B<corr>,
 
-    perldl> p $a->dummy(2)->corr($a->dummy(1)) 
+    perldl> p $a->dummy(2)->corr($a->dummy(1))
 
 This is also how to use B<t_corr> and B<n_pair> with such a table.
-
-=cut
-
   ',
-
 );
 
 pp_def('t_corr',
@@ -596,7 +499,11 @@ pp_def('t_corr',
     $t() = $r() / pow( (1 - pow($r(), 2)) / ($n() - 2) , .5);
   ',
   Doc       => '
-=for usage
+=for ref
+
+t significance test for Pearson correlations.
+
+=for example
 
     $corr   = $data->corr( $data->dummy(1) );
     $n      = $data->n_pair( $data->dummy(1) );
@@ -605,14 +512,7 @@ pp_def('t_corr',
     use PDL::GSL::CDF;
 
     $p_2tail = 2 * (1 - gsl_cdf_tdist_P( $t_corr->abs, $n-2 ));
-
-=for ref
-
-t significance test for Pearson correlations.
-
-=cut
   ',
-
 );
 
 pp_def('n_pair',
@@ -627,15 +527,7 @@ pp_def('n_pair',
     %},)
     $c() = N;
   ',
-  Doc       => '
-
-=for ref
-
-Returns the number of good pairs between 2 lists. Useful with B<corr> (esp. when bad values are involved)
-
-=cut
-  ',
-
+  Doc       => 'Returns the number of good pairs between 2 lists. Useful with B<corr> (esp. when bad values are involved)',
 );
 
 pp_def('corr_dev',
@@ -660,17 +552,7 @@ pp_def('corr_dev',
     vb  = b2 / N;
     $c() = cov / sqrt( va * vb );
   ',
-  Doc       => '
-=for usage
-
-    $corr = $a->dev_m->corr_dev($b->dev_m);
-
-=for ref
-
-Calculates correlations from B<dev_m> vals. Seems faster than doing B<corr> from original vals when data pdl is big
-
-=cut
-  ',
+  Doc       => 'Calculates correlations from B<dev_m> vals. Seems faster than doing B<corr> from original vals when data pdl is big',
 );
 
 pp_def('t_test',
@@ -707,20 +589,15 @@ pp_def('t_test',
     $t() = (sa/N - sb/M) / sdiff;
   ',
   Doc       => '
-
-=for usage
-
-    my ($t, $df) = t_test( $pdl1, $pdl2 );
-
-    use PDL::GSL::CDF;
-
-    my $p_2tail = 2 * (1 - gsl_cdf_tdist_P( $t->abs, $df ));
-
 =for ref
 
 Independent sample t-test, assuming equal var.
 
-=cut
+=for example
+
+    my ($t, $df) = t_test( $pdl1, $pdl2 );
+    use PDL::GSL::CDF;
+    my $p_2tail = 2 * (1 - gsl_cdf_tdist_P( $t->abs, $df ));
   ',
 );
 
@@ -759,18 +636,7 @@ pp_def('t_test_nev',
          / ( pow(se_a_2,2) / (N-1) + pow(se_b_2,2) / (M-1) )
          ;
 ',
-  Doc       => '
-
-=for ref
-
-Independent sample t-test, NOT assuming equal var. ie Welch two sample t test. Df follows Welch-Satterthwaite equation instead of Satterthwaite (1946, as cited by Hays, 1994, 5th ed.). It matches GNumeric, which matches R.
-
-=for usage
-
-    my ($t, $df) = $pdl1->t_test( $pdl2 );
-
-=cut
-  ',
+  Doc       => 'Independent sample t-test, NOT assuming equal var. ie Welch two sample t test. Df follows Welch-Satterthwaite equation instead of Satterthwaite (1946, as cited by Hays, 1994, 5th ed.). It matches GNumeric, which matches R.',
 );
 
 pp_def('t_test_paired',
@@ -795,13 +661,7 @@ pp_def('t_test_paired',
     $d() = N - 1;
     $t() = s_dif / sqrt( N * ( diff2 - pow(s_dif/N,2)*N ) / (N-1) );
   ',
-  Doc       => '
-=for ref
-
-Paired sample t-test.
-
-=cut
-  ',
+  Doc       => 'Paired sample t-test.',
 );
 
 pp_addpm pp_line_numbers(__LINE__, <<'EOD');
@@ -818,7 +678,7 @@ Binomial test. One-tailed significance test for two-outcome distribution. Given 
 
 This function does NOT currently support bad value in the number of successes.
 
-=for usage
+=for example
 
 Usage:
 
@@ -882,7 +742,7 @@ Sample file diet.txt:
     bcm	68	268	1
     clq	67	180	2
     dwm	70	200	2
-  
+
     ($data, $idv, $ido) = rtable 'diet.txt';
 
     # By default prints out data info and @$idv index and element
@@ -918,7 +778,7 @@ sub rtable {
             );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{V} and print STDERR "reading $src for data and id... ";
-  
+
   local $PDL::undefval = $opt{MISSN};
 
   my $id_c = [];     # match declaration of $id_r for return purpose
@@ -935,8 +795,8 @@ sub rtable {
     my @entries = split /$opt{SEP}/, $_, -1;
 
     $opt{R_ID} and push @$id_r, shift @entries;
-  
-      # rudimentary check for numeric entry 
+
+      # rudimentary check for numeric entry
     for (@entries) { $_ = $opt{MISSN} unless defined $_ and m/\d\b/ }
 
     push @data, pdl( $opt{TYPE}, \@entries );
@@ -945,13 +805,13 @@ sub rtable {
       if $opt{NROW} and $c_row == $opt{NROW};
   }
   # not explicitly closing $fh_in here in case it's passed from outside
-  # $fh_in will close by going out of scope if opened here. 
+  # $fh_in will close by going out of scope if opened here.
 
   $data = pdl $opt{TYPE}, @data;
   @data = ();
     # rid of last col unless there is data there
   $data = $data(0:$data->getdim(0)-2, )->sever
-    unless ( nelem $data(-1, )->where($data(-1, ) != $opt{MISSN}) ); 
+    unless ( nelem $data(-1, )->where($data(-1, ) != $opt{MISSN}) );
 
   my ($idv, $ido) = ($id_r, $id_c);
     # var in columns instead of rows
@@ -962,7 +822,7 @@ sub rtable {
     print STDERR "OK.\ndata table as PDL dim o x v: " . $data->info . "\n";
     $idv and print STDERR "$_\t$$idv[$_]\n" for (0..$#$idv);
   }
- 
+
   $data = $data->setvaltobad( $opt{MISSN} );
   $data->check_badflag;
   return wantarray? (@$idv? ($data, $idv, $ido) : ($data, $ido)) : $data;

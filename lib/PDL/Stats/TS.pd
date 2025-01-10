@@ -85,7 +85,7 @@ Autocorrelation function for up to lag h. If h is not specified it's set to t-1 
 
 acf does not process bad values.
 
-=for usage
+=for example
 
 usage:
 
@@ -140,7 +140,7 @@ Autocovariance function for up to lag h. If h is not specified it's set to t-1 b
 
 acvf does not process bad values.
 
-=for usage
+=for example
 
 usage:
 
@@ -210,11 +210,7 @@ if ($d() % 2) {
   %}
 }
 ',
-  Doc   => '
-=for ref
-
-Deseasonalize data using moving average filter the size of period d.
-',
+  Doc   => 'Deseasonalize data using moving average filter the size of period d.',
 );
 
 pp_def('fill_ma',
@@ -263,11 +259,9 @@ EOF
 
 Fill missing value with moving average. xf(t) = sum(x(t-q .. t-1, t+1 .. t+q)) / 2q.
 
+=for bad
+
 fill_ma does handle bad values. Output pdl bad flag is cleared unless the specified window size q is too small and there are still bad values.
-
-=for usage
-
-  my $x_filled = $x->fill_ma( $q );
 EOD
 );
 
@@ -287,11 +281,7 @@ loop(t) %{
   $xf() = m;
 %}
 ',
-  Doc   => '
-=for ref
-
-Filter, exponential smoothing. xf(t) = a * x(t) + (1-a) * xf(t-1)
-',
+  Doc   => 'Filter, exponential smoothing. xf(t) = a * x(t) + (1-a) * xf(t-1)',
 );
 
 pp_def('filter_ma',
@@ -313,11 +303,7 @@ loop(t) %{
   $xf() = sum / n;
 %}
 ',
-  Doc   => '
-=for ref
-
-Filter, moving average. xf(t) = sum(x(t-q .. t+q)) / (2q + 1)
-',
+  Doc   => 'Filter, moving average. xf(t) = sum(x(t-q .. t+q)) / (2q + 1)',
 );
 
 pp_def('mae',
@@ -336,17 +322,7 @@ loop(n) %{
 if (N < 1) { $SETBAD(c()); continue; }
 $c() = sum / N;
 ',
-  Doc   => '
-=for ref
-
-Mean absolute error. MAE = 1/n * sum( abs(y - y_pred) )
-
-=for usage
-
-Usage:
-
-    $mae = $y->mae( $y_pred );
-',
+  Doc   => 'Mean absolute error. MAE = 1/n * sum( abs(y - y_pred) )',
 );
 
 pp_def('mape',
@@ -365,17 +341,7 @@ loop(n) %{
 if (N < 1) { $SETBAD(c()); continue; }
 $c() = sum / N;
 ',
-  Doc   => '
-=for ref
-
-Mean absolute percent error. MAPE = 1/n * sum(abs((y - y_pred) / y))
-
-=for usage
-
-Usage:
-
-    $mape = $y->mape( $y_pred );
-',
+  Doc   => 'Mean absolute percent error. MAPE = 1/n * sum(abs((y - y_pred) / y))',
 );
 
 pp_def('wmape',
@@ -392,17 +358,7 @@ loop(n) %{
 if (!sum) { $SETBAD(c()); continue; }
 $c() = sum_e / sum;
 ',
-  Doc   => '
-=for ref
-
-Weighted mean absolute percent error. avg(abs(error)) / avg(abs(data)). Much more robust compared to mape with division by zero error (cf. Schütz, W., & Kolassa, 2006).
-
-=for usage
-
-Usage:
-
-    $wmape = $y->wmape( $y_pred );
-',
+  Doc   => 'Weighted mean absolute percent error. avg(abs(error)) / avg(abs(data)). Much more robust compared to mape with division by zero error (cf. Schütz, W., & Kolassa, 2006).',
 );
 
 pp_def('portmanteau',
@@ -422,7 +378,7 @@ $Q() = $t() * ($t()+2) * sum;
 
 Portmanteau significance test (Ljung-Box) for autocorrelations.
 
-=for usage
+=for example
 
 Usage:
 
@@ -494,7 +450,7 @@ pred_ar does not process bad values.
 
   CONST  => 1,
 
-=for usage
+=for example
 
 Usage:
 
