@@ -430,8 +430,6 @@ my %anova_bad_a = (
   });
 }
 
-# Tests for mixed anova thanks to Erich Greene
-
 sub test_stats_cmp {
   local $Test::Builder::Level = $Test::Builder::Level + 1;
   my ($m, $ans, $eps) = @_;
@@ -487,6 +485,9 @@ my %anova_ans_l3_common = (
   '| within ~ between | ms' =>  1.037,
   '| within ~ between | F'  =>   .596,
 );
+
+# Tests for mixed anova thanks to Erich Greene
+
 $anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
 if (0) { # FIXME
   # anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var
