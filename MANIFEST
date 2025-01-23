@@ -8,8 +8,8 @@ Makefile.PL
 MANIFEST			This list of files
 README.md
 t/00-report-prereqs.t
-t/stats_basic.t
-t/stats_glm.t
-t/stats_kmeans.t
-t/stats_ols_rptd.t
-t/stats_ts.t
+t/basic.t
+t/glm.t
+t/kmeans.t
+t/ols_rptd.t
+t/ts.t
