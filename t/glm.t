@@ -234,7 +234,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
 
 { # anova 3 way
   my $d = sequence 60;
-  my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
+  my @a = (('a')x 15, ('b')x 15, ('c')x 15, ('d')x 15);
   my $b = $d % 3;
   my $c = $d % 2;
   $d->set( 20, 10 );
@@ -264,7 +264,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
   $d->set( 20, 10 );
   $d->setbadat(1);
   $d->setbadat(10);
-  my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
+  my @a = (('a')x 15, ('b')x 15, ('c')x 15, ('d')x 15);
   my $b = sequence(60) % 3;
   my $c = sequence(60) % 2;
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, v=>0});
@@ -279,7 +279,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
 
 { # anova_3w bad dv iv
   my $d = sequence 63;
-  my @a = map {$a = $_; map { $a } 0..14 } qw(a b c d);
+  my @a = (('a')x 15, ('b')x 15, ('c')x 15, ('d')x 15);
   push @a, undef, qw( b c );
   my $b = $d % 3;
   my $c = $d % 2;
@@ -573,8 +573,8 @@ if (0) { # FIXME
 
 {
   my $a = effect_code( sequence(12) > 5 );
-  my $b = effect_code([ map {(0, 1)} (1..6) ]);
-  my $c = effect_code([ map {(0,0,1,1,2,2)} (1..2) ]);
+  my $b = effect_code([ (0,1)x 6 ]);
+  my $c = effect_code([ (0,0,1,1,2,2)x 2 ]);
   my $ans = pdl '1 -1  0 -0 -1  1 -1  1 -0  0  1 -1; 0 -0  1 -1 -1  1 -0  0 -1  1  1 -1';
   my $inter = interaction_code( $a, $b, $c);
   is_pdl $inter, $ans, 'interaction_code';
