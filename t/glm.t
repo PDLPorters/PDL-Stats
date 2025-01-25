@@ -286,7 +286,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
   $d->set( 20, 10 );
   $d->setbadat(62);
   $b->setbadat(61);
-  my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0});
+  my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, V=>0});
   $m{$_} = $m{$_}->(,2,)->squeeze for '# A ~ B ~ C # m';
   test_stats_cmp(\%m, {
     '| A | F' => 165.252100840336,

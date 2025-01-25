@@ -643,8 +643,7 @@ Usage:
 *plot_acf = \&PDL::plot_acf;
 sub PDL::plot_acf {
   require PDL::Graphics::PGPLOT::Window;
-  my $opt = pop @_
-    if ref $_[-1] eq 'HASH';
+  my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
   my ($self, $h) = @_;
   my $r = $self->acf($h);
     
