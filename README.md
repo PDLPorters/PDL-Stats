@@ -71,15 +71,6 @@ then add `/home/user/my_perl_lib` to your PERL5LIB environment variable.
 
 If you have trouble installing PDL, you can look for help at the PDL wiki or PDL mailing list.
 
-### Windows
-
-Thanks to Sisyphus, Windows users can download and install the ppm version of PDL-Stats and all dependencies using the PPM utility included in ActiveState perl or Strawberry perl. You can also get the PPM utility from CPAN.
-
-    ppm install http://www.sisyphusion.tk/ppm/PGPLOT.ppd
-    ppm install http://www.sisyphusion.tk/ppm/PDL.ppd
-    ppm install http://www.sisyphusion.tk/ppm/PDL-Stats.ppd
-
-
 ## SUPPORT AND DOCUMENTATION
 
 After installing, you can find documentation for the modules with the
