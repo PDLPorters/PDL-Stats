@@ -10,7 +10,7 @@
 
 This is a collection of statistics modules in Perl Data Language, with a quick-start guide for non-PDL people.
 
-They make perldl--the simple shell for PDL--work like a teenie weenie R, but with PDL threading--"the fast (and automagic) vectorised iteration of 'elementary operations' over arbitrary slices of multidimensional data"--on procedures including t-test, ordinary least squares regression, and kmeans.
+They make perldl--the simple shell for PDL--work like a teenie weenie R, but with PDL broadcasting--"the fast (and automagic) vectorised iteration of 'elementary operations' over arbitrary slices of multidimensional data"--on procedures including t-test, ordinary least squares regression, and kmeans.
 
 Of course, they also work in perl scripts.
 

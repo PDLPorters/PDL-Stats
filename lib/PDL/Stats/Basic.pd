@@ -16,7 +16,7 @@ PDL::Stats::Basic -- basic statistics and related utilities such as standard dev
 
 =head1 DESCRIPTION
 
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are threadable and methods that are NOT threadable, respectively.
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are broadcastable and methods that are NOT broadcastable, respectively.
 
 Does not have mean or median function here. see SEE ALSO.
 
@@ -318,7 +318,7 @@ for (i=0; i<M; i++) {
   Doc      => '
 =for ref
 
-Square covariance table. Gives the same result as threading using B<cov> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
+Square covariance table. Gives the same result as broadcasting using B<cov> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
 
 =for example
 
@@ -455,7 +455,7 @@ for (i=0; i<M; i++) {
   Doc      => '
 =for ref
 
-Square Pearson correlation table. Gives the same result as threading using B<corr> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
+Square Pearson correlation table. Gives the same result as broadcasting using B<corr> but it calculates only half the square, hence much faster. And it is easier to use with higher dimension pdls.
 
 =for example
 
@@ -830,7 +830,7 @@ sub rtable {
 
 =head2 group_by
 
-Returns pdl reshaped according to the specified factor variable. Most useful when used in conjunction with other threading calculations such as average, stdv, etc. When the factor variable contains unequal number of cases in each level, the returned pdl is padded with bad values to fit the level with the most number of cases. This allows the subsequent calculation (average, stdv, etc) to return the correct results for each level.
+Returns pdl reshaped according to the specified factor variable. Most useful when used in conjunction with other broadcasting calculations such as average, stdv, etc. When the factor variable contains unequal number of cases in each level, the returned pdl is padded with bad values to fit the level with the most number of cases. This allows the subsequent calculation (average, stdv, etc) to return the correct results for each level.
 
 Usage:
 
@@ -845,7 +845,7 @@ Usage:
 	pdl> p $a->group_by( $factor )->average
 	[2 7]
 
-    # more complex case with threading and unequal number of n across levels in the factor
+    # more complex case with broadcasting and unequal number of n across levels in the factor
 
 	pdl> p $a = sequence 10,2
 	[
@@ -998,9 +998,9 @@ sub _group_by_single_factor {
     die "Data pdl and factor pdl do not match!"
         unless $factor->dim(0) == $p->dim(0);
 
-    # get active dim that will be split according to factor and dims to thread over
-	my @p_threaddims = $p->dims;
-	my $p_dim0 = shift @p_threaddims;
+    # get active dim that will be split according to factor and dims to broadcast over
+	my @p_broadcastdims = $p->dims;
+	my $p_dim0 = shift @p_broadcastdims;
 
     my $uniq = $factor->uniq;
 
@@ -1014,7 +1014,7 @@ sub _group_by_single_factor {
 	my $max = pdl(\@uniq_ns)->max->sclr;
 
     my $badvalue = int($p->max + 1);
-    my $p_tmp = ones($max, @p_threaddims, $uniq->nelem) * $badvalue;
+    my $p_tmp = ones($max, @p_broadcastdims, $uniq->nelem) * $badvalue;
     for (0 .. $#uniq_ns) {
         my $i = which $factor == $uniq($_);
         $p_tmp->dice_axis(-1,$_)->squeeze->(0:$uniq_ns[$_]-1, ) .= $p($i, );

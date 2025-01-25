@@ -145,11 +145,11 @@ Here is one of the most complicated signatures in the package. This is a functio
 
 Got the idea? Then we can see how PDL does its magic :)
 
-=head2 Threading
+=head2 Broadcasting
 
-Another concept. The first thing to know is that, threading is optional.
+Another concept. The first thing to know is that, broadcasting is optional.
 
-PDL threading means automatically repeating the operation on extra elements or dimensions fed to a function. For a function with a signature like this
+PDL broadcasting means automatically repeating the operation on extra elements or dimensions fed to a function. For a function with a signature like this
 
     gsl_cdf_tdist_P
 
@@ -183,7 +183,7 @@ The same function is repeated on each element in the list you provided. If you h
 
 The df's are automatically matched with the t's to give you the results.
 
-An example of threading thru extra dimension(s):
+An example of broadcasting over extra dimension(s):
 
     stdv
 
@@ -206,9 +206,9 @@ if the input is of 2D, say you want to compute the stdv for each of the 3 variab
 
 Here the function was given an input with an extra dimension of size 3, so it repeats the stdv operation on the extra dimension 3 times, and gives back a 1D pdl of size 3.
 
-Threading works for arbitrary number of dimensions, but it's best to refrain from higher dim pdls unless you have already decided to become a PDL wiz / witch.
+Broadcasting works for arbitrary number of dimensions, but it's best to refrain from higher dim pdls unless you have already decided to become a PDL wiz / witch.
 
-Not all PDL::Stats methods thread. As a rule of thumb, if a function has a signature attached to it, it threads.
+Not all PDL::Stats methods broadcast. As a rule of thumb, if a function has a signature attached to it, it broadcasts.
 
 =head2 perldl
 

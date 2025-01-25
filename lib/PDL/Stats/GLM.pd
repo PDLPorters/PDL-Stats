@@ -23,7 +23,7 @@ PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA
 
 =head1 DESCRIPTION
 
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are threadable and methods that are NOT threadable, respectively. FUNCTIONS except B<ols_t> support bad value.
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are broadcastable and methods that are NOT broadcastable, respectively. FUNCTIONS except B<ols_t> support bad value.
 
 P-values, where appropriate, are provided if PDL::GSL::CDF is installed.
 
@@ -354,7 +354,7 @@ my $_tmp;
 
 =for ref
 
-Threaded version of ordinary least squares regression (B<ols>). The price of threading was losing significance tests for coefficients (but see B<r2_change>). The fitting function was shamelessly copied then modified from PDL::Fit::Linfit. Intercept is LAST of coeff if CONST => 1.
+Broadcasted version of ordinary least squares regression (B<ols>). The price of broadcasting was losing significance tests for coefficients (but see B<r2_change>). The fitting function was shamelessly copied then modified from PDL::Fit::Linfit. Intercept is LAST of coeff if CONST => 1.
 
 ols_t does not handle bad values. consider B<fill_m> or B<fill_rand> if there are bad values.
 
@@ -403,7 +403,7 @@ Usage:
     perldl> p $x->info
     PDL: Double D [10,2,3]
 
-    # insert a dummy dim between IV and the dim (model) to be threaded
+    # insert a dummy dim between IV and the dim (model) to be broadcasted
 
     perldl> %m = $y->ols_t( $x->dummy(2) )
 
@@ -483,7 +483,7 @@ sub PDL::ols_t {
 }
 
 sub _ols_common {
-  my $threaded = shift;
+  my $broadcasted = shift;
   my $opt = pop @_ if ref $_[-1] eq 'HASH';
     # y [n], ivs [n x attr] pdl
   my ($y, $ivs) = @_;
@@ -494,15 +494,15 @@ sub _ols_common {
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
 
-  if (!$threaded) {
+  if (!$broadcasted) {
     $y = $y->squeeze;
     $y->getndims > 1 and
-      croak "use ols_t for threaded version";
+      croak "use ols_t for broadcasted version";
   }
 
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
 
-  ($y, $ivs) = _rm_bad_value( $y, $ivs ) if !$threaded;
+  ($y, $ivs) = _rm_bad_value( $y, $ivs ) if !$broadcasted;
 
     # set up ivs and const as ivs
   $opt{CONST} and
@@ -512,7 +512,7 @@ sub _ols_common {
   # (double) it or ushort y and sequence iv won't work right
   my $ymean = $y->abs->avgover->double;
   ($_tmp = $ymean->where( $ymean==0 )) .= 1;
-  my $y2 = $y / ($threaded ? $ymean->dummy(0) : $ymean);
+  my $y2 = $y / ($broadcasted ? $ymean->dummy(0) : $ymean);
 
   # Do the fit
 
@@ -523,13 +523,13 @@ sub _ols_common {
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
   $coeff = $coeff->dummy(0)
-    if $threaded and $coeff->getndims == 1 and $y->getndims > 1;
-  $coeff *= ($threaded ? $ymean->dummy(0) : $ymean); # Un-normalise
+    if $broadcasted and $coeff->getndims == 1 and $y->getndims > 1;
+  $coeff *= ($broadcasted ? $ymean->dummy(0) : $ymean); # Un-normalise
 
   my %ret;
 
     # ***$coeff x $ivs looks nice but produces nan on successive tries***
-  $ret{y_pred} = sumover( ($threaded ? $coeff->dummy(1) : $coeff) * $ivs->transpose );
+  $ret{y_pred} = sumover( ($broadcasted ? $coeff->dummy(1) : $coeff) * $ivs->transpose );
   $opt{PLOT} and $y->plot_residuals( $ret{y_pred}, \%opt );
   return $coeff unless wantarray;
 
@@ -545,7 +545,7 @@ sub _ols_common {
   $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $ret{F_df}->dog )
     if $CDF;
 
-  if (!$threaded) {
+  if (!$broadcasted) {
     my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
 
     $opt{CONST} and
@@ -1466,7 +1466,7 @@ sub PDL::interaction_code {
 
 =for ref
 
-Ordinary least squares regression, aka linear regression. Unlike B<ols_t>, ols is not threadable, but it can handle bad value (by ignoring observations with bad value in dependent or independent variables list-wise) and returns the full model in list context with various stats.
+Ordinary least squares regression, aka linear regression. Unlike B<ols_t>, ols is not broadcastable, but it can handle bad value (by ignoring observations with bad value in dependent or independent variables list-wise) and returns the full model in list context with various stats.
 
 IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the constant vector in $x. Intercept is automatically added and returned as LAST of the coeffs if CONST=>1. Returns full model in list context and coeff in scalar context.
 
@@ -1542,7 +1542,7 @@ sub _rm_bad_value {
 
 =for ref
 
-Repeated measures linear regression (Lorch & Myers, 1990; Van den Noortgate & Onghena, 2006). Handles purely within-subject design for now. See t/stats_ols_rptd.t for an example using the Lorch and Myers data.
+Repeated measures linear regression (Lorch & Myers, 1990; Van den Noortgate & Onghena, 2006). Handles purely within-subject design for now. See F<t/ols_rptd.t> for an example using the Lorch and Myers data.
 
 =for usage
 
@@ -1587,7 +1587,7 @@ sub PDL::ols_rptd {
 
   $y = $y->squeeze;
   $y->getndims > 1 and
-    croak "ols_rptd does not support threading";
+    croak "ols_rptd does not support broadcasting";
 
   my @ivs = map {  (ref $_ eq 'PDL' and $_->ndims > 1)?  $_
                   : ref $_ eq 'PDL' ?                    $_->dummy(1)
@@ -1934,7 +1934,7 @@ sub PDL::pca {
   my ($eigvec, $eigval) = $var_var->eigens_sym;
   $eigvec = $eigvec->transpose; # compatibility with PDL::Slatec::eigsys
 
-    # ind is sticky point for threading
+    # ind is sticky point for broadcasting
   my $ind_sorted = $eigval->qsorti->(-1:0);
   $eigvec = $eigvec( ,$ind_sorted)->sever;
   $eigval = $eigval($ind_sorted)->sever;

@@ -15,7 +15,7 @@ PDL::Stats::Kmeans -- classic k-means cluster analysis
 
 Assumes that we have data pdl dim [observation, variable] and the goal is to put observations into clusters based on their values on the variables. The terms "observation" and "variable" are quite arbitrary but serve as a reminder for "that which is being clustered" and "that which is used to cluster".
 
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are threadable and methods that are non-threadable, respectively.
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are broadcastable and methods that are non-broadcastable, respectively.
 
 =head1 SYNOPSIS
 
@@ -111,7 +111,7 @@ pp_def('_random_cluster',
   GenericTypes => [U],
   RedoDimsCode => 'if ($SIZE(c) > $SIZE(o)) $CROAK("more cluster than obs!");',
   Code  => '
-/* threading w time only srand produces identical clusters */
+/* broadcasting w time only srand produces identical clusters */
 long r;
 srand( time( NULL ) + r++);
 PDL_Indx nc = $SIZE(c);
@@ -464,7 +464,7 @@ Usage:
    [         0 0.66666667]
   ]
 
-Now, for the valiant, kmeans is threadable. Say you gathered 10 persons' ratings on 5 movies from 2 countries, so the data is dim [10,5,2], and you want to put the 10 persons from each country into 3 clusters, just specify NCLUS => [3,1], and there you have it. The key is for NCLUS to include $data->ndims - 1 numbers. The 1 in [3,1] turns into a dummy dim, so the 3-cluster operation is repeated on both countries. Similarly, when seeding, CNTRD needs to have ndims that at least match the data ndims. Extra dims in CNTRD will lead to threading (convenient if you want to try out different centroid locations, for example, but you will have to hand pick the best result). See stats_kmeans.t for examples w 3D and 4D data.
+Now, for the valiant, kmeans is broadcastable. Say you gathered 10 persons' ratings on 5 movies from 2 countries, so the data is dim [10,5,2], and you want to put the 10 persons from each country into 3 clusters, just specify NCLUS => [3,1], and there you have it. The key is for NCLUS to include $data->ndims - 1 numbers. The 1 in [3,1] turns into a dummy dim, so the 3-cluster operation is repeated on both countries. Similarly, when seeding, CNTRD needs to have ndims that at least match the data ndims. Extra dims in CNTRD will lead to broadcasting (convenient if you want to try out different centroid locations, for example, but you will have to hand pick the best result). See F<t/kmeans.t> for examples w 3D and 4D data.
 
 *With bad value, R2 is based on average of variances instead of sum squared error.
 
@@ -501,7 +501,7 @@ sub PDL::kmeans {
 
   my ($centroid, $ss_cv, $R2, $clus_this, $clus_last);
 
-    # NTRY made into extra dim in $cluster for threading
+    # NTRY made into extra dim in $cluster for broadcasting
   my @nclus = (ref $opt{NCLUS} eq 'ARRAY')? @{$opt{NCLUS}} : ($opt{NCLUS});
   $clus_this
     = (defined($opt{CNTRD}) and $opt{CNTRD}->nelem) ?
@@ -549,7 +549,7 @@ sub PDL::kmeans {
       $ss_ms   => $ss_cv->dice_axis(-1,$i_best)->sever->squeeze,
     );
 
-  # now for threading beyond 2D data
+  # now for broadcasting beyond 2D data
 
   # can't believe i'm using a perl loop :P
 
