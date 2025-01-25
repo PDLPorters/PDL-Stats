@@ -366,27 +366,19 @@ my %anova_bad_a = (
   '# a ~ b # m' => pdl(qw( 3  1.3333333  3.3333333 3.3333333  3.6666667  2.6666667  ))->reshape(3,2),
 );
 { # anova_rptd_2w bad dv
-  my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
-  $d = $d->setbadat(5);
-  my $s = sequence(4)->dummy(1,6)->flat;
-# [0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]
-  my $a = qsort sequence(24) % 3;
-# [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]
-  my $b = (sequence(8) > 3)->dummy(1,3)->flat;
-# [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
+  my $d = pdl '[3 2 1 5 2 BAD 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
+  my $s = pdl '[0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]';
+  my $a = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
+  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_bad_a);
 }
 
 { # anova_rptd_2w bad iv
-  my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
-  my $s = sequence(4)->dummy(1,6)->flat;
-# [0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]
-  my $a = qsort sequence(24) % 3;
-  $a = $a->setbadat(5);
-# [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]
-  my $b = (sequence(8) > 3)->dummy(1,3)->flat;
-# [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
+  my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
+  my $s = pdl '[0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]';
+  my $a = pdl '[0 0 0 0 0 BAD 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
+  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_bad_a);
 }
@@ -408,25 +400,6 @@ my %anova_bad_a = (
     '| a ~ b ~ c | F' => 1.71299093655589,
     '# a ~ b ~ c # m' => pdl(qw( 4 2.75 2.75 2.5 3.25 4.25 3.5 1.75 2 3.5 2.75 2.25 ))->reshape(2,2,3),
     '# a ~ b # se' => ones(2, 2) * 0.55014729,
-  });
-}
-
-{ # anova_rptd mixed
-  my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
-  my $s = sequence(4)->dummy(1,6)->flat;
-# [0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]
-  my $a = qsort sequence(24) % 3;
-# [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]
-  my $b = (sequence(8) > 3)->dummy(1,3)->flat;
-# [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
-  my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
-  test_stats_cmp(\%m, {
-    '| a | F' => 0.0775862068965517,
-    '| a | ms' => 0.125,
-    '| a ~ b | F' => 1.88793103448276,
-    '| b | F' => 0.585657370517928,
-    '| b || err ms' => 3.48611111111111,
-    '# a ~ b # se' => ones(3,2) * 0.63464776,
   });
 }
 
@@ -491,51 +464,55 @@ my %anova_ans_l3_common = (
 $anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
 if (0) { # FIXME
   # anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var
-  my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2);
-  my $s = sequence(8)->dummy(1,3)->flat;
-  # [0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7]
-  my $w = qsort sequence(24) % 3;
-  # [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]
-  my $b = (sequence(8) % 2)->qsort->dummy(1,3)->flat;
-  # [0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]
+  my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
+  my $s = pdl '[0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7]';
+  my $w = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
+  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
   my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_ans_l2_common);
 }
 {
   # anova_rptd mixed with 2 btwn-subj var levels, data grouped by subject
-  my $d = pdl qw( 3 1 4 2 4 2 1 1 1 5 2 5 2 3 4 1 5 3 5 5 2 3 3 2);
-  my $s = qsort sequence(24) % 8;
-  # [0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7]
-  my $w = sequence(3)->dummy(1,8)->flat;
-  # [0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]
-  my $b = qsort sequence(24) % 2;
-  # [0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1]
+  my $d = pdl '[3 1 4 2 4 2 1 1 1 5 2 5 2 3 4 1 5 3 5 5 2 3 3 2]';
+  my $s = pdl '[0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7]';
+  my $w = pdl '[0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]';
+  my $b = pdl '[0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1]';
   my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_ans_l2_common);
 }
 if (0) { # FIXME
   # eps=.001 anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var
-  my $d = pdl qw( 5 2 2 5 4 1 5 3 5 4 4 3 4 3 4 3 5 1 4 3 3 4 5 4 5 5 2 );
-  my $s = sequence(9)->dummy(1,3)->flat;
-  # [0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8]
-  my $w = qsort sequence(27) % 3;
-  # [0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]
-  my $b = (sequence(9) % 3)->qsort->dummy(1,3)->flat;
-  # [0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2]
+  my $d = pdl '[5 2 2 5 4 1 5 3 5 4 4 3 4 3 4 3 5 1 4 3 3 4 5 4 5 5 2]';
+  my $s = pdl '[0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8]';
+  my $w = pdl '[0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]';
+  my $b = pdl '[0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2]';
   my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_ans_l3_common);
 }
 if (0) { # FIXME
   # eps=.001 anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject
-  my $d = pdl qw( 5 4 4 2 4 3 2 3 3 5 4 4 4 3 5 1 4 4 5 3 5 3 5 5 5 1 2 );
-  my $s = qsort sequence(27) % 9;
-  # [0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7 8 8 8]
-  my $w = sequence(3)->dummy(1,9)->flat;
-  # [0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]
-  my $b = qsort sequence(27) % 3;
-  # [0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]
+  my $d = pdl '[5 4 4 2 4 3 2 3 3 5 4 4 4 3 5 1 4 4 5 3 5 3 5 5 5 1 2]';
+  my $s = pdl '[0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7 8 8 8]';
+  my $w = pdl '[0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]';
+  my $b = pdl '[0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]';
   my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_ans_l3_common);
+}
+
+{ # anova_rptd mixed
+  my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
+  my $s = pdl '[0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]';
+  my $a = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
+  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
+  my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
+  test_stats_cmp(\%m, {
+    '| a | F' => 0.0775862068965517,
+    '| a | ms' => 0.125,
+    '| a ~ b | F' => 1.88793103448276,
+    '| b | F' => 0.585657370517928,
+    '| b || err ms' => 3.48611111111111,
+    '# a ~ b # se' => ones(3,2) * 0.63464776,
+  });
 }
 
 { # anova_rptd mixed bad

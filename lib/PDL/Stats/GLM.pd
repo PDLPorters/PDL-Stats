@@ -518,7 +518,7 @@ sub _ols_common {
 
   my $Y = $ivs x $y2->dummy(0);
 
-  my $C = inv( $ivs x $ivs->xchg(0,1) );
+  my $C = inv( $ivs x $ivs->t );
 
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
@@ -1082,7 +1082,7 @@ sub PDL::anova_rptd {
   my $b_full = $y->ols_t( $ivs, {CONST=>0} );
 
   $ret{ss_total} = $y->ss;
-  $ret{ss_residual} = $y->sse( sumover( $b_full * $ivs->xchg(0,1) ) );
+  $ret{ss_residual} = $y->sse( sumover( $b_full * $ivs->t ) );
 
   if (defined $subj) {
     my @full = (@$ivs_ref, @$err_ref);
