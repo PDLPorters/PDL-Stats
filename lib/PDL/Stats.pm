@@ -121,19 +121,19 @@ This is not a function, but a concept. You will see something like this frequent
 
     stdv
 
-      Signature: (a(n); float+ [o]b())
+      Signature: (a(n); [o]b())
 
-The signature tells you what the function expects as input and what kind of output it produces. a(n) means it expects a 1D pdl with n elements; [o] is for output, b() means its a scalar. So stdv will take your 1D list and give back a scalar. float+ you can ignore; but if you insist, it means the output is at float or double precision. The name a or b or c is not important. What's important is the thing in the parenthesis.
+The signature tells you what the function expects as input and what kind of output it produces. a(n) means it expects a 1D pdl with n elements; [o] is for output, b() means its a scalar. So stdv will take your 1D list and give back a scalar. The name a or b or c is not important. What's important is the thing in the parenthesis.
 
     corr
 
-      Signature: (a(n); b(n); float+ [o]c())
+      Signature: (a(n); b(n); [o]c())
 
 Here the function corr takes two inputs, two 1D pdl with the same numbers of elements, and gives back a scalar.
 
     t_test
 
-      Signature: (a(n); b(m); float+ [o]t(); [o]d())
+      Signature: (a(n); b(m); [o]t(); [o]d())
 
 Here the function t_test can take two 1D pdls of unequal size (n==m is certainly fine), and give back two scalars, t-value and degrees of freedom. Yes we accommodate t-tests with unequal sample sizes.
 
@@ -187,7 +187,7 @@ An example of broadcasting over extra dimension(s):
 
     stdv
 
-      Signature: (a(n); float+ [o]b())
+      Signature: (a(n); [o]b())
 
 if the input is of 2D, say you want to compute the stdv for each of the 3 variables,
 

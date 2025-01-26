@@ -42,7 +42,7 @@ pp_addhdr('
 );
 
 pp_def('stdv',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -61,7 +61,7 @@ pp_def('stdv',
 );
 
 pp_def('stdv_unbiased',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -80,7 +80,7 @@ pp_def('stdv_unbiased',
 );
 
 pp_def('var',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -99,7 +99,7 @@ pp_def('var',
 );
 
 pp_def('var_unbiased',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -118,7 +118,7 @@ pp_def('var_unbiased',
 );
 
 pp_def('se',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -147,7 +147,7 @@ Standard error of the mean. Useful for calculating confidence intervals.
 );
 
 pp_def('ss',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -166,7 +166,7 @@ pp_def('ss',
 );
 
 pp_def('skew',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -192,7 +192,7 @@ pp_def('skew',
 );
 
 pp_def('skew_unbiased',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -217,7 +217,7 @@ pp_def('skew_unbiased',
 );
 
 pp_def('kurt',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -242,7 +242,7 @@ pp_def('kurt',
 );
 
 pp_def('kurt_unbiased',
-  Pars      => 'a(n); float+ [o]b()',
+  Pars      => 'a(n); [o]b()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -267,7 +267,7 @@ pp_def('kurt_unbiased',
 );
 
 pp_def('cov',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code  => '
@@ -287,7 +287,7 @@ pp_def('cov',
 );
 
 pp_def('cov_table',
-  Pars      => 'a(n,m); float+ [o]c(m,m)',
+  Pars      => 'a(n,m); [o]c(m,m)',
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code  => '
@@ -356,7 +356,7 @@ for the same cov matrix table using B<cov>,
 );
 
 pp_def('corr',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
@@ -409,7 +409,7 @@ but it is easier and faster to use B<corr_table>.
 );
 
 pp_def('corr_table',
-  Pars      => 'a(n,m); float+ [o]c(m,m)',
+  Pars      => 'a(n,m); [o]c(m,m)',
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code  => '
@@ -531,7 +531,7 @@ pp_def('n_pair',
 );
 
 pp_def('corr_dev',
-  Pars      => 'a(n); b(n); float+ [o]c()',
+  Pars      => 'a(n); b(n); [o]c()',
   GenericTypes => [F, D],
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
@@ -556,7 +556,7 @@ pp_def('corr_dev',
 );
 
 pp_def('t_test',
-  Pars      => 'a(n); b(m); float+ [o]t(); [o]d()',
+  Pars      => 'a(n); b(m); [o]t(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
   RedoDimsCode => '
@@ -602,7 +602,7 @@ Independent sample t-test, assuming equal var.
 );
 
 pp_def('t_test_nev',
-  Pars      => 'a(n); b(m); float+ [o]t(); [o]d()',
+  Pars      => 'a(n); b(m); [o]t(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
   RedoDimsCode => '
@@ -640,7 +640,7 @@ pp_def('t_test_nev',
 );
 
 pp_def('t_test_paired',
-  Pars      => 'a(n); b(n); float+ [o]t(); [o]d()',
+  Pars      => 'a(n); b(n); [o]t(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',

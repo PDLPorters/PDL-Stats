@@ -307,7 +307,7 @@ loop(t) %{
 );
 
 pp_def('mae',
-  Pars  => 'a(n); b(n); float+ [o]c()',
+  Pars  => 'a(n); b(n); [o]c()',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
@@ -326,7 +326,7 @@ $c() = sum / N;
 );
 
 pp_def('mape',
-  Pars  => 'a(n); b(n); float+ [o]c()',
+  Pars  => 'a(n); b(n); [o]c()',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '
@@ -345,7 +345,7 @@ $c() = sum / N;
 );
 
 pp_def('wmape',
-  Pars  => 'a(n); b(n); float+ [o]c()',
+  Pars  => 'a(n); b(n); [o]c()',
   GenericTypes => [F,D],
   HandleBad    => 1,
   Code  => '

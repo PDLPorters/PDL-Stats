@@ -106,9 +106,9 @@ sub random_cluster {
 EOD
 
 pp_def('_random_cluster',
-  Pars  => 'short a(o,c); short [o]b(o,c)',
+  Pars  => 'a(o,c); [o]b(o,c)',
   Inplace   => 1,
-  GenericTypes => [U],
+  GenericTypes => ['S'],
   RedoDimsCode => 'if ($SIZE(c) > $SIZE(o)) $CROAK("more cluster than obs!");',
   Code  => '
 /* broadcasting w time only srand produces identical clusters */
@@ -228,7 +228,7 @@ Takes data pdl dim [obs x var] and centroid pdl dim [cluster x var] and returns 
 );
 
 pp_def('centroid',
-  Pars  => 'data(o,v); cluster(o,c); float+ [o]m(c,v); float+ [o]ss(c,v)',
+  Pars  => 'data(o,v); cluster(o,c); [o]m(c,v); [o]ss(c,v)',
   GenericTypes => [F,D],
   HandleBad => 1,
   Code  => '
@@ -345,7 +345,7 @@ sub _d_point2line {
 EOD
 
 pp_def('_d_p2l',
-  Pars      => 'xc(); yc(); xa(); ya(); xb(); yb(); float+ [o]d()',
+  Pars      => 'xc(); yc(); xa(); ya(); xb(); yb(); [o]d()',
   GenericTypes => [F, D],
   HandleBad => 1,
   Code   => '
