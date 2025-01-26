@@ -305,14 +305,25 @@ is_pdl pdl([1,1,1], [2,2,2])->stddz, zeroes(3,2), 'stddz nan vs bad';
   # P2,79,77,75
   # P3,83,77,75
   # P4,92,93,87
-  # in Octave, statistics package 1.4.2:
-  # [p, table] = repanova([102 97 95; 79 77 75; 83 77 75; 92 93 87], 3, 'string')
-  # p = 7.3048e-03
-  # table =
-  # Source	SS	df	MS	F	Prob > F
-  # Subject	916.667	3	305.556
-  # Measure	72	2	36	12.4615	0.00730475
-  # Error	17.3333	6	2.88889
+  # library(data.table)
+  # library(rstatix)
+  # tdata <- data.frame(
+  #  stringsAsFactors = FALSE,
+  #  dv = c(102.0,97.0,95.0,79.0,77.0,75.0,83.0,77.0,75.0,92.0,93.0,87.0),
+  #  id = c(0L,0L,0L,1L,1L,1L,2L,2L,2L,3L,3L,3L),
+  #  wk = c(0L,2L,4L,0L,2L,4L,0L,2L,4L,0L,2L,4L)
+  # )
+  # as.data.table(tdata)
+  # res.aov <- anova_test(
+  #   data = tdata, dv = dv, wid = id,
+  #   within = c(wk), detailed = TRUE
+  #   )
+  # res.aov
+  # get_anova_table(res.aov, correction = "none")
+  # ANOVA Table (type III tests)
+  #        Effect DFn DFd   SSn     SSd       F       p p<.05   ges
+  # 1 (Intercept)   1   3 88752 916.667 290.461 0.00044     * 0.990
+  # 2          wk   2   6    72  17.333  12.462 0.00700     * 0.072
   # turned into format for anova_rptd, then ($data, $idv, $subj) = rtable 'diet.txt', {SEP=>','}
   # Person,Week,Weight
   # P1,0,102
