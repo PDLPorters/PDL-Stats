@@ -58,11 +58,11 @@ pp_def('stdv',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
-    $b() = sqrt( a2 / N - pow(sa/N,2) );
+    $b() = sqrt( a2 / N - (sa/N)*(sa/N) );
   ',
   Doc      => 'Sample standard deviation.',
 );
@@ -77,11 +77,11 @@ pp_def('stdv_unbiased',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(b()); continue; }
-    $b() = pow( a2/(N-1) - pow(sa/N,2) * N/(N-1), .5 );
+    $b() = pow( a2/(N-1) - sa*sa/(N*(N-1)), .5 );
   ',
   Doc      => 'Unbiased estimate of population standard deviation.',
 );
@@ -95,12 +95,12 @@ pp_def('var',
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
-      a2 += pow($a(), 2);
       sa += $a();
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
-    $b() = a2 / N - pow(sa/N, 2);
+    $b() = a2 / N - sa*sa/(N*N);
   ',
   Doc      => 'Sample variance.',
 );
@@ -114,12 +114,12 @@ pp_def('var_unbiased',
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       sa += $a();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(b()); continue; }
-    $b() = (a2 - pow(sa/N, 2) * N) / (N-1);
+    $b() = (a2 - sa*sa/N) / (N-1);
   ',
   Doc      => 'Unbiased estimate of population variance.',
 );
@@ -134,11 +134,11 @@ pp_def('se',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(b()); continue; }
-    $b() = sqrt( (a2/(N-1) - pow(sa/N,2) * N/(N-1)) / N );
+    $b() = sqrt( (a2 - sa*sa/N) / (N*(N-1)) );
   ',
   Doc      => '
 =for ref
@@ -163,11 +163,11 @@ pp_def('ss',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
-    $b() = a2 - N * pow(sa/N,2);
+    $b() = a2 - sa*sa/N;
   ',
   Doc      => 'Sum of squared deviations from the mean.',
 );
@@ -189,8 +189,8 @@ pp_def('skew',
     loop (n) %{
       if ( $ISGOOD($a()) ) {
         d   = $a() - m;
-        d2 += pow(d, 2);
-        d3 += pow(d, 3);
+        d2 += d*d;
+        d3 += d*d*d;
       }
     %}
     $b() = d3/N / pow(d2/N, 1.5);
@@ -215,8 +215,8 @@ pp_def('skew_unbiased',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       d   = $a() - m;
-      d2 += pow(d, 2);
-      d3 += pow(d, 3);
+      d2 += d*d;
+      d3 += d*d*d;
     %}
     $b() = sqrt(N*(N-1)) / (N-2) * d3/N / pow(d2/N, 1.5);
   ',
@@ -240,10 +240,10 @@ pp_def('kurt',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       d   = $a() - m;
-      d2 += pow(d, 2);
-      d4 += pow(d, 4);
+      d2 += d*d;
+      d4 += d*d*d*d;
     %}
-    $b() = N * d4 / pow(d2,2) - 3;
+    $b() = N * d4 / (d2*d2) - 3;
   ',
   Doc      => 'Sample kurtosis, measure of "peakedness" of data. kurtosis == 0 for normal distribution.',
 );
@@ -265,10 +265,10 @@ pp_def('kurt_unbiased',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       d   = $a() - m;
-      d2 += pow(d, 2);
-      d4 += pow(d, 4);
+      d2 += d*d;
+      d4 += d*d*d*d;
     %}
-    $b() = ((N-1)*N*(N+1) * d4 / pow(d2,2) - 3 * pow(N-1,2)) / ((N-2)*(N-3));
+    $b() = ((N-1)*N*(N+1) * d4 / (d2*d2) - 3 * (N-1)*(N-1)) / ((N-2)*(N-3));
   ',
   Doc      => 'Unbiased estimate of population kurtosis. This is the number in GNumeric Descriptive Statistics.',
 );
@@ -376,14 +376,14 @@ pp_def('corr',
       ab += $a() * $b();
       sa += $a();
       sb += $b();
-      a2 += pow($a(), 2);
-      b2 += pow($b(), 2);
+      a2 += $a() * $a();
+      b2 += $b() * $b();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(c()); continue; }
     cov = ab - (sa * sb) / N;
-    va  = a2 - pow(sa,2) / N;
-    vb  = b2 - pow(sb,2) / N;
+    va  = a2 - sa*sa / N;
+    vb  = b2 - sb*sb / N;
     $c() = cov / sqrt( va * vb );
   ',
   Doc      => '
@@ -432,8 +432,8 @@ for (i=0; i<M; i++) {
       sa += a_ = $a(m=>i);
       sb += b_ = $a(m=>j);
       ab += a_ * b_;
-      a2 += pow(a_, 2);
-      b2 += pow(b_, 2);
+      a2 += a_ * a_;
+      b2 += b_ * b_;
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) {
@@ -442,8 +442,8 @@ for (i=0; i<M; i++) {
       continue;
     }
     cov = ab - (sa * sb) / N;
-    va  = a2 - pow(sa,2) / N;
-    vb  = b2 - pow(sb,2) / N;
+    va  = a2 - sa*sa / N;
+    vb  = b2 - sb*sb / N;
     r   = cov / sqrt( va * vb );
     $c(m0=>i, m1=>j) =
     $c(m0=>j, m1=>i) = r;
@@ -503,7 +503,7 @@ pp_def('t_corr',
     if ($ISBAD(r()) || $ISBAD(n()) ) { $SETBAD( $t() ); continue; }
     if ($n() <= 2) { $SETBAD(t()); continue; }
     ,)
-    $t() = $r() / pow( (1 - pow($r(), 2)) / ($n() - 2) , .5);
+    $t() = $r() / pow( (1 - $r()*$r()) / ($n() - 2) , .5);
   ',
   Doc       => '
 =for ref
@@ -549,8 +549,8 @@ pp_def('corr_dev',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue;,)
       ab += $a() * $b();
-      a2 += pow($a(), 2);
-      b2 += pow($b(), 2);
+      a2 += $a() * $a();
+      b2 += $b() * $b();
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(c()); continue; }
@@ -575,13 +575,13 @@ pp_def('t_test',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     loop (m) %{
       PDL_IF_BAD(if ($ISBAD($b())) continue;,)
       sb += $b();
-      b2 += pow($b(), 2);
+      b2 += $b() * $b();
       PDL_IF_BAD(M++;,)
     %}
     if (N < 2 || M < 2) {
@@ -590,8 +590,8 @@ pp_def('t_test',
       continue;
     }
     $d() = N + M - 2;
-    $GENERIC(t) va = (a2 - pow(sa/N, 2) * N) / (N-1);
-    $GENERIC(t) vb = (b2 - pow(sb/M, 2) * M) / (M-1);
+    $GENERIC(t) va = (a2 - sa*sa/N) / (N-1);
+    $GENERIC(t) vb = (b2 - sb*sb/M) / (M-1);
     $GENERIC(t) sdiff = sqrt( (1/N + 1/M) * ((N-1)*va + (M-1)*vb) / $d() );
     $t() = (sa/N - sb/M) / sdiff;
   ',
@@ -621,13 +621,13 @@ pp_def('t_test_nev',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(), 2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     loop (m) %{
       PDL_IF_BAD(if ($ISBAD($b())) continue;,)
       sb += $b();
-      b2 += pow($b(), 2);
+      b2 += $b() * $b();
       PDL_IF_BAD(M++;,)
     %}
     if (N < 2 || M < 2) {
@@ -635,12 +635,12 @@ pp_def('t_test_nev',
       $SETBAD($d());
       continue;
     }
-    $GENERIC(t) se_a_2 = (a2 - pow(sa/N,2)*N) / (N*(N-1));
-    $GENERIC(t) se_b_2 = (b2 - pow(sb/M,2)*M) / (M*(M-1));
+    $GENERIC(t) se_a_2 = (a2 - sa*sa/N) / (N*(N-1));
+    $GENERIC(t) se_b_2 = (b2 - sb*sb/M) / (M*(M-1));
     $GENERIC(t) sdiff = sqrt( se_a_2 + se_b_2 );
     $t() = (sa/N - sb/M) / sdiff;
-    $d() = pow(se_a_2 + se_b_2, 2)
-         / ( pow(se_a_2,2) / (N-1) + pow(se_b_2,2) / (M-1) )
+    $d() = (se_a_2 + se_b_2)*(se_a_2 + se_b_2)
+         / ( se_a_2*se_a_2 / (N-1) + se_b_2*se_b_2 / (M-1) )
          ;
 ',
   Doc       => 'Independent sample t-test, NOT assuming equal var. ie Welch two sample t test. Df follows Welch-Satterthwaite equation instead of Satterthwaite (1946, as cited by Hays, 1994, 5th ed.). It matches GNumeric, which matches R.',
@@ -657,7 +657,7 @@ pp_def('t_test_paired',
       PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue;,)
       $GENERIC(t) diff = $a() - $b();
       s_dif += diff;
-      diff2 += pow(diff, 2);
+      diff2 += diff*diff;
       PDL_IF_BAD(N++;,)
     %}
     if (N < 2) {
@@ -666,7 +666,7 @@ pp_def('t_test_paired',
       continue;
     }
     $d() = N - 1;
-    $t() = s_dif / sqrt( N * ( diff2 - pow(s_dif/N,2)*N ) / (N-1) );
+    $t() = s_dif / sqrt( ( N*diff2 - s_dif*s_dif ) / (N-1) );
   ',
   Doc       => 'Paired sample t-test.',
 );

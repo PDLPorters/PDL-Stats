@@ -194,12 +194,12 @@ pp_def('stddz',
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD($a())) continue;,)
       sa += $a();
-      a2 += pow($a(),2);
+      a2 += $a() * $a();
       PDL_IF_BAD(N++;,)
     %}
     PDL_IF_BAD(if (N < 1) { loop (n) %{ $SETBAD(b()); %} continue; },)
     m  = sa / N;
-    sd = pow( a2/N - pow(m,2), .5 );
+    sd = pow( a2/N - m*m, .5 );
     loop (n) %{
       PDL_IF_BAD(if ($ISBAD(a())) { $SETBAD(b()); continue; },)
 /* sd? does not work, presumably due to floating point */
@@ -217,7 +217,8 @@ pp_def('sse',
     $GENERIC(c) ss = 0;
     loop (n) %{
       PDL_IF_BAD(if ( $ISBAD($a()) || $ISBAD($b()) ) continue;,)
-      ss += pow($a() - $b(), 2);
+      $GENERIC() diff = $a() - $b();
+      ss += diff * diff;
     %}
     $c() = ss;
   ',
@@ -233,7 +234,8 @@ pp_def('mse',
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
       PDL_IF_BAD(if ( $ISBAD($a()) || $ISBAD($b()) ) continue;,)
-      ss += pow($a() - $b(), 2);
+      $GENERIC() diff = $a() - $b();
+      ss += diff * diff;
       PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(c()); continue; }
@@ -251,7 +253,8 @@ pp_def('rmse',
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
       PDL_IF_BAD(if ( $ISBAD($a()) || $ISBAD($b()) ) continue;,)
-      d2 += pow($a() - $b(), 2);
+      $GENERIC() diff = $a() - $b();
+      d2 += diff * diff;
       PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(c()); continue; }

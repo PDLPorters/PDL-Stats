@@ -60,10 +60,10 @@ PDL_Indx  T, i;
 T = $SIZE(t);
 loop(t) %{
   s += $x();
-  s2 += pow($x(), 2);
+  s2 += $x()*$x();
 %}
 m = s/T;
-cov0 = s2 - T * pow(m, 2);
+cov0 = s2 - T * m * m;
 loop (h) %{
   if (h) {
     covh = 0;
@@ -116,7 +116,7 @@ long T, i;
 T = $SIZE(t);
 loop(t) %{
   s += $x();
-  s2 += pow($x(), 2);
+  s2 += $x()*$x();
 %}
 m = s/T;
 loop (h) %{
@@ -128,7 +128,7 @@ loop (h) %{
     $v() = covh;
   }
   else {
-    $v() = s2 - T * pow(m, 2);
+    $v() = s2 - T * m * m;
   }
 %}
 ',
@@ -376,7 +376,7 @@ $GENERIC(r) sum;
 sum = 0;
 loop(h) %{
   if (h)
-    sum += pow($r(), 2) / ($t() - h);
+    sum += $r()*$r() / ($t() - h);
 %}
 $Q() = $t() * ($t()+2) * sum;
 ',

@@ -181,7 +181,8 @@ loop (o) %{
     PDL_Indx nvc = 0;
     loop (v) %{
       PDL_IF_BAD(if ($ISBAD($data()) || $ISBAD($centroid())) continue;,)
-      ssc += pow($data() - $centroid(), 2);
+      $GENERIC() diff = $data() - $centroid();
+      ssc += diff*diff;
       nvc ++;
     %}
     if (nvc) {
@@ -255,7 +256,7 @@ loop (c) %{
     loop (v) %{
       PDL_IF_BAD(if ($ISBAD($data())) continue;,)
       s[c][v]  += $data();
-      s2[c][v] += pow($data(), 2);
+      s2[c][v] += $data()*$data();
       PDL_IF_BAD(n[c][v]++;,)
     %}
   %}
@@ -361,7 +362,7 @@ $GENERIC(d) xba, yba;
 xba = $xb() - $xa();
 yba = $yb() - $ya();
 $d() = fabs( xba * ($ya() - $yc()) - ($xa() - $xc()) * yba )
-     / sqrt( pow(xba,2) + pow(yba,2) );
+     / hypot( xba, yba );
   ',
   Doc      => undef,
 );
