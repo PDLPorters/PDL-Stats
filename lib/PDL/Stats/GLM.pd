@@ -414,7 +414,7 @@ Usage:
 
     perldl> p "$_\t$m{$_}\n" for (sort keys %m)
 
-    # 2 persons' ratings, eached fitted with 3 "different" models
+    # 2 persons' ratings, each fitted with 3 "different" models
 
     F
     [

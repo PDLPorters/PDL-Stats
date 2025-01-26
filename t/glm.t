@@ -469,10 +469,10 @@ my %anova_ans_l3_common = (
   '| within ~ between | ms' =>  1.037,
   '| within ~ between | F'  =>   .596,
 );
+$anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
 
 # Tests for mixed anova thanks to Erich Greene
 
-$anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
 if (0) { # FIXME
   # anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var
   my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
