@@ -1,8 +1,15 @@
+use strict;
+use warnings;
+
+my $F = [qw(F D)];
+
 pp_add_exported('', 'binomial_test', 'rtable', 'which_id',
 );
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
+use strict;
+use warnings;
 use PDL::LiteF;
 use PDL::NiceSlice;
 use Carp;
@@ -43,7 +50,7 @@ pp_addhdr('
 
 pp_def('stdv',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, a2 = 0;
@@ -62,7 +69,7 @@ pp_def('stdv',
 
 pp_def('stdv_unbiased',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, a2 = 0;
@@ -81,7 +88,7 @@ pp_def('stdv_unbiased',
 
 pp_def('var',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) a2 = 0, sa = 0;
@@ -100,7 +107,7 @@ pp_def('var',
 
 pp_def('var_unbiased',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) a2 = 0, sa = 0;
@@ -119,7 +126,7 @@ pp_def('var_unbiased',
 
 pp_def('se',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, a2 = 0;
@@ -148,7 +155,7 @@ Standard error of the mean. Useful for calculating confidence intervals.
 
 pp_def('ss',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, a2 = 0;
@@ -167,7 +174,7 @@ pp_def('ss',
 
 pp_def('skew',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d3 = 0;
@@ -193,7 +200,7 @@ pp_def('skew',
 
 pp_def('skew_unbiased',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d3 = 0;
@@ -218,7 +225,7 @@ pp_def('skew_unbiased',
 
 pp_def('kurt',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d4 = 0;
@@ -243,7 +250,7 @@ pp_def('kurt',
 
 pp_def('kurt_unbiased',
   Pars      => 'a(n); [o]b()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d4 = 0;
@@ -268,7 +275,7 @@ pp_def('kurt_unbiased',
 
 pp_def('cov',
   Pars      => 'a(n); b(n); [o]c()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code  => '
     $GENERIC(c) ab = 0, sa = 0, sb = 0;
@@ -357,7 +364,7 @@ for the same cov matrix table using B<cov>,
 
 pp_def('corr',
   Pars      => 'a(n); b(n); [o]c()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code  => '
@@ -489,7 +496,7 @@ This is also how to use B<t_corr> and B<n_pair> with such a table.
 
 pp_def('t_corr',
   Pars      => 'r(); n(); [o]t()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   Code   => '
     PDL_IF_BAD(
@@ -532,7 +539,7 @@ pp_def('n_pair',
 
 pp_def('corr_dev',
   Pars      => 'a(n); b(n); [o]c()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code   => '
@@ -557,7 +564,7 @@ pp_def('corr_dev',
 
 pp_def('t_test',
   Pars      => 'a(n); b(m); [o]t(); [o]d()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   RedoDimsCode => '
     if ($SIZE(n) < 2) $CROAK("too few N");
@@ -603,7 +610,7 @@ Independent sample t-test, assuming equal var.
 
 pp_def('t_test_nev',
   Pars      => 'a(n); b(m); [o]t(); [o]d()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   RedoDimsCode => '
     if ($SIZE(n) < 2) $CROAK("too few N");
@@ -641,7 +648,7 @@ pp_def('t_test_nev',
 
 pp_def('t_test_paired',
   Pars      => 'a(n); b(n); [o]t(); [o]d()',
-  GenericTypes => [F, D],
+  GenericTypes => $F,
   HandleBad => 1,
   RedoDimsCode => 'if ($SIZE(n) < 2) $CROAK("too few N");',
   Code   => '

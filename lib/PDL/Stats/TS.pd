@@ -1,3 +1,8 @@
+use strict;
+use warnings;
+
+my $F = [qw(F D)];
+
 pp_addpm({At=>'Top'}, <<'EOD');
 
 =encoding utf8
@@ -22,6 +27,8 @@ The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that ar
 
 =cut
 
+use strict;
+use warnings;
 use Carp;
 use PDL::LiteF;
 use PDL::NiceSlice;
@@ -45,7 +52,7 @@ pp_addhdr('
 pp_def('acf',
   Pars  => 'x(t); [o]r(h)',
   OtherPars => 'IV lag=>h',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   Code  => '
 $GENERIC(x) s, s2, m, cov0, covh;
 s=0; s2=0; m=0; cov0=0; covh=0;
@@ -101,7 +108,7 @@ EOD
 pp_def('acvf',
   Pars  => 'x(t); [o]v(h)',
   OtherPars => 'IV lag=>h;',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   Code  => '
 $GENERIC(x) s, s2, m, covh;
 s=0; s2=0; m=0; covh=0;
@@ -160,7 +167,7 @@ EOD
 
 pp_def('dseason',
   Pars  => 'x(t); indx d(); [o]xd(t)',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   HandleBad    => 1,
   Code  => '
 PDL_Indx i, max = PDL_IF_BAD(,$SIZE(t))-1, min = PDL_IF_BAD(-1,0);
@@ -215,7 +222,7 @@ if ($d() % 2) {
 
 pp_def('fill_ma',
   Pars  => 'x(t); indx q(); [o]xf(t)',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   HandleBad    => 1,
   Code  => '
 $GENERIC(x) sum, xx;
@@ -267,7 +274,7 @@ EOD
 
 pp_def('filter_exp',
   Pars  => 'x(t); a(); [o]xf(t)',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   Code  => '
 $GENERIC(x) b, m;
 b = 1 - $a();
@@ -286,7 +293,7 @@ loop(t) %{
 
 pp_def('filter_ma',
   Pars  => 'x(t); indx q(); [o]xf(t)',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   Code  => '
 $GENERIC(x) sum;
 PDL_Indx i, n, max;
@@ -308,7 +315,7 @@ loop(t) %{
 
 pp_def('mae',
   Pars  => 'a(n); b(n); [o]c()',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   HandleBad    => 1,
   Code  => '
 $GENERIC(c) sum;
@@ -327,7 +334,7 @@ $c() = sum / N;
 
 pp_def('mape',
   Pars  => 'a(n); b(n); [o]c()',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   HandleBad    => 1,
   Code  => '
 $GENERIC(c) sum;
@@ -346,7 +353,7 @@ $c() = sum / N;
 
 pp_def('wmape',
   Pars  => 'a(n); b(n); [o]c()',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   HandleBad    => 1,
   Code  => '
 $GENERIC(c) sum_e=0, sum=0;
@@ -363,7 +370,7 @@ $c() = sum_e / sum;
 
 pp_def('portmanteau',
   Pars  => 'r(h); longlong t(); [o]Q()',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   Code  => '
 $GENERIC(r) sum;
 sum = 0;
@@ -401,7 +408,7 @@ Usage:
 pp_def('pred_ar',
   Pars  => 'x(p); b(p); [o]pred(t)',
   OtherPars => 'IV end=>t;',
-  GenericTypes => [F,D],
+  GenericTypes => $F,
   Code  => '
 PDL_Indx ord = $SIZE(p);
 $GENERIC(x) xt, xp[ord];
