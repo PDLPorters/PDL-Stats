@@ -56,10 +56,9 @@ pp_def('stdv',
     $GENERIC(b) sa = 0, a2 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
     $b() = sqrt( a2 / N - (sa/N)*(sa/N) );
@@ -75,10 +74,9 @@ pp_def('stdv_unbiased',
     $GENERIC(b) sa = 0, a2 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(b()); continue; }
     $b() = pow( a2/(N-1) - sa*sa/(N*(N-1)), .5 );
@@ -94,10 +92,9 @@ pp_def('var',
     $GENERIC(b) a2 = 0, sa = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
     $b() = a2 / N - sa*sa/(N*N);
@@ -113,10 +110,9 @@ pp_def('var_unbiased',
     $GENERIC(b) a2 = 0, sa = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       a2 += $a() * $a();
       sa += $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(b()); continue; }
     $b() = (a2 - sa*sa/N) / (N-1);
@@ -132,10 +128,9 @@ pp_def('se',
     $GENERIC(b) sa = 0, a2 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(b()); continue; }
     $b() = sqrt( (a2 - sa*sa/N) / (N*(N-1)) );
@@ -161,10 +156,9 @@ pp_def('ss',
     $GENERIC(b) sa = 0, a2 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
     $b() = a2 - sa*sa/N;
@@ -180,9 +174,8 @@ pp_def('skew',
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d3 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
     m = sa / N;
@@ -206,9 +199,8 @@ pp_def('skew_unbiased',
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d3 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 3) { $SETBAD(b()); continue; }
     m = sa / N;
@@ -231,9 +223,8 @@ pp_def('kurt',
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d4 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(b()); continue; }
     m = sa / N;
@@ -256,9 +247,8 @@ pp_def('kurt_unbiased',
     $GENERIC(b) sa = 0, m = 0, d=0, d2 = 0, d4 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 4) { $SETBAD(b()); continue; }
     m = sa / N;
@@ -281,11 +271,10 @@ pp_def('cov',
     $GENERIC(c) ab = 0, sa = 0, sb = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue; N++;,)
       ab += $a() * $b();
       sa += $a();
       sb += $b();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 1) { $SETBAD(c()); continue; }
     $c() = ab / N - (sa/N) * (sb/N);
@@ -305,11 +294,10 @@ for (i=0; i<M; i++) {
     $GENERIC(c) ab = 0, sa = 0, sb = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a(m=>i)) || $ISBAD($a(m=>j))) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a(m=>i)) || $ISBAD($a(m=>j))) continue; N++;,)
       sa += a_ = $a(m=>i);
       sb += b_ = $a(m=>j);
       ab += a_ * b_;
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) {
       $SETBAD($c(m0=>i, m1=>j));
@@ -372,13 +360,12 @@ pp_def('corr',
     ab=0; sa=0; sb=0; a2=0; b2=0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue; N++;,)
       ab += $a() * $b();
       sa += $a();
       sb += $b();
       a2 += $a() * $a();
       b2 += $b() * $b();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(c()); continue; }
     cov = ab - (sa * sb) / N;
@@ -428,13 +415,12 @@ for (i=0; i<M; i++) {
     ab=0; sa=0; sb=0; a2=0; b2=0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a(m=>i)) || $ISBAD($a(m=>j))) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a(m=>i)) || $ISBAD($a(m=>j))) continue; N++;,)
       sa += a_ = $a(m=>i);
       sb += b_ = $a(m=>j);
       ab += a_ * b_;
       a2 += a_ * a_;
       b2 += b_ * b_;
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) {
       $SETBAD($c(m0=>i, m1=>j));
@@ -547,11 +533,10 @@ pp_def('corr_dev',
     ab = 0; a2 = 0; b2 = 0;
     PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue; N++;,)
       ab += $a() * $b();
       a2 += $a() * $a();
       b2 += $b() * $b();
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) { $SETBAD(c()); continue; }
     cov = ab / N;
@@ -573,10 +558,9 @@ pp_def('t_test',
   Code   => '
     $GENERIC(t) N = PDL_IF_BAD(0,$SIZE(n)), M = PDL_IF_BAD(0,$SIZE(m)), sa = 0, sb = 0, a2 = 0, b2 = 0;
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     loop (m) %{
       PDL_IF_BAD(if ($ISBAD($b())) continue;,)
@@ -619,16 +603,14 @@ pp_def('t_test_nev',
   Code   => '
     $GENERIC(t) N = PDL_IF_BAD(0,$SIZE(n)), M = PDL_IF_BAD(0,$SIZE(m)), sa = 0, sb = 0, a2 = 0, b2 = 0;
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a())) continue; N++;,)
       sa += $a();
       a2 += $a() * $a();
-      PDL_IF_BAD(N++;,)
     %}
     loop (m) %{
-      PDL_IF_BAD(if ($ISBAD($b())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($b())) continue; M++;,)
       sb += $b();
       b2 += $b() * $b();
-      PDL_IF_BAD(M++;,)
     %}
     if (N < 2 || M < 2) {
       $SETBAD($t());
@@ -654,11 +636,10 @@ pp_def('t_test_paired',
   Code   => '
     $GENERIC(t) N = PDL_IF_BAD(0,$SIZE(n)), s_dif = 0, diff2 = 0;
     loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue;,)
+      PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD($b())) continue; N++;,)
       $GENERIC(t) diff = $a() - $b();
       s_dif += diff;
       diff2 += diff*diff;
-      PDL_IF_BAD(N++;,)
     %}
     if (N < 2) {
       $SETBAD($t());

@@ -187,9 +187,8 @@ if ($d() % 2) {
          : (t+i > max)?  max
          :               t+i
          ;
-      PDL_IF_BAD(if ($ISBAD($x(t=>ti))) continue;,)
+      PDL_IF_BAD(if ($ISBAD($x(t=>ti))) continue; dd++;,)
       sum += $x(t=>ti);
-      PDL_IF_BAD(dd++;,)
     }
     PDL_IF_BAD(if (!dd) { $SETBAD(xd()); continue; },)
     $xd() = sum / PDL_IF_BAD(dd,$d());
@@ -203,9 +202,8 @@ if ($d() % 2) {
          : (t+i > max)?  max
          :               t+i
          ;
-      PDL_IF_BAD(if ($ISBAD($x(t=>ti))) continue;,)
+      PDL_IF_BAD(if ($ISBAD($x(t=>ti))) continue; dd++;,)
       sum += (i == q || i == -q)? .5 * $x(t=>ti) : $x(t=>ti);
-      PDL_IF_BAD(dd++;,)
     }
     PDL_IF_BAD(if (!dd) { $SETBAD(xd()); continue; }
     dd--;
@@ -322,9 +320,8 @@ $GENERIC(c) sum;
 sum = 0;
 PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
 loop(n) %{
-  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue;,)
+  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue; N++;,)
   sum += fabs( $a() - $b() );
-  PDL_IF_BAD(N++;,)
 %}
 if (N < 1) { $SETBAD(c()); continue; }
 $c() = sum / N;
@@ -341,9 +338,8 @@ $GENERIC(c) sum;
 sum = 0;
 PDL_Indx N = PDL_IF_BAD(0,$SIZE(n));
 loop(n) %{
-  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue;,)
+  PDL_IF_BAD(if ($ISBAD($a()) || $ISBAD(b())) continue; N++;,)
   sum += fabs( ($a() - $b()) / $a() );
-  PDL_IF_BAD(N++;,)
 %}
 if (N < 1) { $SETBAD(c()); continue; }
 $c() = sum / N;
