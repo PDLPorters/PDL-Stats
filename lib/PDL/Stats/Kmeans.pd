@@ -80,9 +80,6 @@ pp_addhdr('
 
 pp_addpm pp_line_numbers(__LINE__, <<'EOD' );
 
-# my tmp var for PDL 2.007 slice upate
-my $_tmp;
-
 =head2 random_cluster
 
 =for sig
@@ -331,8 +328,8 @@ sub _scree_ind {
     croak "1D pdl only please";
 
   my $a = zeroes 2, $self->nelem;
-  ($_tmp = $a->slice('(0)')) .= sequence $self->nelem;
-  ($_tmp = $a->slice('(1)')) .= $self;
+  $a->slice('(0)') .= sequence $self->nelem;
+  $a->slice('(1)') .= $self;
 
   my $d = _d_point2line( $a, $a->slice(':,(0)'), $a->slice(':,(-1)') );
 
