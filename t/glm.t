@@ -510,20 +510,21 @@ if (0) { # FIXME
   test_stats_cmp(\%m, \%anova_ans_l3_common);
 }
 
+my %ans_mixed = (
+  '| a | F' => 0.0775862068965517,
+  '| a | ms' => 0.125,
+  '| a ~ b | F' => 1.88793103448276,
+  '| b | F' => 0.585657370517928,
+  '| b || err ms' => 3.48611111111111,
+  '# a ~ b # se' => ones(3,2) * 0.63464776,
+);
 { # anova_rptd mixed
   my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
   my $s = pdl '[0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3]';
   my $a = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
   my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
-  test_stats_cmp(\%m, {
-    '| a | F' => 0.0775862068965517,
-    '| a | ms' => 0.125,
-    '| a ~ b | F' => 1.88793103448276,
-    '| b | F' => 0.585657370517928,
-    '| b || err ms' => 3.48611111111111,
-    '# a ~ b # se' => ones(3,2) * 0.63464776,
-  });
+  test_stats_cmp(\%m, \%ans_mixed);
 }
 
 { # anova_rptd mixed bad
@@ -533,15 +534,7 @@ if (0) { # FIXME
   my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 BAD]';
   # any missing value causes all data from the subject (4) to be dropped
   my %m = $d->anova_rptd($s, $a, $b, {ivnm=>['a','b'],btwn=>[1],plot=>0, v=>0});
-  test_stats_cmp(\%m, {
-    '| a | df' => 2,
-    '| a | F' => 0.0775862068965517,
-    '| a | ms' => 0.125,
-    '| a ~ b | F' => 1.88793103448276,
-    '| b | F' => 0.585657370517928,
-    '| b || err ms' => 3.48611111111111,
-    '# a ~ b # se' => ones(3,2) * 0.63464776,
-  });
+  test_stats_cmp(\%m, \%ans_mixed);
 }
 
 { # anova_rptd_mixed_4w
