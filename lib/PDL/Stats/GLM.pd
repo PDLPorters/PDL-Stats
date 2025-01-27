@@ -1065,8 +1065,7 @@ sub PDL::anova_rptd {
     if ($opt{V} and $y->nelem < $pdl_ivs_raw[0]->nelem) {
       warn sprintf "%d subjects with missing data removed\n", $pdl_ivs_raw[0]->nelem - $y->nelem;
     }
-      # dog preserves data flow
-    @pdl_ivs_raw = map {$_->copy} $pdl_ivs_raw->dog;
+    @pdl_ivs_raw = $pdl_ivs_raw->dog;
   }
 
     # code for ivs and cell mean in diff @s: effect_code vs iv_cluster
@@ -1212,7 +1211,7 @@ sub PDL::anova_rptd {
 sub _add_errors {
   my ($subj, $ivs_ref, $idv, $raw_ivs, $opt) = @_;
 
-  # code (btwn group) subjects. Rutherford (2001) pp 101-102
+  # code (btwn group) subjects. Rutherford (2011) pp 208-209
 
   my (@grp, %grp_s);
   for my $n (0 .. $subj->nelem - 1) {
@@ -1243,47 +1242,31 @@ sub _add_errors {
   # @errors ind matches @$ivs_ref, with an extra elem at the end for subj
 
     # mark btwn factors for error terms
-    # same error term for B(wn) and A(btwn) x B(wn) (Rutherford, p98)
-  my @qr = map { "(?:$idv->[$_])" } @{ $opt->{BTWN} };
-  my $qr = join('|', @qr);
+    # same error term for B(wn) and A(btwn) x B(wn) (Rutherford, p205)
+  my %is_btwn = map +($_=>1), @$idv[ @{$opt->{BTWN}} ];
+  my $has_btwn = keys %is_btwn;
+  my %idv2indx = map +($idv->[$_]=>$_), 0..$#$idv;
 
   my $ie_subj;
-  my @errors = map
-    { my @fs = split ' ~ ', $idv->[$_];
-        # separate bw and wn factors
-        # if only bw, error is bw x subj
-        # if only wn or wn and bw, error is wn x subj
-      my (@wn, @bw);
-      if ($qr) {
-        for (@fs) {
-          /$qr/? push @bw, $_ : push @wn, $_;
-        }
-      }
-      else {
-        @wn = @fs;
-      }
-      $ie_subj = defined($ie_subj)? $ie_subj : $_
-        if !@wn;
+  my @errors = map {
+    my @fs = split ' ~ ', $idv->[$_];
+      # separate bw and wn factors
+      # if only bw, error is bw x subj
+      # if only wn or wn and bw, error is wn x subj
+    my @bw = !$has_btwn ? ()  : grep  $is_btwn{$_}, @fs;
+    my @wn = !$has_btwn ? @fs : grep !$is_btwn{$_}, @fs;
+    $ie_subj = $_ if !defined($ie_subj) and !@wn;
+    my $err = join ' ~ ', @wn ? @wn : @bw;
+      # highest order inter of within factors, use ss_residual as error
+    if ( @wn == @$raw_ivs - @{$opt->{BTWN}} )                   { undef }
+      # repeating btwn factors use ss_subject as error
+    elsif (!@wn and $_ > $ie_subj)                           { $ie_subj }
+      # repeating error term
+    elsif ($_ > $idv2indx{$err})                      { $idv2indx{$err} }
+    else            { PDL::clump($ivs_ref->[$_] * $spdl->dummy(1), 1,2) }
+  } 0 .. $#$ivs_ref;
 
-      my $err = @wn? join(' ~ ', @wn) : join(' ~ ', @bw);
-      my $ie;               # mark repeating error term
-      for my $i (0 .. $#$ivs_ref) {
-        if ($idv->[$i] eq $err) {
-          $ie = $i;
-          last;
-        }
-      }
-
-        # highest order inter of within factors, use ss_residual as error
-      if ( @wn == @$raw_ivs - @{$opt->{BTWN}} )                   { undef }
-        # repeating btwn factors use ss_subject as error
-      elsif (!@wn and $_ > $ie_subj)                           { $ie_subj }
-        # repeating error term
-      elsif ($_ > $ie)                                              { $ie }
-      else            { PDL::clump($ivs_ref->[$_] * $spdl->dummy(1), 1,2) }
-    } 0 .. $#$ivs_ref;
-
-  @{$opt->{BTWN}}? push @errors, $ie_subj : push @errors, $spdl;
+  push @errors, $has_btwn ? $ie_subj : $spdl;
 
   return \@errors;
 }
@@ -2388,7 +2371,7 @@ Lorch, R.F., & Myers, J.L. (1990). Regression analyses of repeated measures data
 
 Osgood C.E., Suci, G.J., & Tannenbaum, P.H. (1957). The Measurement of Meaning. Champaign, IL: University of Illinois Press.
 
-Rutherford, A. (2001). Introducing Anova and Ancova: A GLM Approach (1st ed.). Thousand Oaks, CA: Sage Publications.
+Rutherford, A. (2011). ANOVA and ANCOVA: A GLM Approach (2nd ed.). Wiley.
 
 Shlens, J. (2009). A Tutorial on Principal Component Analysis. Retrieved April 10, 2011 from http://citeseerx.ist.psu.edu/
 
