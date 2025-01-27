@@ -27,7 +27,7 @@ The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that ar
 =head1 SYNOPSIS
 
 Implement a basic k-means procedure,
- 
+
     use PDL::LiteF;
     use PDL::NiceSlice;
     use PDL::Stats;
@@ -55,15 +55,11 @@ or, use the B<kmeans> function provided here,
 
 plot the clusters if there are only 2 vars in $data,
 
-    use PDL::Graphics::PGPLOT::Window;
+    use PDL::Graphics::Simple;
 
     my ($win, $c);
-    $win = pgwin 'xs';
-    $win->env($data( ,0)->minmax, $data( ,1)->minmax);
-
-    $win->points( $data->dice_axis(0,which($k{cluster}->(,$_)))->dog,
-                  {COLOR=>++$c} )
-      for (0 .. $k{cluster}->dim(1)-1);
+    $win = pgswin();
+    $win->plot(map +(with=>'points', $data->dice_axis(0,which($k{cluster}->(,$_)))->dog), 0 .. $k{cluster}->dim(1)-1);
 
 =cut
 
