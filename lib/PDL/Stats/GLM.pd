@@ -488,57 +488,68 @@ sub PDL::ols_t {
 }
 
 sub _ols_common {
-  my $broadcasted = shift;
-  my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
+  my ($broadcasted, $y, $ivs, $opt) = @_;
+  ($y, $ivs) = _ols_prep_inputs(@_);
+  _ols_main($broadcasted, $y, $ivs, $opt);
+}
+
+sub _ols_prep_inputs {
     # y [n], ivs [n x attr] pdl
-  my ($y, $ivs) = @_;
+  my ($broadcasted, $y, $ivs, $opt) = @_;
   my %opt = (
     CONST => 1,
     PLOT  => 0,
     WIN    => undef,      # for plotting
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   if (!$broadcasted) {
     $y = $y->squeeze;
     $y->getndims > 1 and
       croak "use ols_t for broadcasted version";
   }
-
   $ivs = $ivs->dummy(1) if $ivs->getndims == 1;
-
   ($y, $ivs) = _rm_bad_value( $y, $ivs ) if !$broadcasted;
-
     # set up ivs and const as ivs
   $opt{CONST} and
     $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
+  ($y, $ivs);
+}
+
+sub _ols_main {
+  my ($broadcasted, $y, $ivs, $opt) = @_;
+  my %opt = (
+    CONST => 1,
+    PLOT  => 0,
+    WIN    => undef,      # for plotting
+  );
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
+
+  my $C = inv( $ivs x $ivs->t );
 
   # Internally normalise data
   # (double) it or ushort y and sequence iv won't work right
   my $ymean = $y->abs->avgover->double;
   $ymean->where( $ymean==0 ) .= 1;
-  my $y2 = $y / ($broadcasted ? $ymean->dummy(0) : $ymean);
-
-  # Do the fit
+  my $divisor = $broadcasted ? $ymean->dummy(0) : $ymean;
+  my $y2 = $y / $divisor;
 
   my $Y = $ivs x $y2->dummy(0);
 
-  my $C = inv( $ivs x $ivs->t );
+  # Do the fit
 
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
   $coeff = $coeff->dummy(0)
     if $broadcasted and $coeff->getndims == 1 and $y->getndims > 1;
-  $coeff *= ($broadcasted ? $ymean->dummy(0) : $ymean); # Un-normalise
-
-  my %ret;
+  $coeff *= $divisor; # Un-normalise
 
     # ***$coeff x $ivs looks nice but produces nan on successive tries***
-  $ret{y_pred} = sumover( ($broadcasted ? $coeff->dummy(1) : $coeff) * $ivs->transpose );
-  $opt{PLOT} and $y->plot_residuals( $ret{y_pred}, \%opt );
+  my $y_pred = sumover( ($broadcasted ? $coeff->dummy(1) : $coeff) * $ivs->transpose );
+  $opt{PLOT} and $y->plot_residuals( $y_pred, \%opt );
   return $coeff unless wantarray;
 
-  $ret{ss_total} = $opt{CONST}? $y->ss : sumover( $y ** 2 );
+  my %ret = (y_pred => $y_pred);
+  $ret{ss_total} = $opt{CONST} ? $y->ss : sumover( $y ** 2 );
   $ret{ss_residual} = $y->sse( $ret{y_pred} );
   $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
   $ret{R2} = $ret{ss_model} / $ret{ss_total};
@@ -1074,7 +1085,10 @@ sub PDL::anova_rptd {
     # stitch together
   my $ivs = PDL->null->glue( 1, @$ivs_ref, grep defined($_) && ref($_), @$err_ref);
   $ivs = $ivs->glue(1, ones $ivs->dim(0));
-  my $b_full = $y->ols_t( $ivs, {CONST=>0} );
+  my ($y_ols, $ivs_ols) = _ols_prep_inputs(1, $y, $ivs, {CONST=>0});
+  confess "anova_rptd: got singular matrix for IVs x IVs'"
+    if any +($ivs_ols x $ivs_ols->t)->det == 0;
+  my $b_full = _ols_main(1, $y_ols, $ivs_ols, {CONST=>0});
 
   $ret{ss_total} = $y->ss;
   $ret{ss_residual} = $y->sse( sumover( $b_full * $ivs->t ) );
