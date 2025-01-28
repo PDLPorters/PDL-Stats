@@ -781,17 +781,8 @@ sub PDL::anova {
 }
 
 sub _effect_code_ivs {
-  my $ivs = shift;
-
-  my (@i_iv, @i_cmo);
-  for (@$ivs) {
-    my ($e, $map) = effect_code($_->squeeze);
-    my $var = ($e->getndims == 1)? $e->dummy(1) : $e;
-    push @i_iv, $var;
-    my @indices = sort { $a<=>$b } values %$map;
-    push @i_cmo, pdl @indices;
-  }
-  return \@i_iv, \@i_cmo;
+  my @ec = map [effect_code($_)], @{ $_[0] };
+  ([map $_->[0], @ec], [map pdl(values %{$_->[1]})->qsort, @ec]);
 }
 
 sub _add_interactions {
@@ -1107,15 +1098,13 @@ sub PDL::anova_rptd {
           = $ret{ "| $idv->[$i] |$e ss" } / $ret{ "| $idv->[$i] |$e df" };
       }
       elsif (ref $full[$k]) {       # unique error term
-        my (@G, $G, $b_G);
-        @G = grep { $_ != $k and defined $full[$_] } (0 .. $#full);
-
+        my @G = grep { $_ != $k and defined $full[$_] } (0 .. $#full);
         next EFFECT
           unless @G;
 
-        $G = PDL->null->glue( 1, grep { ref $_ } @full[@G] );
+        my $G = PDL->null->glue( 1, grep { ref $_ } @full[@G] );
         $G = $G->glue(1, ones $G->dim(0));
-        $b_G = $y->ols_t( $G, {CONST=>0} );
+        my $b_G = $y->ols_t( $G, {CONST=>0} );
 
         if ($k == $#full) {
           $ret{ss_subject}
