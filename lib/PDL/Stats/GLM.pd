@@ -1037,8 +1037,6 @@ sub PDL::anova_rptd {
     if !$opt{IVNM} or !@{ $opt{IVNM} };
   my @idv = @{ $opt{IVNM} };
 
-  my %ret;
-
   $y = $y->squeeze;
   my @pdl_ivs_raw = map scalar PDL::Stats::Basic::_array_to_pdl($_), @ivs_raw;
   my $pdl_ivs_raw = pdl \@pdl_ivs_raw;
@@ -1090,8 +1088,8 @@ sub PDL::anova_rptd {
     if any +($ivs_ols x $ivs_ols->t)->det == 0;
   my $b_full = _ols_main(1, $y_ols, $ivs_ols, {CONST=>0});
 
-  $ret{ss_total} = $y->ss;
-  $ret{ss_residual} = $y->sse( sumover( $b_full * $ivs->t ) );
+  my %ret = (ss_total => $y->ss,
+    ss_residual => $y->sse( sumover( $b_full * $ivs->t ) ));
 
   if (defined $subj) {
     my @full = (@$ivs_ref, @$err_ref);
@@ -1221,9 +1219,7 @@ sub _add_errors {
       # construct string to code group membership
       # something not treated as BAD by _array_to_pdl to start off marking group membership
       # if no $opt->{BTWN}, everyone ends up in the same grp
-    my $s = '_';
-    $s .= $_->($n)
-      for (@$raw_ivs[@{ $opt->{BTWN} }]);
+    my $s = '_' . join '', map $_->($n), @$raw_ivs[@{ $opt->{BTWN} }];
     push @grp, $s;                 # group membership
     $s .= $subj($n);               # keep track of total uniq subj
     $grp_s{$s} = 1;
