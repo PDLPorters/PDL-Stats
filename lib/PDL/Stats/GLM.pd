@@ -1265,9 +1265,9 @@ sub _add_errors {
     else            { PDL::clump($ivs_ref->[$_] * $spdl->dummy(1), 1,2) }
   } 0 .. $#$ivs_ref;
   for (grep defined $errors[$_] && ref $errors[$_], 0..$#errors) {
-    my $nnull_rows = $errors[$_]->zcover->sumover;
-    confess "got $nnull_rows null rows in error entry #$_ ($idv->[$_])"
-      if any $nnull_rows;
+    my ($null_row_ids, $non_null_row_ids) = $errors[$_]->zcover->which_both;
+    confess "got null rows $null_row_ids in error entry #$_ ($idv->[$_])"
+      if !$null_row_ids->isempty;
   }
 
   push @errors, $has_btwn ? $ie_subj : $spdl;
