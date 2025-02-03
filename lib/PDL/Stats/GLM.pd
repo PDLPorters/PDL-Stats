@@ -20,8 +20,6 @@ use PDL::Stats::Kmeans;
 eval { require PDL::Core; require PDL::GSL::CDF; };
 my $CDF = 1 if !$@;
 
-my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
-
 =head1 NAME
 
 PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA, linear regression, PCA, and logistic regression.
@@ -2032,14 +2030,10 @@ Default options (case insensitive):
     AUTO  => 1,       # auto set dims to be on x-axis, line, panel
                       # if set 0, dim 0 goes on x-axis, dim 1 as lines
                       # dim 2+ as panels
-      # see PDL::Graphics::PGPLOT::Window for next options
-    WIN   => undef,   # pgwin object. not closed here if passed
+      # see PDL::Graphics::Simple for next option
+    WIN   => undef,   # pgswin object. not closed here if passed
                       # allows comparing multiple lines in same plot
-                      # set env before passing WIN
-    DEV   => '/xs',         # open and close dev for plotting if no WIN
-                            # defaults to '/png' in Windows
     SIZE  => 640,           # individual square panel size in pixels
-    SYMBL => [0, 4, 7, 11],
 
 =for usage
 
@@ -2056,7 +2050,7 @@ Or like this:
 
 *plot_means = \&PDL::plot_means;
 sub PDL::plot_means {
-  require PDL::Graphics::PGPLOT::Window;
+  require PDL::Graphics::Simple;
   my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
   my ($self, $se) = @_;
   $self = $self->squeeze;
@@ -2069,12 +2063,10 @@ sub PDL::plot_means {
     IVNM => ['IV_0', 'IV_1', 'IV_2', 'IV_3'],
     DVNM => 'DV',
     AUTO  => 1,             # auto set vars to be on X axis, line, panel
-    WIN   => undef,         # PDL::Graphics::PGPLOT::Window object
-    DEV   => $DEV,
+    WIN   => undef,         # PDL::Graphics::Simple object
     SIZE  => 640,           # individual square panel size in pixels
-    SYMBL => [0, 4, 7, 11], # ref PDL::Graphics::PGPLOT::Window
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt }
 
     # decide which vars to plot as x axis, lines, panels
     # put var w most levels on x axis
@@ -2094,56 +2086,30 @@ sub PDL::plot_means {
   my $nx = $self->dim($iD[2]);    # n xpanels
   my $ny = $self->dim($iD[3]);    # n ypanels
 
-  my $w = $opt{WIN};
-  if (!defined $w) {
-    $w = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, NX=>$nx, NY=>$ny,
-                 SIZE=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny], UNIT=>3);
-  }
+  my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin(
+    multi=>[$nx,$ny], size=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny,'px']);
 
-  my ($min, $max) = defined $se? pdl($self + $se, $self - $se)->minmax
-                  :              $self->minmax
-                  ;
-  my $range = $max - $min;
-  my $p = 0;   # panel
-
-  for my $y (0..$self->dim($iD[3])-1) {
-    for my $x (0..$self->dim($iD[2])-1) {
-      $p ++;
+  my $seq0 = sequence($self->dim($iD[0]));
+  for my $y (0..$ny-1) {
+    for my $x (0..$nx-1) {
       my $tl = '';
-      $tl = $opt{IVNM}->[$iD[2]] . " $x"        if $self->dim($iD[2]) > 1;
-      $tl .= ' ' . $opt{IVNM}->[$iD[3]] . " $y"  if $self->dim($iD[3]) > 1;
-      $w->env( 0, $self->dim($iD[0])-1, $min - 2*$range/5, $max + $range/5,
-             { XTitle=>$opt{IVNM}->[$iD[0]], YTitle=>$opt{DVNM}, Title=>$tl,                 PANEL=>$p, AXIS=>['BCNT', 'BCNST'], Border=>1,
-              } )
-        unless $opt{WIN};
+      $tl =        $opt{IVNM}[$iD[2]] . " $x" if $nx > 1;
+      $tl .= ' ' . $opt{IVNM}[$iD[3]] . " $y" if $ny > 1;
 
-      my (@legend, @color);
       for (0 .. $self->dim($iD[1]) - 1) {
-        push @legend, $opt{IVNM}->[$iD[1]] . " $_"
-          if ($self->dim($iD[1]) > 1);
-        push @color, $_ + 2;    # start from red
-        $w->points( sequence($self->dim($iD[0])),
-        $self->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)->dice_axis($iD[1],$_),
-                      $opt{SYMBL}->[$_],
-                    { PANEL=>$p, CHARSIZE=>2, COLOR=>$_+2, PLOTLINE=>1, } );
-        $w->errb( sequence($self->dim($iD[0])),
-        $self->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)->dice_axis($iD[1],$_),
-        $se->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)->dice_axis($iD[1],$_),
-                    { PANEL=>$p, CHARSIZE=>2, COLOR=>$_+2 }  )
-          if defined $se;
-      }
-      if ($self->dim($iD[1]) > 1) {
-        $w->legend( \@legend, ($self->dim($iD[0])-1)/1.6, $min - $range/10,
-                   { COLOR=>\@color } );
-        $w->legend( \@legend, ($self->dim($iD[0])-1)/1.6, $min - $range/10,
-                   { COLOR=>\@color, SYMBOL=>[ @{$opt{SYMBL}}[0..$#color] ] } );
+        my $ke = $self->dim($iD[1]) > 1 ? "$opt{IVNM}[$iD[1]] $_" : '';
+
+        my $ydiced = $self->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)->dice_axis($iD[1],$_)->squeeze;
+        $w->plot(
+          with=>'points', !$ke?():(ke=>$ke), $seq0, $ydiced,
+          !defined($se)?():(with=>'errorbars', $seq0, $ydiced, $ydiced),
+          { xlabel=>$opt{IVNM}[$iD[0]], ylabel=>$opt{DVNM}, title=>$tl },
+        );
+
       }
     }
   }
-  $w->close
-    unless $opt{WIN};
-
-  return;
+  $w;
 }
 
 =head2 plot_residuals
@@ -2160,12 +2126,9 @@ Usage:
 
 Default options (case insensitive):
 
-     # see PDL::Graphics::PGPLOT::Window for more info
-    WIN   => undef,  # pgwin object. not closed here if passed
+     # see PDL::Graphics::Simple for more info
+    WIN   => undef,  # pgswin object. not closed here if passed
                      # allows comparing multiple lines in same plot
-                     # set env before passing WIN
-    DEV   => '/xs',  # open and close dev for plotting if no WIN
-                     # defaults to '/png' in Windows
     SIZE  => 640,    # plot size in pixels
     COLOR => 1,
 
@@ -2173,15 +2136,13 @@ Default options (case insensitive):
 
 *plot_residuals = \&PDL::plot_residuals;
 sub PDL::plot_residuals {
-  require PDL::Graphics::PGPLOT::Window;
+  require PDL::Graphics::Simple;
   my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
   my ($y, $y_pred) = @_;
   my %opt = (
-     # see PDL::Graphics::PGPLOT::Window for next options
-    WIN   => undef,  # pgwin object. not closed here if passed
+     # see PDL::Graphics::Simple for next options
+    WIN   => undef,  # pgswin object. not closed here if passed
                      # allows comparing multiple lines in same plot
-                     # set env before passing WIN
-    DEV   => $DEV ,  # open and close dev for plotting if no WIN
     SIZE  => 640,    # plot size in pixels
     COLOR => 1,
   );
@@ -2189,23 +2150,13 @@ sub PDL::plot_residuals {
 
   my $residuals = $y - $y_pred;
 
-  my $win = $opt{WIN};
+  my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
 
-  if (!$win) {
-   $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
-   $win->env( $y_pred->minmax, $residuals->minmax,
-     {XTITLE=>'predicted value', YTITLE=>'residuals',
-      AXIS=>['BCNT', 'BCNST'], Border=>1,} );
-  }
-
-  $win->points($y_pred, $residuals, { COLOR=>$opt{COLOR} });
-  # add 0-line
-  $win->line(pdl($y_pred->minmax), pdl(0,0), { COLOR=>$opt{COLOR} } );
-
-  $win->close
-    unless $opt{WIN};
-
-  return;
+  $win->plot(
+    with=>'points', style=>$opt{COLOR}, $y_pred, $residuals,
+    with=>'lines',  style=>$opt{COLOR}, pdl($y_pred->minmax), pdl(0,0), # 0-line
+    {xlabel=>'predicted value', ylabel=>'residuals'},
+  );
 }
 
 
@@ -2219,12 +2170,9 @@ Default options (case insensitive):
 
   CORR  => 1,      # boolean. PCA was based on correlation or covariance
   COMP  => [0,1],  # indices to components to plot
-    # see PDL::Graphics::PGPLOT::Window for next options
-  WIN   => undef,  # pgwin object. not closed here if passed
+    # see PDL::Graphics::Simple for next options
+  WIN   => undef,  # pgswin object. not closed here if passed
                    # allows comparing multiple lines in same plot
-                   # set env before passing WIN
-  DEV   => '/xs',  # open and close dev for plotting if no WIN
-                   # defaults to '/png' in Windows
   SIZE  => 640,    # plot size in pixels
   COLOR => [1,2],  # color for original and rotated scores
 
@@ -2239,44 +2187,33 @@ Usage:
 
 *plot_scores = \&PDL::plot_scores;
 sub PDL::plot_scores {
-  require PDL::Graphics::PGPLOT::Window;
+  require PDL::Graphics::Simple;
   my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
   my ($self, $eigvec) = @_;
   my %opt = (
     CORR  => 1,      # boolean. PCA was based on correlation or covariance
     COMP  => [0,1],  # indices to components to plot
-     # see PDL::Graphics::PGPLOT::Window for next options
-    WIN   => undef,  # pgwin object. not closed here if passed
+     # see PDL::Graphics::Simple for next options
+    WIN   => undef,  # pgswin object. not closed here if passed
                      # allows comparing multiple lines in same plot
-                     # set env before passing WIN
-    DEV   => $DEV ,  # open and close dev for plotting if no WIN
     SIZE  => 640,    # plot size in pixels
     COLOR => [1,2],  # color for original and transformed scoress
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt }
 
   my $i = pdl $opt{COMP};
-  my $z = $opt{CORR}? $self->stddz : $self->dev_m;
+  my $z = $opt{CORR} ? $self->stddz : $self->dev_m;
 
     # transformed normed values
   my $scores = sumover($eigvec( ,$i) * $z->transpose->dummy(1))->transpose;
   $z = $z( ,$i)->sever;
 
-  my $win = $opt{WIN};
-  my $max = pdl($z, $scores)->abs->ceil->max->sclr;
-  if (!$win) {
-   $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
-   $win->env(-$max, $max, -$max, $max,
-     {XTitle=>"Component $opt{COMP}->[0]", YTitle=>"Component $opt{COMP}->[1]",
-     AXIS=>['ABCNST', 'ABCNST'], Border=>1, });
-  }
-
-  $win->points( $z( ,0;-), $z( ,1;-), { COLOR=>$opt{COLOR}->[0] } );
-  $win->points( $scores( ,0;-), $scores( ,1;-), { COLOR=>$opt{COLOR}->[1] } );
-  $win->legend( ['original', 'transformed'], .2*$max, .8*$max, {color=>[1,2],symbol=>[1,1]} );
-  $win->close
-    unless $opt{WIN};
-  return;
+  my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
+  $win->plot(
+    with=>'points', style=>$opt{COLOR}[0], ke=>'original', $z( ,0;-), $z( ,1;-),
+    with=>'points', style=>$opt{COLOR}[1], ke=>'transformed', $scores( ,0;-), $scores( ,1;-),
+    {xlabel=>"Component $opt{COMP}[0]", ylabel=>"Component $opt{COMP}[1]"},
+  );
 }
 
 
@@ -2291,14 +2228,10 @@ Default options (case insensitive):
   NCOMP => 20,     # max number of components to plot
   CUT   => 0,      # set to plot cutoff line after this many components
                    # undef to plot suggested cutoff line for NCOMP comps
-   # see PDL::Graphics::PGPLOT::Window for next options
-  WIN   => undef,  # pgwin object. not closed here if passed
+   # see PDL::Graphics::Simple for next options
+  WIN   => undef,  # pgswin object. not closed here if passed
                    # allows comparing multiple lines in same plot
-                   # set env before passing WIN
-  DEV   => '/xs',  # open and close dev for plotting if no WIN
-                   # defaults to '/png' in Windows
   SIZE  => 640,    # plot size in pixels
-  COLOR => 1,
 
 =for usage
 
@@ -2317,20 +2250,17 @@ Or, because NCOMP is used so often, it is allowed a shortcut,
 *plot_scree = \&PDL::plot_screes;      # here for now for compatibility
 *plot_screes = \&PDL::plot_screes;
 sub PDL::plot_screes {
-  require PDL::Graphics::PGPLOT::Window;
+  require PDL::Graphics::Simple;
   my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
   my ($self, $ncomp) = @_;
   my %opt = (
     NCOMP => 20,     # max number of components to plot
     CUT   => 0,      # set to plot cutoff line after this many components
                      # undef to plot suggested cutoff line for NCOMP comps
-     # see PDL::Graphics::PGPLOT::Window for next options
-    WIN   => undef,  # pgwin object. not closed here if passed
+     # see PDL::Graphics::Simple for next options
+    WIN   => undef,  # pgswin object. not closed here if passed
                      # allows comparing multiple lines in same plot
-                     # set env before passing WIN
-    DEV   => $DEV ,  # open and close dev for plotting if no WIN
     SIZE  => 640,    # plot size in pixels
-    COLOR => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{NCOMP} = $ncomp
@@ -2343,19 +2273,16 @@ sub PDL::plot_screes {
   my $win = $opt{WIN};
 
   if (!$win) {
-   $win = PDL::Graphics::PGPLOT::Window::pgwin(DEV=>$opt{DEV}, SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
+   $win = PDL::Graphics::Simple::pgswin(SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(0, $ncomp-1, 0, 1,
      {XTitle=>'Component', YTitle=>'Proportion of Variance Accounted for',
      AXIS=>['BCNT', 'BCNST'], Border=>1, });
   }
 
-  $win->points(sequence($ncomp), $self(0:$ncomp-1, ),
-        {CHARSIZE=>2, COLOR=>$opt{COLOR}, PLOTLINE=>1} );
+  $win->points(sequence($ncomp), $self(0:$ncomp-1));
   $win->line( pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max->sclr+.05),
-        {COLOR=>15} )
+        {style=>15} )
     if $opt{CUT};
-  $win->close
-    unless $opt{WIN};
   return;
 }
 

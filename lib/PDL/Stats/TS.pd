@@ -13,7 +13,9 @@ PDL::Stats::TS -- basic time series functions
 
 =head1 DESCRIPTION
 
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are broadcastable and methods that are NOT broadcastable, respectively. Plots require L<PDL::Graphics::PGPLOT>.
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to
+methods that are threadable and methods that are NOT threadable,
+respectively. Plots require L<PDL::Graphics::Simple>.
 
 ***EXPERIMENTAL!*** In particular, bad value support is spotty and may be shaky. USE WITH DISCRETION! 
 
@@ -34,8 +36,6 @@ use PDL::LiteF;
 use PDL::NiceSlice;
 use PDL::Stats::Basic;
 use PDL::Stats::Kmeans;
-
-my $DEV = ($^O =~ /win/i)? '/png' : '/xs';
 
 EOD
 
@@ -484,13 +484,9 @@ Default options (case insensitive):
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
     PLOT  => 0,              # boolean
-      # see PDL::Graphics::PGPLOT::Window for next options
-    WIN   => undef,          # pass pgwin object for more plotting control
-    DEV   => '/xs',          # open and close dev for plotting if no WIN
-                             # defaults to '/png' in Windows
+     # see PDL::Graphics::Simple for next options
+    WIN   => undef,          # pass pgswin object for more plotting control
     COLOR => 1,
-
-See PDL::Graphics::PGPLOT for detailed graphing options.
 
 =for usage
 
@@ -505,14 +501,10 @@ sub PDL::season_m {
     START_POSITION => 0,     # series starts at this position in season
     MISSING        => -999,  # internal mark for missing points in season
     PLOT  => 0,
-    WIN   => undef,          # pass pgwin object for more plotting control
-    DEV   => $DEV,           # see PDL::Graphics::PGPLOT for more info
+    WIN   => undef,          # pass pgswin object for more plotting control
     COLOR => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-  if ($opt{PLOT}) {
-    require PDL::Graphics::PGPLOT::Window;
-  }
 
   my $n_season = ($self->dim(0) + $opt{START_POSITION}) / $d;
   $n_season = pdl($n_season)->ceil->sum->sclr;
@@ -532,20 +524,17 @@ sub PDL::season_m {
   my ($m, $ms) = $data->centroid( $s );
 
   if ($opt{PLOT}) {
-    my $w = $opt{WIN};
-    if (!$w) {
-      $w = PDL::Graphics::PGPLOT::Window::pgwin( Dev=>$opt{DEV} );
-      $w->env( 0, $d-1, $m->minmax,
-              {XTitle=>'period', YTitle=>'mean'} );
-    }
-    $w->points( sequence($d), $m, {COLOR=>$opt{COLOR}, PLOTLINE=>1} );
-
-    if ($m->squeeze->ndims < 2) {
-      $w->errb( sequence($d), $m, sqrt( $ms / $s->sumover ),
-               {COLOR=>$opt{COLOR}} );
-    }
-    $w->close
-      unless $opt{WIN};
+    require PDL::Graphics::Simple;
+    my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
+    my $seq = sequence($d);
+    my $errb_length = sqrt( $ms / $s->sumover )->squeeze;
+    $w->plot(
+      (map +(with=>'lines', style=>$opt{COLOR}, $seq, $_), $m->dog),
+      ($m->squeeze->ndims < 2 && ($errb_length > 0)->any) ? (
+        with=>'errorbars', style=>$opt{COLOR}, $seq, $m->squeeze, $errb_length
+      ) : (),
+      { xlabel=>'period', ylabel=>'mean' },
+    );
   }
 
   return wantarray? ($m, $ms) : $m;
@@ -555,52 +544,38 @@ sub PDL::season_m {
 
 =for ref
 
-Plots deseasonalized data and original data points. Opens and closes default window for plotting unless a pgwin object is passed in options. Returns deseasonalized data. 
+Plots deseasonalized data and original data points. Opens and closes
+default window for plotting unless a C<WIN> object is passed in
+options. Returns deseasonalized data.
 
 =for options
 
 Default options (case insensitive):
 
     WIN   => undef,
-    DEV   => '/xs',    # open and close dev for plotting if no WIN
-                       # defaults to '/png' in Windows
     COLOR => 1,        # data point color
-
-See PDL::Graphics::PGPLOT for detailed graphing options.
 
 =cut
 
 *plot_dseason = \&PDL::plot_dseason;
 sub PDL::plot_dseason {
-  require PDL::Graphics::PGPLOT::Window;
+  require PDL::Graphics::Simple;
   my ($self, $d, $opt) = @_;
   !defined($d) and croak "please set season period length";
   $self = $self->squeeze;
-
-  my $dsea;
   my %opt = (
       WIN   => undef,
-      DEV   => $DEV,
       COLOR => 1,       # data point color
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
-  $dsea = $self->dseason($d);
-
-  my $w = $opt{WIN};
-  if (!$opt{WIN}) {
-    $w = PDL::Graphics::PGPLOT::Window::pgwin( $opt{DEV} );
-    $w->env( 0, $self->dim(0)-1, $self->minmax,
-          {XTitle=>'T', YTitle=>'DV'} );
-  }
-
-  my $missn = ushort $self->max->sclr + 1;   # ushort in case precision issue
-  $w->line( sequence($self->dim(0)), $dsea->setbadtoval( $missn ),
-           {COLOR=>$opt{COLOR}+1, MISSING=>$missn} );
-  $w->points( sequence($self->dim(0)), $self, {COLOR=>$opt{COLOR}} );
-  $w->close
-    unless $opt{WIN};
-
+  my $dsea = $self->dseason($d);
+  my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
+  my $seq = sequence($self->dim(0));
+  $w->plot(
+    (map +(with=>'lines', style=>$opt{COLOR}+1, $seq, $_), $dsea->dog),
+    (map +(with=>'points', style=>$opt{COLOR}, $seq, $_), $self->dog),
+    { xlabel=>'T', ylabel=>'DV' },
+  );
   return $dsea; 
 }
 
@@ -629,8 +604,7 @@ Plots and returns autocorrelations for a time series.
 Default options (case insensitive):
 
     SIG  => 0.05,      # can specify .10, .05, .01, or .001
-    DEV  => '/xs',     # open and close dev for plotting
-                       # defaults to '/png' in Windows
+    WIN  => undef,
 
 =for usage
 
@@ -645,21 +619,15 @@ Usage:
 
 *plot_acf = \&PDL::plot_acf;
 sub PDL::plot_acf {
-  require PDL::Graphics::PGPLOT::Window;
+  require PDL::Graphics::Simple;
   my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
   my ($self, $h) = @_;
   my $r = $self->acf($h);
-    
   my %opt = (
-      SIG => 0.05,
-      DEV => $DEV,
+    SIG => 0.05,
+    WIN  => undef,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
-  my $w = PDL::Graphics::PGPLOT::Window::pgwin( Dev=>$opt{DEV} );
-  $w->env(-1, $h+1, -1.05, 1.05, {XTitle=>'lag', YTitle=>'acf'});
-  $w->line(pdl(-1,$h+1), zeroes(2));   # x axis
-
   my $y_sig = ($opt{SIG} == 0.10)?   1.64485362695147
             : ($opt{SIG} == 0.05)?   1.95996398454005
             : ($opt{SIG} == 0.01)?   2.5758293035489
@@ -671,14 +639,13 @@ sub PDL::plot_acf {
     $y_sig = 1.95996398454005;
   }
 
-  $w->line( pdl(-1,$h+1), ones(2) * $y_sig / sqrt($self->dim(0)),
-            { LINESTYLE=>"Dashed" } );
-  $w->line( pdl(-1,$h+1), ones(2) * $y_sig / sqrt($self->dim(0)) * -1,
-            { LINESTYLE=>"Dashed" } );
-  for my $lag (0..$h) {
-    $w->line( ones(2)*$lag, pdl(0, $r($lag)) );
-  }
-  $w->close;
+  my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
+  my $seq = pdl(-1,$h+1);
+  my $y_seq = ones(2) * $y_sig / sqrt($self->dim(0)) * -1;
+  $w->plot(with=>'lines', $seq, zeroes(2)); # x axis
+  $w->oplot(with=>'lines', style=>2, $seq,  $y_seq);
+  $w->oplot(with=>'lines', style=>2, $seq, -$y_seq);
+  $w->oplot((map +(with=>'lines', ones(2)*$_, pdl(0, $r(($_)))), 0..$h), { xlabel=>'lag', ylabel=>'acf', });
 
   return $r;
 }

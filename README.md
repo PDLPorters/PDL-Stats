@@ -20,7 +20,7 @@ Of course, they also work in perl scripts.
 
   Perl Data Language.
 
-  The required PDL version is 2.057.
+  The required PDL version is 2.096.
 
 - PDL::GSL (Optional)
 
@@ -29,13 +29,10 @@ Of course, they also work in perl scripts.
   PDL::Stats::GLM. GSL is otherwise NOT required for the core PDL::Stats
   modules to work, ie Basic, Kmeans, and GLM.
 
-- PGPLOT (Optional)
+- PDL::Graphics::Simple (Optional)
 
-  PDL-Stats currently uses PGPLOT for plotting. There are
-  two pgplot/PGPLOT modules, which cause much confusion upon
-  installation. First there is the pgplot Fortran library. Then there is
-  the perl PGPLOT module, which is the perl interface to pgplot, including
-  PDL::Graphics::PGPLOT, that PDL-Stats uses for plotting.
+  PDL-Stats currently uses this for plotting. It can use any of several
+  engines to achieve this.
 
 ## INSTALLATION
 

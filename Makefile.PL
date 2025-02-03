@@ -34,7 +34,7 @@ WriteMakefile(
         },
         runtime => {
           recommends => {
-            'PDL::Graphics::PGPLOT' => 0,
+            'PDL::Graphics::Simple' => 0,
             'PDL::GSL' => 0,
           },
         },
