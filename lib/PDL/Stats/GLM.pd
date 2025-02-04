@@ -1207,23 +1207,20 @@ sub PDL::anova_rptd {
   return %ret;
 }
 
-sub _add_errors {
-  my ($subj, $ivs_ref, $idv, $raw_ivs, $opt) = @_;
-
-  # code (btwn group) subjects. Rutherford (2011) pp 208-209
-
+# code (btwn group) subjects. Rutherford (2011) pp 208-209
+sub _code_btwn {
+  my ($subj, $btwn) = @_;
   my (@grp, %grp_s);
   for my $n (0 .. $subj->nelem - 1) {
       # construct string to code group membership
       # something not treated as BAD by _array_to_pdl to start off marking group membership
-      # if no $opt->{BTWN}, everyone ends up in the same grp
-    my $s = '_' . join '', map $_->($n), @$raw_ivs[@{ $opt->{BTWN} }];
+      # if no $btwn, everyone ends up in the same grp
+    my $s = '_' . join '', map $_->($n), @$btwn;
     push @grp, $s;                 # group membership
     $s .= $subj($n);               # keep track of total uniq subj
     $grp_s{$s} = 1;
   }
   my $grp = PDL::Stats::Kmeans::iv_cluster \@grp;
-
   my $spdl = zeroes $subj->dim(0), keys(%grp_s) - $grp->dim(1);
   my $d1 = 0;
   for my $g (0 .. $grp->dim(1)-1) {
@@ -1233,6 +1230,12 @@ sub _add_errors {
     $spdl($col_inds, $d1:$d1+$nsub-1) .= $gsub;
     $d1 += $nsub;
   }
+  $spdl;
+}
+
+sub _add_errors {
+  my ($subj, $ivs_ref, $idv, $raw_ivs, $opt) = @_;
+  my $spdl = _code_btwn($subj, [@$raw_ivs[@{ $opt->{BTWN} }]]);
 
   # if btwn factor involved, or highest order inter for within factors
   # elem is undef, so that
