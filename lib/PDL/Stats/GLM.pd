@@ -794,25 +794,20 @@ sub _effect_code_ivs {
   ([map $_->[0], @ec], [map pdl(values %{$_->[1]})->qsort, @ec]);
 }
 
-sub _add_interactions {
-  my ($var_ref, $i_cmo_ref, $idv, $raw_ref) = @_;
-
-    # append info re inter to main effects
+sub _interactions {
+  my ($ivs_ref, $i_cmo_ref, $idv, $raw_ref) = @_;
   my (@inter, @idv_inter, @inter_cm, @inter_cmo);
-  for my $nway ( 2 .. @$var_ref ) {
-    my $iter_idv = _combinations( $nway, [0..$#$var_ref] );
-
+  for my $nway ( 2 .. @$ivs_ref ) {
+    my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
     while ( my @v = &$iter_idv() ) {
-      my $i = ones( $var_ref->[0]->dim(0), 1 );
+      my $i = ones( $ivs_ref->[0]->dim(0), 1 );
       for (@v) {
-        $i = $i * $var_ref->[$_]->dummy(1);
+        $i = $i * $ivs_ref->[$_]->dummy(1);
         $i = $i->clump(1,2);
       }
       push @inter, $i;
-
       my $e = join( ' ~ ', @$idv[@v] );
       push @idv_inter, $e;
-
         # now prepare for cell mean
       my @i_cm = ();
       for my $o ( 0 .. $raw_ref->[0]->dim(0) - 1 ) {
@@ -821,7 +816,6 @@ sub _add_interactions {
       }
       my ($inter, $map) = effect_code( \@i_cm );
       push @inter_cm, $inter;
-
         # get the order to put means in correct multi dim pdl pos
         # this is order in var_e dim(1)
       my @levels = sort { $map->{$a} <=> $map->{$b} } keys %$map;
@@ -831,9 +825,7 @@ sub _add_interactions {
       push @inter_cmo, pdl @i_cmo;
     }
   }
-    # append info re inter to main effects
-  return ([@$var_ref, @inter], [@$i_cmo_ref, @inter_cmo],
-          [@$idv, @idv_inter], [@$var_ref, @inter_cm]     );
+  (\@inter, \@inter_cmo, \@idv_inter, \@inter_cm);
 }
 
 sub _cell_means {
@@ -1045,7 +1037,6 @@ sub PDL::anova_rptd {
     # delete bad data listwise ie remove subj if any cell missing
     $sj = PDL::Stats::Basic::_array_to_pdl($subj);
     my $ibad = which( $y->isbad | nbadover($pdl_ivs_raw->transpose) );
-
     my $sj_bad = $sj($ibad)->uniq;
     if ($sj_bad->nelem) {
       warn $sj_bad->nelem . " subjects with missing data removed\n"
@@ -1070,12 +1061,17 @@ sub PDL::anova_rptd {
   my ($ivs_ref, $i_cmo_ref)
     = _effect_code_ivs( \@pdl_ivs_raw );
 
-  ($ivs_ref, $i_cmo_ref, my( $idv, $ivs_cm_ref))
-    = _add_interactions( $ivs_ref, $i_cmo_ref, \@idv, \@pdl_ivs_raw );
+  my ($ivs_inter_ref, $inter_cmo_ref, $idv_inter, $inter_cm_ref)
+    = _interactions( $ivs_ref, $i_cmo_ref, \@idv, \@pdl_ivs_raw );
+  # append inter info to main effects
+  my $ivs_cm_ref = [@$ivs_ref, @$inter_cm_ref]; # before modify $ivs_ref
+  $ivs_ref = [@$ivs_ref, @$ivs_inter_ref];
+  $i_cmo_ref = [@$i_cmo_ref, @$inter_cmo_ref];
+  push @idv, @$idv_inter;
 
     # matches $ivs_ref, with an extra last pdl for subj effect
   my $err_ref = defined($subj) ?
-    _add_errors( $sj, $ivs_ref, $idv, \@pdl_ivs_raw, \%opt )
+    _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, \%opt )
     : [];
 
     # stitch together
@@ -1096,16 +1092,16 @@ sub PDL::anova_rptd {
       my $i = ($k > $#$ivs_ref)?  $k - @$ivs_ref : $k;
 
       if (!defined $full[$k]) {     # ss_residual as error
-        $ret{ "| $idv->[$i] |$e ss" } = $ret{ss_residual};
+        $ret{ "| $idv[$i] |$e ss" } = $ret{ss_residual};
           # highest ord inter for purely within design, (p-1)*(q-1)*(n-1)
-        $ret{ "| $idv->[$i] |$e df" }
+        $ret{ "| $idv[$i] |$e df" }
           = pdl(map { $_->dim(1) } @full[0 .. $#ivs_raw])->prodover;
-        $ret{ "| $idv->[$i] |$e df" }
+        $ret{ "| $idv[$i] |$e df" }
           *= ref($full[-1])?   $full[-1]->dim(1)
           :                    $err_ref->[$err_ref->[-1]]->dim(1)
           ;
-        $ret{ "| $idv->[$i] |$e ms" }
-          = $ret{ "| $idv->[$i] |$e ss" } / $ret{ "| $idv->[$i] |$e df" };
+        $ret{ "| $idv[$i] |$e ms" }
+          = $ret{ "| $idv[$i] |$e ss" } / $ret{ "| $idv[$i] |$e df" };
       }
       elsif (ref $full[$k]) {       # unique error term
         my @G = grep { $_ != $k and defined $full[$_] } (0 .. $#full);
@@ -1121,34 +1117,34 @@ sub PDL::anova_rptd {
             = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
         }
         else {
-          $ret{ "| $idv->[$i] |$e ss" }
+          $ret{ "| $idv[$i] |$e ss" }
             = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
-          $ret{ "| $idv->[$i] |$e df" }
+          $ret{ "| $idv[$i] |$e df" }
             = $full[$k]->dim(1);
-          $ret{ "| $idv->[$i] |$e ms" }
-            = $ret{ "| $idv->[$i] |$e ss" } / $ret{ "| $idv->[$i] |$e df" };
+          $ret{ "| $idv[$i] |$e ms" }
+            = $ret{ "| $idv[$i] |$e ss" } / $ret{ "| $idv[$i] |$e df" };
         }
       }
       else {                        # repeating error term
         if ($k == $#full) {
-          $ret{ss_subject} = $ret{"| $idv->[$full[$k]] |$e ss"};
+          $ret{ss_subject} = $ret{"| $idv[$full[$k]] |$e ss"};
         }
         else {
-          $ret{ "| $idv->[$i] |$e ss" } = $ret{"| $idv->[$full[$k]] |$e ss"};
-          $ret{ "| $idv->[$i] |$e df" } = $ret{"| $idv->[$full[$k]] |$e df"};
-          $ret{ "| $idv->[$i] |$e ms" }
-            = $ret{ "| $idv->[$i] |$e ss" } / $ret{ "| $idv->[$i] |$e df" };
+          $ret{ "| $idv[$i] |$e ss" } = $ret{"| $idv[$full[$k]] |$e ss"};
+          $ret{ "| $idv[$i] |$e df" } = $ret{"| $idv[$full[$k]] |$e df"};
+          $ret{ "| $idv[$i] |$e ms" }
+            = $ret{ "| $idv[$i] |$e ss" } / $ret{ "| $idv[$i] |$e df" };
         }
       }
     }
       # have all iv, inter, and error effects. get F and F_p
     for (0 .. $#$ivs_ref) {
-      $ret{ "| $idv->[$_] | F" }
-        = $ret{ "| $idv->[$_] | ms" } / $ret{ "| $idv->[$_] || err ms" };
-      $ret{ "| $idv->[$_] | F_p" }
-        = 1 - $ret{ "| $idv->[$_] | F" }->gsl_cdf_fdist_P(
-          $ret{ "| $idv->[$_] | df" }, $ret{ "| $idv->[$_] || err df" } )
-        if $CDF and $ret{ "| $idv->[$_] || err df" } > 0;
+      $ret{ "| $idv[$_] | F" }
+        = $ret{ "| $idv[$_] | ms" } / $ret{ "| $idv[$_] || err ms" };
+      $ret{ "| $idv[$_] | F_p" }
+        = 1 - $ret{ "| $idv[$_] | F" }->gsl_cdf_fdist_P(
+          $ret{ "| $idv[$_] | df" }, $ret{ "| $idv[$_] || err df" } )
+        if $CDF and $ret{ "| $idv[$_] || err df" } > 0;
     }
   } else {
     $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
@@ -1173,24 +1169,24 @@ sub PDL::anova_rptd {
       }
       my $b_G = $y->ols_t( $G, {CONST=>0} );
 
-      $ret{ "| $idv->[$k] | ss" }
+      $ret{ "| $idv[$k] | ss" }
         = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
-      $ret{ "| $idv->[$k] | F_df" }
+      my $df = $ret{ "| $idv[$k] | F_df" }
         = pdl( $ivs_ref->[$k]->dim(1), $ret{F_df}->(1)->copy )->squeeze;
-      $ret{ "| $idv->[$k] | ms" }
-        = $ret{ "| $idv->[$k] | ss" } / $ret{ "| $idv->[$k] | F_df" }->(0);
-      $ret{ "| $idv->[$k] | F" }
-        = $ret{ "| $idv->[$k] | ms" } / $ret{ms_residual};
-      $ret{ "| $idv->[$k] | F_p" }
-        = 1 - $ret{ "| $idv->[$k] | F" }->gsl_cdf_fdist_P( $ret{ "| $idv->[$k] | F_df" }->dog )
-        if $CDF and $ret{ "| $idv->[$k] | F_df" }->(1) > 0;
+      $ret{ "| $idv[$k] | ms" }
+        = $ret{ "| $idv[$k] | ss" } / $df->(0);
+      $ret{ "| $idv[$k] | F" }
+        = $ret{ "| $idv[$k] | ms" } / $ret{ms_residual};
+      $ret{ "| $idv[$k] | F_p" }
+        = 1 - $ret{ "| $idv[$k] | F" }->gsl_cdf_fdist_P( $df->dog )
+        if $CDF and $df->(1) > 0;
     }
   }
 
   for (keys %ret) {ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze};
 
   my $cm_ref
-    = _cell_means( $y, $ivs_cm_ref, $i_cmo_ref, $idv, \@pdl_ivs_raw );
+    = _cell_means( $y, $ivs_cm_ref, $i_cmo_ref, \@idv, \@pdl_ivs_raw );
   if (defined $subj) {
     my @ls = map { $_->uniq->nelem } @pdl_ivs_raw;
     $cm_ref
@@ -1201,10 +1197,10 @@ sub PDL::anova_rptd {
 
   my $highest = join(' ~ ', @{ $opt{IVNM} });
   $cm_ref->{"# $highest # m"}->plot_means( $cm_ref->{"# $highest # se"},
-                                           { %opt, IVNM=>$idv } )
+                                           { %opt, IVNM=>\@idv } )
     if $opt{PLOT};
 
-  return %ret;
+  %ret;
 }
 
 # code (btwn group) subjects. Rutherford (2011) pp 208-209
@@ -1326,12 +1322,9 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 *dummy_code = \&PDL::dummy_code;
 sub PDL::dummy_code {
   my ($var_ref) = @_;
-
   my $var_e = effect_code( $var_ref );
-
   $var_e->where( $var_e == -1 ) .= 0;
-
-  return $var_e;
+  $var_e;
 }
 
 =head2 effect_code
