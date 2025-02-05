@@ -796,23 +796,21 @@ sub _effect_code_ivs {
 
 sub _interactions {
   my ($ivs_ref, $i_cmo_ref, $idv, $raw_ref) = @_;
-  my (@inter, @idv_inter, @inter_cm, @inter_cmo);
+  my ($dim0, @inter, @idv_inter, @inter_cm, @inter_cmo) = $ivs_ref->[0]->dim(0);
   for my $nway ( 2 .. @$ivs_ref ) {
     my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
     while ( my @v = &$iter_idv() ) {
-      my $i = ones( $ivs_ref->[0]->dim(0), 1 );
+      my $i = ones( $dim0, 1 );
       for (@v) {
         $i = $i * $ivs_ref->[$_]->dummy(1);
         $i = $i->clump(1,2);
       }
       push @inter, $i;
-      my $e = join( ' ~ ', @$idv[@v] );
-      push @idv_inter, $e;
+      push @idv_inter, join ' ~ ', @$idv[@v];
         # now prepare for cell mean
-      my @i_cm = ();
-      for my $o ( 0 .. $raw_ref->[0]->dim(0) - 1 ) {
-        my @cell = map { $_($o)->squeeze } @$raw_ref[@v];
-        push @i_cm, join('', @cell);
+      my @i_cm;
+      for my $o ( 0 .. $dim0 - 1 ) {
+        push @i_cm, join '', map $_(($o)), @$raw_ref[@v];
       }
       my ($inter, $map) = effect_code( \@i_cm );
       push @inter_cm, $inter;
@@ -1071,7 +1069,7 @@ sub PDL::anova_rptd {
 
     # matches $ivs_ref, with an extra last pdl for subj effect
   my $err_ref = defined($subj) ?
-    _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, \%opt )
+    _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, $opt{BTWN} )
     : [];
 
     # stitch together
@@ -1112,13 +1110,9 @@ sub PDL::anova_rptd {
         $G = $G->glue(1, ones $G->dim(0));
         my $b_G = $y->ols_t( $G, {CONST=>0} );
 
-        if ($k == $#full) {
-          $ret{ss_subject}
-            = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
-        }
-        else {
-          $ret{ "| $idv[$i] |$e ss" }
-            = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
+        $ret{$k == $#full ? 'ss_subject' : "| $idv[$i] |$e ss"}
+          = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
+        if ($k != $#full) {
           $ret{ "| $idv[$i] |$e df" }
             = $full[$k]->dim(1);
           $ret{ "| $idv[$i] |$e ms" }
@@ -1230,8 +1224,8 @@ sub _code_btwn {
 }
 
 sub _add_errors {
-  my ($subj, $ivs_ref, $idv, $raw_ivs, $opt) = @_;
-  my $spdl = _code_btwn($subj, [@$raw_ivs[@{ $opt->{BTWN} }]]);
+  my ($subj, $ivs_ref, $idv, $raw_ivs, $btwn) = @_;
+  my $spdl = _code_btwn($subj, [@$raw_ivs[@$btwn]]);
 
   # if btwn factor involved, or highest order inter for within factors
   # elem is undef, so that
@@ -1239,7 +1233,7 @@ sub _add_errors {
 
     # mark btwn factors for error terms
     # same error term for B(wn) and A(btwn) x B(wn) (Rutherford, p205)
-  my %is_btwn = map +($_=>1), @$idv[ @{$opt->{BTWN}} ];
+  my %is_btwn = map +($_=>1), @$idv[ @$btwn ];
   my $has_btwn = keys %is_btwn;
   my %idv2indx = map +($idv->[$_]=>$_), 0..$#$idv;
 
@@ -1254,7 +1248,7 @@ sub _add_errors {
     $ie_subj = $_ if !defined($ie_subj) and !@wn;
     my $err = join ' ~ ', @wn ? @wn : @bw;
       # highest order inter of within factors, use ss_residual as error
-    if ( @wn == @$raw_ivs - @{$opt->{BTWN}} )                   { undef }
+    if ( @wn == @$raw_ivs - @$btwn )                            { undef }
       # repeating btwn factors use ss_subject as error
     elsif (!@wn and $_ > $ie_subj)                           { $ie_subj }
       # repeating error term

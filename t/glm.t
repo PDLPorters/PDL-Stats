@@ -582,13 +582,15 @@ if (0) { # FIXME
   my $s = pdl '1 1 1 9 9 9 2 2 2 10 10 10 3 3 3 11 11 11 4 4 4 12 12 12 5 5 5 13 13 13 6 6 6 14 14 14 7 7 7 15 15 15 8 8 8 16 16 16';
   my $t = pdl '1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3';
   my $i = pdl '1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2';
-  my %m = $d->anova_rptd($s,$t,$i,{ivnm=>['time','instructions'],btwn=>[1],plot=>0, v=>0});
-  test_stats_cmp(\%m, {
+  my $exp = {
     '| time | F' => 37.2348284960422,
     '| time | ms' => 336,
-    '| time ~ instructions | F' => 12.4116094986807,
+    '| instructions ~ time | F' => 12.4116094986807,
     '| instructions | F' => 47.4973821989529,
-  });
+  };
+  my @idv = qw(instructions time);
+  my %m = $d->anova_rptd($s,$i,$t,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
+  test_stats_cmp(\%m, $exp);
 }
 
 my %ans_mixed = (
