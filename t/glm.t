@@ -495,6 +495,8 @@ sub test_stats_cmp {
     is_pdl $got, PDL->topdl($exp), {atol=>$eps, require_equal_types=>0, test_name=>$_};
   }
 }
+
+# Tests for mixed anova thanks to Erich Greene
 my %anova_ans_l2_common = (
   '| within | df'           => 2,
   '| within || err df'      => 12,
@@ -516,6 +518,24 @@ my %anova_ans_l2_common = (
   '| within ~ between | F'  =>  1.5422535,
 );
 $anova_ans_l2_common{"| within ~ between || err $_"} = $anova_ans_l2_common{"| within || err $_"} foreach qw/df ss ms/;
+{
+  # anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var
+  my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
+  my $s = pdl '[0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7]';
+  my $w = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
+  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
+  my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
+  test_stats_cmp(\%m, \%anova_ans_l2_common);
+}
+{
+  # anova_rptd mixed with 2 btwn-subj var levels, data grouped by subject
+  my $d = pdl '[3 1 4 2 4 2 1 1 1 5 2 5 2 3 4 1 5 3 5 5 2 3 3 2]';
+  my $s = pdl '[0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7]';
+  my $w = pdl '[0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]';
+  my $b = pdl '[0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1]';
+  my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
+  test_stats_cmp(\%m, \%anova_ans_l2_common);
+}
 my %anova_ans_l3_common = (
   '| within | df'           =>  2,
   '| within || err df'      => 12,
@@ -537,29 +557,8 @@ my %anova_ans_l3_common = (
   '| within ~ between | F'  =>   .595744,
 );
 $anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
-
-# Tests for mixed anova thanks to Erich Greene
-
-{
-  # anova_rptd mixed with 2 btwn-subj var levels, data grouped by within var
-  my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
-  my $s = pdl '[0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7]';
-  my $w = pdl '[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2]';
-  my $b = pdl '[0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 1]';
-  my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
-  test_stats_cmp(\%m, \%anova_ans_l2_common);
-}
-{
-  # anova_rptd mixed with 2 btwn-subj var levels, data grouped by subject
-  my $d = pdl '[3 1 4 2 4 2 1 1 1 5 2 5 2 3 4 1 5 3 5 5 2 3 3 2]';
-  my $s = pdl '[0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7]';
-  my $w = pdl '[0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]';
-  my $b = pdl '[0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1]';
-  my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
-  test_stats_cmp(\%m, \%anova_ans_l2_common);
-}
 if (0) { # FIXME
-  # eps=.001 anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var
+  # anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var
   my $d = pdl '[5 2 2 5 4 1 5 3 5 4 4 3 4 3 4 3 5 1 4 3 3 4 5 4 5 5 2]';
   my $s = pdl '[0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8]';
   my $w = pdl '[0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]';
@@ -568,12 +567,13 @@ if (0) { # FIXME
   test_stats_cmp(\%m, \%anova_ans_l3_common);
 }
 if (0) { # FIXME
-  # eps=.001 anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject
+  # anova_rptd mixed with 3 btwn-subj var levels, data grouped by subject
   my $d = pdl '[5 4 4 2 4 3 2 3 3 5 4 4 4 3 5 1 4 4 5 3 5 3 5 5 5 1 2]';
   my $s = pdl '[0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5 5 5 6 6 6 7 7 7 8 8 8]';
   my $w = pdl '[0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2 0 1 2]';
   my $b = pdl '[0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]';
-  my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
+  my @idv = qw(between within);
+  my %m = $d->anova_rptd($s,$b,$w,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_ans_l3_common);
 }
 
