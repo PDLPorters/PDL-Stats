@@ -800,12 +800,7 @@ sub _interactions {
   for my $nway ( 2 .. @$ivs_ref ) {
     my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
     while ( my @v = &$iter_idv() ) {
-      my $i = ones( $dim0, 1 );
-      for (@v) {
-        $i = $i * $ivs_ref->[$_]->dummy(1);
-        $i = $i->clump(1,2);
-      }
-      push @inter, $i;
+      push @inter, interaction_code(@$ivs_ref[@v]);
       push @idv_inter, join ' ~ ', @$idv[@v];
         # now prepare for cell mean
       my @i_cm;
@@ -856,7 +851,7 @@ sub _cell_means {
     $cm{ "# $ids->[$i] # se" } = $se;
     $i++;
   }
-  return \%cm;
+  \%cm;
 }
 
   # http://www.perlmonks.org/?node_id=371228
@@ -1253,7 +1248,7 @@ sub _add_errors {
     elsif (!@wn and $_ > $ie_subj)                           { $ie_subj }
       # repeating error term
     elsif ($_ > $idv2indx{$err})                      { $idv2indx{$err} }
-    else            { PDL::clump($ivs_ref->[$_] * $spdl->dummy(1), 1,2) }
+    else                      { interaction_code($ivs_ref->[$_], $spdl) }
   } 0 .. $#$ivs_ref;
   for (grep defined $errors[$_] && ref $errors[$_], 0..$#errors) {
     my ($null_row_ids, $non_null_row_ids) = $errors[$_]->zcover->which_both;
@@ -1430,15 +1425,9 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 
 *interaction_code = \&PDL::interaction_code;
 sub PDL::interaction_code {
-  my @vars = @_;
-
-  my $i = ones( $vars[0]->dim(0), 1 );
-  for (@vars) {
-    $i = $i * $_->dummy(1);
-    $i = $i->clump(1,2);
-  }
-
-  return $i;
+  my $i = ones( $_[0]->dim(0), 1 );
+  $i = ($i * $_->dummy(1))->clump(1,2) for @_;
+  $i;
 }
 
 =head2 ols
@@ -1600,16 +1589,15 @@ sub PDL::ols_rptd {
     # get predictor ss by successively reducing the model
   $r{ss} = zeroes scalar(@ivs);
   for my $i (0 .. $#ivs) {
-    my @i_rest = grep { $_ != $i } 0 .. $#ivs;
-    my $iv = $s->glue(1, @ivs[ @i_rest ]);
+    my $iv = $s->glue(1, @ivs[ grep $_ != $i, 0..$#ivs ]);
     my $b  = $y->ols_t($iv);
     $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
     $r{ss}->($i) .= $y->sse($pred) - $ss_pe;
   }
 
-  # STEP 3: get precitor x subj interaction as error term
+  # STEP 3: get predictor x subj interaction as error term
 
-  my $iv_e = PDL::glue 1, map { interaction_code( $s, $_ ) } @ivs;
+  my $iv_e = PDL::glue 1, map interaction_code( $s, $_ ), @ivs;
 
     # get total sse for this step. full model now.
   my $b_f = $y->ols_t( $iv_p->glue(1,$iv_e) );
@@ -1619,9 +1607,8 @@ sub PDL::ols_rptd {
     # get predictor x subj ss by successively reducing the error term
   $r{ss_err} = zeroes scalar(@ivs);
   for my $i (0 .. $#ivs) {
-    my @i_rest = grep { $_ != $i } 0 .. $#ivs;
-    my $e_rest = PDL::glue 1, map { interaction_code( $s, $_ ) } @ivs[@i_rest];
-    my $iv = $iv_p->glue(1, $e_rest);
+    my $iv = $iv_p->glue(1, map interaction_code($s, $_),
+      @ivs[grep $_ != $i, 0..$#ivs]);
     my $b  = $y->ols_t($iv);
     my $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
     $r{ss_err}->($i) .= $y->sse($pred) - $r{'(ss_residual)'};
@@ -1640,7 +1627,7 @@ sub PDL::ols_rptd {
   $r{F_p} = 1 - $r{F}->gsl_cdf_fdist_P( $r{df}, $r{df_err} )
     if $CDF;
 
-  return %r;
+  %r;
 }
 
 
