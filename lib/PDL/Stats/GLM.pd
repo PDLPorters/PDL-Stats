@@ -553,17 +553,17 @@ sub _ols_main {
   $ret{R2} = $ret{ss_model} / $ret{ss_total};
 
   my $n_var = $opt{CONST}? $ivs->dim(1) - 1 : $ivs->dim(1);
-  $ret{F_df} = pdl( $n_var, $y->dim(0) - $ivs->dim(1) );
-  $ret{F} = $ret{ss_model} / $ret{F_df}->(0)
-    / ($ret{ss_residual} / $ret{F_df}->(1));
-  $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $ret{F_df}->dog )
+  $ret{F_df} = pdl( $n_var, my $df1 = $y->dim(0) - $ivs->dim(1) );
+  $ret{F} = $ret{ss_model} / $n_var
+    / ($ret{ss_residual} / $df1);
+  $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $n_var, $df1 )
     if $CDF;
 
   if (!$broadcasted) {
     my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
 
     $opt{CONST} and
-      $se_b(-1) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) * $C(-1,-1) );
+      $se_b(-1) .= sqrt( $ret{ss_residual} / $df1 * $C(-1,-1) );
 
       # get the se for bs by successivly regressing each iv by the rest ivs
     if ($ivs->dim(1) > 1) {
@@ -576,17 +576,17 @@ sub _ols_main {
 
         my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
 
-        $se_b($k) .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / $ss_res_k );
+        $se_b($k) .= sqrt( $ret{ss_residual} / $df1 / $ss_res_k );
       }
     }
     else {
       $se_b(0)
-        .= sqrt( $ret{ss_residual} / $ret{F_df}->(1) / sum( $ivs( ,0)**2 ) );
+        .= sqrt( $ret{ss_residual} / $df1 / sum( $ivs( ,0)**2 ) );
     }
 
     $ret{b_se} = $se_b;
     $ret{b_t} = $coeff / $ret{b_se};
-    $ret{b_p} = 2 * ( 1 - $ret{b_t}->abs->gsl_cdf_tdist_P( $ret{F_df}->(1) ) )
+    $ret{b_p} = 2 * ( 1 - $ret{b_t}->abs->gsl_cdf_tdist_P( $df1 ) )
       if $CDF;
   }
 
@@ -666,17 +666,17 @@ sub PDL::r2_change {
 
   $ret{R2_change} = $ret{model1}->{R2} - $ret{model0}->{R2};
   $ret{F_df}
-    = pdl($ivs1->dim(1) - $ivs0->dim(1),
-          $ret{model1}->{F_df}->((1)) );
+    = pdl(my $df0 = $ivs1->dim(1) - $ivs0->dim(1),
+          my $df1 = $ret{model1}->{F_df}->((1)) );
   $ret{F_change}
-    = $ret{R2_change} * $ret{F_df}->((1))
-    / ( (1-$ret{model1}->{R2}) * $ret{F_df}->((0)) );
-  $ret{F_p} = 1 - $ret{F_change}->gsl_cdf_fdist_P( $ret{F_df}->dog )
+    = $ret{R2_change} * $df1
+    / ( (1-$ret{model1}->{R2}) * $df0 );
+  $ret{F_p} = 1 - $ret{F_change}->gsl_cdf_fdist_P( $df0, $df1 )
     if $CDF;
 
   for (keys %ret) { ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze };
 
-  return %ret;
+  %ret;
 }
 
 =head1 METHODS
@@ -1087,14 +1087,12 @@ sub PDL::anova_rptd {
       if (!defined $full[$k]) {     # ss_residual as error
         $ret{ "| $idv[$i] |$e ss" } = $ret{ss_residual};
           # highest ord inter for purely within design, (p-1)*(q-1)*(n-1)
-        $ret{ "| $idv[$i] |$e df" }
-          = pdl(map { $_->dim(1) } @full[0 .. $#ivs_raw])->prodover;
-        $ret{ "| $idv[$i] |$e df" }
-          *= ref($full[-1])?   $full[-1]->dim(1)
-          :                    $err_ref->[$err_ref->[-1]]->dim(1)
-          ;
+        my $factor = ref($full[-1]) ? $full[-1]->dim(1)
+                                    : $err_ref->[$err_ref->[-1]]->dim(1);
+        my $df = $ret{ "| $idv[$i] |$e df" }
+          = pdl($factor, map { $_->dim(1) } @full[0 .. $#ivs_raw])->prodover;
         $ret{ "| $idv[$i] |$e ms" }
-          = $ret{ "| $idv[$i] |$e ss" } / $ret{ "| $idv[$i] |$e df" };
+          = $ret{ "| $idv[$i] |$e ss" } / $df;
       }
       elsif (ref $full[$k]) {       # unique error term
         my @G = grep { $_ != $k and defined $full[$_] } (0 .. $#full);
@@ -1108,10 +1106,8 @@ sub PDL::anova_rptd {
         $ret{$k == $#full ? 'ss_subject' : "| $idv[$i] |$e ss"}
           = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
         if ($k != $#full) {
-          $ret{ "| $idv[$i] |$e df" }
-            = $full[$k]->dim(1);
-          $ret{ "| $idv[$i] |$e ms" }
-            = $ret{ "| $idv[$i] |$e ss" } / $ret{ "| $idv[$i] |$e df" };
+          my $df = $ret{ "| $idv[$i] |$e df" } = $full[$k]->dim(1);
+          $ret{ "| $idv[$i] |$e ms" } = $ret{ "| $idv[$i] |$e ss" } / $df;
         }
       }
       else {                        # repeating error term
@@ -1137,12 +1133,12 @@ sub PDL::anova_rptd {
     }
   } else {
     $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
-    $ret{F_df} = pdl($ivs->dim(1) - 1, $y->nelem - ($ivs->dim(1) - 1) -1);
-    $ret{ms_model} = $ret{ss_model} / $ret{F_df}->(0);
-    $ret{ms_residual} = $ret{ss_residual} / $ret{F_df}->(1);
+    $ret{F_df} = pdl(my $F_df0 = $ivs->dim(1) - 1, my $df1 = $y->nelem - $ivs->dim(1));
+    $ret{ms_model} = $ret{ss_model} / $F_df0;
+    $ret{ms_residual} = $ret{ss_residual} / $df1;
     $ret{F} = $ret{ms_model} / $ret{ms_residual};
-    $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $ret{F_df}->dog )
-      if $CDF and $ret{F_df}->(1) > 0;
+    $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $F_df0, $df1 )
+      if $CDF and $df1 > 0;
 
     # get IV ss from $ivs_ref instead of $ivs pdl
 
@@ -1160,15 +1156,15 @@ sub PDL::anova_rptd {
 
       $ret{ "| $idv[$k] | ss" }
         = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
-      my $df = $ret{ "| $idv[$k] | F_df" }
-        = pdl( $ivs_ref->[$k]->dim(1), $ret{F_df}->(1)->copy )->squeeze;
+      $ret{ "| $idv[$k] | F_df" }
+        = pdl( my $df0 = $ivs_ref->[$k]->dim(1), $df1 )->squeeze;
       $ret{ "| $idv[$k] | ms" }
-        = $ret{ "| $idv[$k] | ss" } / $df->(0);
+        = $ret{ "| $idv[$k] | ss" } / $df0;
       $ret{ "| $idv[$k] | F" }
         = $ret{ "| $idv[$k] | ms" } / $ret{ms_residual};
       $ret{ "| $idv[$k] | F_p" }
-        = 1 - $ret{ "| $idv[$k] | F" }->gsl_cdf_fdist_P( $df->dog )
-        if $CDF and $df->(1) > 0;
+        = 1 - $ret{ "| $idv[$k] | F" }->gsl_cdf_fdist_P( $df0, $df1 )
+        if $CDF and $df1 > 0;
     }
   }
 
@@ -1616,7 +1612,7 @@ sub PDL::ols_rptd {
 
   # Finally, get MS, F, etc
 
-  $r{df} = pdl( map { $_->squeeze->ndims } @ivs );
+  $r{df} = pdl( map $_->squeeze->ndims, @ivs );
   $r{ms} = $r{ss} / $r{df};
 
   $r{df_err} = $s->dim(1) * $r{df};
