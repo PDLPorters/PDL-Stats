@@ -591,6 +591,10 @@ if (0) { # FIXME
   my @idv = qw(instructions time);
   my %m = $d->anova_rptd($s,$i,$t,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
   test_stats_cmp(\%m, $exp);
+  my $inds_by_i_t_subj = PDL::glue(0, map $_->t, $i, $t, $s)->qsortveci;
+  $_ = $_->index($inds_by_i_t_subj) for $d, $s, $i, $t;
+  %m = $d->anova_rptd($s,$i,$t,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
+  test_stats_cmp(\%m, $exp);
 }
 
 my %ans_mixed = (
