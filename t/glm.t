@@ -551,19 +551,20 @@ my %anova_ans_l3_common = (
   '| between || err ss'     => 13.111111,
   '| between || err ms'     =>  2.185185,
   '| between | F'           =>   .271186,
-  '| within ~ between | df' =>  4,
-  '| within ~ between | ss' =>  4.148148,
-  '| within ~ between | ms' =>  1.037037,
-  '| within ~ between | F'  =>   .595744,
+  '| between ~ within | df' =>  4,
+  '| between ~ within | ss' =>  4.148148,
+  '| between ~ within | ms' =>  1.037037,
+  '| between ~ within | F'  =>   .595744,
 );
-$anova_ans_l3_common{"| within ~ between || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
+$anova_ans_l3_common{"| between ~ within || err $_"} = $anova_ans_l3_common{"| within || err $_"} foreach qw/df ss ms/;
 if (0) { # FIXME
   # anova_rptd mixed with 3 btwn-subj var levels, data grouped by within var
   my $d = pdl '[5 2 2 5 4 1 5 3 5 4 4 3 4 3 4 3 5 1 4 3 3 4 5 4 5 5 2]';
   my $s = pdl '[0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8 0 1 2 3 4 5 6 7 8]';
   my $w = pdl '[0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2]';
   my $b = pdl '[0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2 0 0 0 1 1 1 2 2 2]';
-  my %m = $d->anova_rptd($s,$w,$b,{ivnm=>['within','between'],btwn=>[1],plot=>0, v=>0});
+  my @idv = qw(between within);
+  my %m = $d->anova_rptd($s,$b,$w,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
   test_stats_cmp(\%m, \%anova_ans_l3_common);
 }
 if (0) { # FIXME
@@ -580,8 +581,8 @@ if (0) { # FIXME
 { # from Rutherford (2011) p200, mixed anova
   my $d = pdl '7 7 8 16 16 24 3 11 14 7 10 29 6 9 10 11 13 10 6 11 11 9 10 22 5 10 12 10 10 25 8 10 10 11 14 28 6 11 11 8 11 22 7 11 12 8 12 24';
   my $s = pdl '1 1 1 9 9 9 2 2 2 10 10 10 3 3 3 11 11 11 4 4 4 12 12 12 5 5 5 13 13 13 6 6 6 14 14 14 7 7 7 15 15 15 8 8 8 16 16 16';
-  my $t = pdl '1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3';
-  my $i = pdl '1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2';
+  my $w = pdl '1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3';
+  my $b = pdl '1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2 1 1 1 2 2 2';
   my $exp = {
     '| time | F' => 37.2348284960422,
     '| time | ms' => 336,
@@ -589,11 +590,11 @@ if (0) { # FIXME
     '| instructions | F' => 47.4973821989529,
   };
   my @idv = qw(instructions time);
-  my %m = $d->anova_rptd($s,$i,$t,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
+  my %m = $d->anova_rptd($s,$b,$w,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
   test_stats_cmp(\%m, $exp);
-  my $inds_by_i_t_subj = PDL::glue(0, map $_->t, $i, $t, $s)->qsortveci;
-  $_ = $_->index($inds_by_i_t_subj) for $d, $s, $i, $t;
-  %m = $d->anova_rptd($s,$i,$t,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
+  my $inds_by_i_t_subj = PDL::glue(0, map $_->t, $b, $w, $s)->qsortveci;
+  $_ = $_->index($inds_by_i_t_subj) for $d, $s, $b, $w;
+  %m = $d->anova_rptd($s,$b,$w,{ivnm=>\@idv,btwn=>[0],plot=>0, v=>0});
   test_stats_cmp(\%m, $exp);
 }
 
