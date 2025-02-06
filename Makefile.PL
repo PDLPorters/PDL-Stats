@@ -3,8 +3,11 @@ use warnings;
 use ExtUtils::MakeMaker;
 use PDL::Core::Dev;
 
+my $package_name = "PDL::Stats";
+(my $repo = $package_name) =~ s#::#-#g;
+$repo = "PDLPorters/$repo";
 WriteMakefile(
-    NAME                => 'PDL::Stats',
+    NAME                => $package_name,
     AUTHOR              => 'Maggie J. Xiong  <maggiexyz users.sourceforge.net>',
     VERSION_FROM        => 'lib/PDL/Stats.pm',
     ABSTRACT_FROM       => 'lib/PDL/Stats.pm',
@@ -40,11 +43,13 @@ WriteMakefile(
         },
       },
       resources => {
-        repository => {
+        bugtracker  => {web=>"https://github.com/$repo/issues"},
+        repository  => {
           type => 'git',
-          url => 'git://github.com/PDLPorters/PDL-Stats',
-          web => 'https://github.com/PDLPorters/PDL-Stats',
+          url => "git://github.com/$repo.git",
+          web => "https://github.com/$repo",
         },
+        x_IRC => 'irc://irc.perl.org/#pdl',
       },
     },
 );
