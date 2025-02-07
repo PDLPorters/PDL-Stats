@@ -1066,6 +1066,11 @@ sub PDL::anova_rptd {
   my $err_ref = defined($subj) ?
     _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, $opt{BTWN} )
     : [];
+  for (grep defined $err_ref->[$_] && ref $err_ref->[$_], 0..$#$err_ref) {
+    my ($null_row_ids, $non_null_row_ids) = $err_ref->[$_]->zcover->which_both;
+    confess "got null rows $null_row_ids in error entry #$_ ($idv[$_])"
+      if !$null_row_ids->isempty;
+  }
 
     # stitch together
   my $ivs = PDL->null->glue( 1, @$ivs_ref, grep defined($_) && ref($_), @$err_ref);
@@ -1217,17 +1222,14 @@ sub _code_btwn {
 sub _add_errors {
   my ($subj, $ivs_ref, $idv, $raw_ivs, $btwn) = @_;
   my $spdl = _code_btwn($subj, [@$raw_ivs[@$btwn]]);
-
   # if btwn factor involved, or highest order inter for within factors
   # elem is undef, so that
   # @errors ind matches @$ivs_ref, with an extra elem at the end for subj
-
     # mark btwn factors for error terms
     # same error term for B(wn) and A(btwn) x B(wn) (Rutherford, p205)
   my %is_btwn = map +($_=>1), @$idv[ @$btwn ];
   my $has_btwn = keys %is_btwn;
   my %idv2indx = map +($idv->[$_]=>$_), 0..$#$idv;
-
   my $ie_subj;
   my @errors = map {
     my @fs = split ' ~ ', $idv->[$_];
@@ -1246,15 +1248,8 @@ sub _add_errors {
     elsif ($_ > $idv2indx{$err})                      { $idv2indx{$err} }
     else                      { interaction_code($ivs_ref->[$_], $spdl) }
   } 0 .. $#$ivs_ref;
-  for (grep defined $errors[$_] && ref $errors[$_], 0..$#errors) {
-    my ($null_row_ids, $non_null_row_ids) = $errors[$_]->zcover->which_both;
-    confess "got null rows $null_row_ids in error entry #$_ ($idv->[$_])"
-      if !$null_row_ids->isempty;
-  }
-
   push @errors, $has_btwn ? $ie_subj : $spdl;
-
-  return \@errors;
+  \@errors;
 }
 
 sub _fix_rptd_se {
