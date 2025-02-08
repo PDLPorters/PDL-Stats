@@ -781,12 +781,15 @@ Usage:
     | bake | ms     16.3333333333333
     | bake | ss     16.3333333333333
 
+This is implemented as a call to L</anova_rptd>, with an C<undef>
+subjects vector.
+
 =cut
 
 *anova = \&PDL::anova;
 sub PDL::anova {
-  my ($y, @ivs_raw) = @_;
-  anova_rptd($y, undef, @ivs_raw);
+  my ($y, @args) = @_;
+  anova_rptd($y, undef, @args);
 }
 
 sub _effect_code_ivs {
