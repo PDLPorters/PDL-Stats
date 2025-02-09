@@ -26,7 +26,9 @@ PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA
 
 =head1 DESCRIPTION
 
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that are broadcastable and methods that are NOT broadcastable, respectively. FUNCTIONS except B<ols_t> support bad value.
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to
+methods that are broadcastable and methods that are NOT broadcastable,
+respectively. FUNCTIONS except B<ols_t> support bad value.
 
 P-values, where appropriate, are provided if PDL::GSL::CDF is installed.
 
@@ -87,7 +89,8 @@ pp_def('fill_m',
   Doc      => '
 =for ref
 
-Replaces bad values with sample mean. Mean is set to 0 if all obs are bad. Can be done inplace.
+Replaces bad values with sample mean. Mean is set to 0 if all obs are
+bad.
 
 =for usage
 
@@ -139,7 +142,8 @@ pp_def('fill_rand',
   Doc      => '
 =for ref
 
-Replaces bad values with random sample (with replacement) of good observations from the same variable. Can be done inplace.
+Replaces bad values with random sample (with replacement) of good
+observations from the same variable.
 
 =for usage
 
@@ -178,7 +182,7 @@ pp_def('dev_m',
       $b() = $a() - m;
     %}
 ',
-  Doc      => 'Replaces values with deviations from the mean. Can be done inplace.',
+  Doc      => 'Replaces values with deviations from the mean.',
 );
 
 pp_def('stddz',
@@ -204,7 +208,7 @@ pp_def('stddz',
       $b() = (sd>0)? (($a() - m) / sd) : 0;
     %}
 ',
-  Doc       => 'Standardize ie replace values with z_scores based on sample standard deviation from the mean (replace with 0s if stdv==0). Can be done inplace.',
+  Doc       => 'Standardize ie replace values with z_scores based on sample standard deviation from the mean (replace with 0s if stdv==0).',
 );
 
 pp_def('sse',
@@ -357,9 +361,13 @@ pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =for ref
 
-Broadcasted version of ordinary least squares regression (B<ols>). The price of broadcasting was losing significance tests for coefficients (but see B<r2_change>). The fitting function was shamelessly copied then modified from PDL::Fit::Linfit. Intercept is LAST of coeff if CONST => 1.
+Broadcasted version of ordinary least squares regression (B<ols>). The
+price of broadcasting was losing significance tests for coefficients
+(but see B<r2_change>). The fitting function was shamelessly copied then
+modified from PDL::Fit::Linfit. Intercept is LAST of coeff if CONST => 1.
 
-ols_t does not handle bad values. consider B<fill_m> or B<fill_rand> if there are bad values.
+ols_t does not handle bad values. consider B<fill_m> or B<fill_rand>
+if there are bad values.
 
 =for options
 
@@ -521,50 +529,39 @@ sub _ols_main {
     WIN    => undef,      # for plotting
   );
   if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
-
   my $C = inv( $ivs x $ivs->t );
-
   # Internally normalise data
   # (double) it or ushort y and sequence iv won't work right
   my $ymean = $y->abs->avgover->double;
   $ymean->where( $ymean==0 ) .= 1;
   my $divisor = $broadcasted ? $ymean->dummy(0) : $ymean;
   my $y2 = $y / $divisor;
-
   my $Y = $ivs x $y2->dummy(0);
-
   # Do the fit
-
     # Fitted coefficients vector
   my $coeff = PDL::squeeze( $C x $Y );
   $coeff = $coeff->dummy(0)
     if $broadcasted and $coeff->getndims == 1 and $y->getndims > 1;
   $coeff *= $divisor; # Un-normalise
-
     # ***$coeff x $ivs looks nice but produces nan on successive tries***
   my $y_pred = sumover( ($broadcasted ? $coeff->dummy(1) : $coeff) * $ivs->transpose );
   $opt{PLOT} and $y->plot_residuals( $y_pred, \%opt );
   return $coeff unless wantarray;
-
   my %ret = (y_pred => $y_pred);
   $ret{ss_total} = $opt{CONST} ? $y->ss : sumover( $y ** 2 );
   $ret{ss_residual} = $y->sse( $ret{y_pred} );
   $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
   $ret{R2} = $ret{ss_model} / $ret{ss_total};
-
   my $n_var = $opt{CONST}? $ivs->dim(1) - 1 : $ivs->dim(1);
   $ret{F_df} = pdl( $n_var, my $df1 = $y->dim(0) - $ivs->dim(1) );
   $ret{F} = $ret{ss_model} / $n_var
     / ($ret{ss_residual} / $df1);
   $ret{F_p} = 1 - $ret{F}->gsl_cdf_fdist_P( $n_var, $df1 )
     if $CDF;
-
   if (!$broadcasted) {
     my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
-
     $opt{CONST} and
       $se_b(-1) .= sqrt( $ret{ss_residual} / $df1 * $C(-1,-1) );
-
       # get the se for bs by successivly regressing each iv by the rest ivs
     if ($ivs->dim(1) > 1) {
       for my $k (0 .. $n_var-1) {
@@ -573,9 +570,7 @@ sub _ols_main {
         $opt{CONST} and
           $G = $G->glue( 1, ones($ivs->dim(0)) );
         my $b_G = $ivs( ,$k)->ols( $G, {CONST=>0,PLOT=>0} );
-
         my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
-
         $se_b($k) .= sqrt( $ret{ss_residual} / $df1 / $ss_res_k );
       }
     }
@@ -583,17 +578,13 @@ sub _ols_main {
       $se_b(0)
         .= sqrt( $ret{ss_residual} / $df1 / sum( $ivs( ,0)**2 ) );
     }
-
     $ret{b_se} = $se_b;
     $ret{b_t} = $coeff / $ret{b_se};
     $ret{b_p} = 2 * ( 1 - $ret{b_t}->abs->gsl_cdf_tdist_P( $df1 ) )
       if $CDF;
   }
-
   for (keys %ret) { ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze };
-
   $ret{b} = $coeff;
-
   return %ret;
 }
 
@@ -601,7 +592,12 @@ sub _ols_main {
 
 =for ref
 
-Significance test for the incremental change in R2 when new variable(s) are added to an ols regression model. Returns the change stats as well as stats for both models. Based on B<ols_t>. (One way to make up for the lack of significance tests for coeffs in ols_t).
+Significance test for the incremental change in R2 when new variable(s)
+are added to an ols regression model.
+
+Returns the change stats as well as stats for both models. Based on
+L</ols_t>. (One way to make up for the lack of significance tests for
+coeffs in ols_t).
 
 =for options
 
@@ -687,12 +683,14 @@ sub PDL::r2_change {
 
 Analysis of variance. Uses type III sum of squares for unbalanced data.
 
-Dependent variable should be a 1D pdl. Independent variables can be passed as 1D perl array ref or 1D pdl.
+Dependent variable should be a 1D pdl. Independent variables can be
+passed as 1D perl array ref or 1D pdl.
 
 Will only calculate p-value (C<F_p>) if there are more samples than the
 product of categories of all the IVs.
 
-Supports bad value (by ignoring missing or BAD values in dependent and independent variables list-wise).
+Supports bad value (by ignoring missing or BAD values in dependent and
+independent variables list-wise).
 
 =for options
 
@@ -826,10 +824,8 @@ sub _interactions {
 
 sub _cell_means {
   my ($data, $ivs_ref, $i_cmo_ref, $ids, $raw_ref) = @_;
-
   my %ind_id;
   @ind_id{ @$ids } = 0..$#$ids;
-
   my %cm;
   my $i = 0;
   for (@$ivs_ref) {
@@ -839,10 +835,8 @@ sub _cell_means {
     $last($i_neg) .= 1;
     $_->where($_ == -1) .= 0;
     $_ = $_->glue(1, $last);
-
     my @v = split ' ~ ', $ids->[$i];
     my @shape = map { $raw_ref->[$_]->uniq->nelem } @ind_id{@v};
-
     my ($m, $ss) = $data->centroid( $_ );
     $m  = $m($i_cmo_ref->[$i])->sever;
     $ss = $ss($i_cmo_ref->[$i])->sever;
@@ -860,34 +854,34 @@ sub _cell_means {
   # http://www.perlmonks.org/?node_id=371228
 sub _combinations {
   my ($num, $arr) = @_;
-
   return sub { return }
     if $num == 0 or $num > @$arr;
-
   my @pick;
-
   return sub {
     return @$arr[ @pick = ( 0 .. $num - 1 ) ]
       unless @pick;
-
     my $i = $#pick;
     $i-- until $i < 0 or $pick[$i]++ < @$arr - $num + $i;
     return if $i < 0;
-
     @pick[$i .. $#pick] = $pick[$i] .. $#$arr;
-
     return @$arr[@pick];
   };
 }
 
 =head2 anova_rptd
 
-Repeated measures and mixed model anova. Uses type III sum of squares. The standard error (se) for the means are based on the relevant mean squared error from the anova, ie it is pooled across levels of the effect.
+=for ref
 
+Repeated measures and mixed model anova. Uses type III sum of squares.
+
+The standard error (se) for the means are based on the relevant mean
+squared error from the anova, ie it is pooled across levels of the effect.
 Will only calculate p-value (C<F_p>) if there are more samples than the
 product of categories of all the IVs.
 
-anova_rptd supports bad value in the dependent and independent variables. It automatically removes bad data listwise, ie remove a subject's data if there is any cell missing for the subject.
+anova_rptd supports bad value in the dependent and independent
+variables. It automatically removes bad data listwise, ie remove a
+subject's data if there is any cell missing for the subject.
 
 Default options (case insensitive):
 
@@ -989,7 +983,10 @@ Usage:
     | Wings || err ms	3.65277777777778
     | Wings || err ss	21.9166666666667
 
-For mixed model anova, ie when there are between-subject IVs involved, feed the IVs as above, but specify in BTWN which IVs are between-subject. For example, if we had added age as a between-subject IV in the above example, we would do
+For mixed model anova, ie when there are between-subject IVs
+involved, feed the IVs as above, but specify in BTWN which IVs are
+between-subject. For example, if we had added age as a between-subject
+IV in the above example, we would do
 
     my %m = $dv->anova_rptd( $subj, $age, $b, $w,
                            { ivnm=>['Age', 'Beer', 'Wings'], btwn=>[0] });
@@ -1258,29 +1255,24 @@ sub _add_errors {
 sub _fix_rptd_se {
     # if ivnm lvls_ref for within ss only this can work for mixed design
   my ($cm_ref, $ret, $ivnm, $lvls_ref, $n) = @_;
-
   my @se = grep /se$/, keys %$cm_ref;
   @se = map { /^# (.+?) # se$/; $1; } @se;
-
   my @n_obs
     = map {
         my @ivs = split / ~ /, $_;
         my $i_ivs = which_id $ivnm, \@ivs;
         my $icollapsed = setops pdl(0 .. $#$ivnm), 'XOR', $i_ivs;
-
         my $collapsed = $icollapsed->nelem?
                           pdl( @$lvls_ref[(list $icollapsed)] )->prodover
                       :   1
                       ;
         $n * $collapsed;
       } @se;
-
   for my $i (0 .. $#se) {
     $cm_ref->{"# $se[$i] # se"}
       .= sqrt( $ret->{"| $se[$i] || err ms"} / $n_obs[$i] );
   }
-
-  return $cm_ref;
+  $cm_ref;
 }
 
 =head2 dummy_code
@@ -1314,9 +1306,12 @@ sub PDL::dummy_code {
 
 =for ref
 
-Unweighted effect coding of nominal variable (perl @ ref or 1d pdl) for use in regression. returns in @ context coded pdl and % ref to level - pdl->dim(1) index.
+Unweighted effect coding of nominal variable (perl @ ref or 1d pdl) for
+use in regression. returns in @ context coded pdl and % ref to level -
+pdl->dim(1) index.
 
-Supports BAD value (missing or 'BAD' values result in the corresponding pdl elements being marked as BAD).
+Supports BAD value (missing or 'BAD' values result in the corresponding
+pdl elements being marked as BAD).
 
 =for usage
 
@@ -1341,15 +1336,13 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 *effect_code = \&PDL::effect_code;
 sub PDL::effect_code {
   my ($var_ref) = @_;
-
   my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
   my $var_max = $var->max;
   confess "effect_code called with only one unique value" if $var_max < 1;
   my $var_e = yvals( float, $var->nelem, $var_max ) == $var;
   $var_e(which( $var == $var_max ), ) .= -1;
   $var_e = $var_e->setbadif( $var->isbad ) if $var->badflag;
-
-  return wantarray? ($var_e, $map_ref) : $var_e;
+  wantarray ? ($var_e, $map_ref) : $var_e;
 }
 
 =head2 effect_code_w
@@ -1374,25 +1367,22 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 *effect_code_w = \&PDL::effect_code_w;
 sub PDL::effect_code_w {
   my ($var_ref) = @_;
-
   my ($var_e, $map_ref) = effect_code( $var_ref );
-
   return wantarray ? ($var_e, $map_ref) : $var_e if $var_e->sum == 0;
-
   my $pos = $var_e == 1;
   my $neg = $var_e == -1;
   my $w = $pos->sumover / $neg->sumover;
   my $neg_ind = $neg->whichND;
   $var_e->indexND($neg_ind) *= $w($neg_ind((1)));
-
-  return wantarray ? ($var_e, $map_ref) : $var_e;
+  wantarray ? ($var_e, $map_ref) : $var_e;
 }
 
 =head2 interaction_code
 
 Returns the coded interaction term for effect-coded variables.
 
-Supports BAD value (missing or 'BAD' values result in the corresponding pdl elements being marked as BAD).
+Supports BAD value (missing or 'BAD' values result in the corresponding
+pdl elements being marked as BAD).
 
 =for usage
 
@@ -1428,9 +1418,16 @@ sub PDL::interaction_code {
 
 =for ref
 
-Ordinary least squares regression, aka linear regression. Unlike B<ols_t>, ols is not broadcastable, but it can handle bad value (by ignoring observations with bad value in dependent or independent variables list-wise) and returns the full model in list context with various stats.
+Ordinary least squares regression, aka linear regression.
 
-IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the constant vector in $x. Intercept is automatically added and returned as LAST of the coeffs if CONST=>1. Returns full model in list context and coeff in scalar context.
+Unlike B<ols_t>, ols is not broadcastable, but it can handle bad value (by
+ignoring observations with bad value in dependent or independent variables
+list-wise) and returns the full model in list context with various stats.
+
+IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply
+the constant vector in $x. Intercept is automatically added and returned
+as LAST of the coeffs if CONST=>1. Returns full model in list context
+and coeff in scalar context.
 
 =for options
 
@@ -1487,7 +1484,6 @@ sub PDL::ols {
 
 sub _rm_bad_value {
   my ($y, $ivs) = @_;
-
   my $idx;
   if ($y->check_badflag or $ivs->check_badflag) {
      $idx = which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
@@ -1496,7 +1492,6 @@ sub _rm_bad_value {
      $ivs->badflag(0);
      $y->badflag(0);
   }
-
   return $y, $ivs, $idx;
 }
 
@@ -1504,7 +1499,11 @@ sub _rm_bad_value {
 
 =for ref
 
-Repeated measures linear regression (Lorch & Myers, 1990; Van den Noortgate & Onghena, 2006). Handles purely within-subject design for now. See F<t/ols_rptd.t> for an example using the Lorch and Myers data.
+Repeated measures linear regression.
+Handles purely within-subject design for now.
+
+(Lorch & Myers, 1990; Van den Noortgate & Onghena, 2006).
+See F<t/ols_rptd.t> for an example using the Lorch and Myers data.
 
 =for usage
 
@@ -1539,7 +1538,6 @@ Usage:
     ms_err  [ 2.5595857  1.2030692 0.55671923]
     ss  [ 18.450705  73.813294 0.57026483]
     ss_err  [ 23.036272  10.827623  5.0104731]
-
 
 =cut
 
@@ -1629,13 +1627,20 @@ sub PDL::ols_rptd {
 
 =for ref
 
-Logistic regression with maximum likelihood estimation using PDL::Fit::LM.
+Logistic regression with maximum likelihood estimation using L<PDL::Fit::LM>.
 
-IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply the constant vector in $x. It is included in the model and returned as LAST of coeff. Returns full model in list context and coeff in scalar context.
+IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply
+the constant vector in $x. It is included in the model and returned as
+LAST of coeff. Returns full model in list context and coeff in scalar
+context.
 
-The significance tests are likelihood ratio tests (-2LL deviance) tests. IV significance is tested by comparing deviances between the reduced model (ie with the IV in question removed) and the full model.
+The significance tests are likelihood ratio tests (-2LL deviance)
+tests. IV significance is tested by comparing deviances between the
+reduced model (ie with the IV in question removed) and the full model.
 
-***NOTE: the results here are qualitatively similar to but not identical with results from R, because different algorithms are used for the nonlinear parameter fit. Use with discretion***
+***NOTE: the results here are qualitatively similar to but not identical
+with results from R, because different algorithms are used for the
+nonlinear parameter fit. Use with discretion***
 
 =for options
 
@@ -1697,15 +1702,12 @@ Usage:
 *logistic = \&PDL::logistic;
 sub PDL::logistic {
   require PDL::Fit::LM;
-
   my ( $self, $ivs, $opt ) = @_;
-
   $self = $self->squeeze;
     # make compatible w multiple var cases
   $ivs->getndims == 1 and $ivs = $ivs->dummy(1);
   $self->dim(0) != $ivs->dim(0) and
     carp "mismatched n btwn DV and IV!";
-
   my %opt = (
     INITP => zeroes( $ivs->dim(1) + 1 ),    # n_ivs + 1
     MAXIT => 1000,
@@ -1714,7 +1716,6 @@ sub PDL::logistic {
   $opt and $opt{uc $_} = $opt->{$_} for (%$opt);
     # not using it atm
   $opt{WT} = 1;
-
     # Use lmfit. Fourth input argument is reference to user-defined
     # copy INITP so we have the original value when needed
   my ($yfit,$coeff,$cov,$iter)
@@ -1724,14 +1725,10 @@ sub PDL::logistic {
     # which is changed in later lmfit calls
   $yfit  = $yfit->copy;
   $coeff = $coeff->copy;
-
   return $coeff unless wantarray;
-
   my %ret;
-
   my $n0 = $self->where($self == 0)->nelem;
   my $n1 = $self->nelem - $n0;
-
   $ret{cov} = $cov if $opt{COV};
   $ret{D0} = -2*($n0 * log($n0 / $self->nelem) + $n1 * log($n1 / $self->nelem));
   $ret{Dm} = sum( $self->dvrs( $yfit ) ** 2 );
@@ -1740,19 +1737,15 @@ sub PDL::logistic {
   $ret{Dm_p}
     = 1 - PDL::GSL::CDF::gsl_cdf_chisq_P( $ret{Dm_chisq}, $ret{Dm_df} )
     if $CDF;
-
   my $coeff_chisq = zeroes $opt{INITP}->nelem;
-
   if ( $ivs->dim(1) > 1 ) {
     for my $k (0 .. $ivs->dim(1)-1) {
       my @G = grep { $_ != $k } (0 .. $ivs->dim(1)-1);
       my $G = $ivs->dice_axis(1, \@G);
-
       my $init = $opt{INITP}->dice([ @G, $opt{INITP}->dim(0)-1 ])->copy;
       my $y_G
         = PDL::Fit::LM::lmfit( $G, $self, $opt{WT}, \&_logistic, $init,
         { Maxiter=>$opt{MAXIT}, Eps=>$opt{EPS} } );
-
       $coeff_chisq($k) .= $self->dm( $y_G ) - $ret{Dm};
     }
   }
@@ -1760,63 +1753,49 @@ sub PDL::logistic {
       # d0 is, by definition, the deviance with only intercept
     $coeff_chisq(0) .= $ret{D0} - $ret{Dm};
   }
-
   my $y_c
       = PDL::Fit::LM::lmfit( $ivs, $self, $opt{WT}, \&_logistic_no_intercept, $opt{INITP}->(0:-2)->copy,
       { Maxiter=>$opt{MAXIT}, Eps=>$opt{EPS} } );
-
   $coeff_chisq(-1) .= $self->dm( $y_c ) - $ret{Dm};
-
   $ret{b} = $coeff;
   $ret{b_chisq} = $coeff_chisq;
   $ret{b_p} = 1 - $ret{b_chisq}->gsl_cdf_chisq_P( 1 )
     if $CDF;
   $ret{y_pred} = $yfit;
   $ret{iter} = $iter;
-
   for (keys %ret) { ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze };
-
-  return %ret;
+  %ret;
 }
 
 sub _logistic {
   my ($x,$par,$ym,$dyda) = @_;
-
     # $b and $c are fit parameters slope and intercept
   my $b = $par(0 : $x->dim(1) - 1)->sever;
   my $c = $par(-1)->sever;
-
     # Write function with dependent variable $ym,
     # independent variable $x, and fit parameters as specified above.
     # Use the .= (dot equals) assignment operator to express the equality
     # (not just a plain equals)
   $ym .= 1 / ( 1 + exp( -1 * (sumover($b * $x->transpose) + $c) ) );
-
   my (@dy) = map {$dyda -> slice(",($_)") } (0 .. $par->dim(0)-1);
-
     # Partial derivative of the function with respect to each slope
     # fit parameter ($b in this case). Again, note .= assignment
     # operator (not just "equals")
   $dy[$_] .= $x( ,$_) * $ym * (1 - $ym)
     for (0 .. $b->dim(0)-1);
-
     # Partial derivative of the function re intercept par
   $dy[-1] .= $ym * (1 - $ym);
 }
 
 sub _logistic_no_intercept {
   my ($x,$par,$ym,$dyda) = @_;
-
   my $b = $par(0 : $x->dim(1) - 1)->sever;
-
     # Write function with dependent variable $ym,
     # independent variable $x, and fit parameters as specified above.
     # Use the .= (dot equals) assignment operator to express the equality
     # (not just a plain equals)
   $ym .= 1 / ( 1 + exp( -1 * sumover($b * $x->transpose) ) );
-
   my (@dy) = map {$dyda -> slice(",($_)") } (0 .. $par->dim(0)-1);
-
     # Partial derivative of the function with respect to each slope
     # fit parameter ($b in this case). Again, note .= assignment
     # operator (not just "equals")
@@ -1828,7 +1807,10 @@ sub _logistic_no_intercept {
 
 =for ref
 
-Principal component analysis. Based on corr instead of cov (bad values are ignored pair-wise. OK when bad values are few but otherwise probably should fill_m etc before pca). Uses L<PDL::MatrixOps/eigens_sym>.
+Principal component analysis. Based on corr instead of cov.
+
+Bad values are ignored pair-wise. OK when bad values are few but otherwise
+probably should fill_m etc before pca). Uses L<PDL::MatrixOps/eigens_sym>.
 
 =for options
 
@@ -1880,25 +1862,20 @@ Plot scores along the first two components,
 *pca = \&PDL::pca;
 sub PDL::pca {
   my ($self, $opt) = @_;
-
   my %opt = (
     CORR  => 1,
     PLOT  => 0,
     WIN    => undef,      # for plotting
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
   my $var_var = $opt{CORR}? $self->corr_table : $self->cov_table;
-
     # value is axis pdl and score is var x axis
   my ($eigvec, $eigval) = $var_var->eigens_sym;
   $eigvec = $eigvec->transpose; # compatibility with PDL::Slatec::eigsys
-
     # ind is sticky point for broadcasting
   my $ind_sorted = $eigval->qsorti->(-1:0);
   $eigvec = $eigvec( ,$ind_sorted)->sever;
   $eigval = $eigval($ind_sorted)->sever;
-
     # var x axis
   my $var     = $eigval / $eigval->sum->sclr;
   my $loadings;
@@ -1909,17 +1886,17 @@ sub PDL::pca {
     my $scores = $eigvec x $self->dev_m;
     $loadings = $self->corr( $scores->dummy(1) );
   }
-
   $var->plot_screes(\%opt)
     if $opt{PLOT};
-
-  return ( eigenvalue=>$eigval, eigenvector=>$eigvec,
+  ( eigenvalue=>$eigval, eigenvector=>$eigvec,
            pct_var=>$var, loadings=>$loadings );
 }
 
 =head2 pca_sorti
 
-Determine by which vars a component is best represented. Descending sort vars by size of association with that component. Returns sorted var and relevant component indices.
+Determine by which vars a component is best represented. Descending sort
+vars by size of association with that component. Returns sorted var and
+relevant component indices.
 
 =for options
 
@@ -1963,21 +1940,16 @@ Usage:
 sub PDL::pca_sorti {
     # $self is pdl (var x component)
   my ($self, $opt) = @_;
-
   my %opt = (
     NCOMP => 10,     # maximum number of components to consider
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
   my $ncomp = pdl($opt{NCOMP}, $self->dim(1))->min;
   $self = $self->dice_axis( 1, pdl(0..$ncomp-1) );
-
   my $icomp = $self->transpose->abs->maximum_ind;
-
     # sort between comp
   my $ivar_sort = $icomp->qsorti;
   $self = $self($ivar_sort, )->sever;
-
     # sort within comp
   my $ic = $icomp($ivar_sort)->iv_cluster;
   for my $comp (0 .. $ic->dim(1)-1) {
@@ -1985,7 +1957,7 @@ sub PDL::pca_sorti {
     $ivar_sort(which $ic( ,$comp))
       .= $ivar_sort(which $ic( ,$comp))->($i)->sever;
   }
-  return wantarray? ($ivar_sort, pdl(0 .. $ic->dim(1)-1)) : $ivar_sort;
+  wantarray ? ($ivar_sort, pdl(0 .. $ic->dim(1)-1)) : $ivar_sort;
 }
 
 =head2 plot_means
@@ -2029,7 +2001,6 @@ sub PDL::plot_means {
     carp "Data is > 4D. No plot here.";
     return;
   }
-
   my %opt = (
     IVNM => ['IV_0', 'IV_1', 'IV_2', 'IV_3'],
     DVNM => 'DV',
@@ -2038,7 +2009,6 @@ sub PDL::plot_means {
     SIZE  => 640,           # individual square panel size in pixels
   );
   if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt }
-
     # decide which vars to plot as x axis, lines, panels
     # put var w most levels on x axis
     # put var w least levels on diff panels
@@ -2051,32 +2021,26 @@ sub PDL::plot_means {
     if defined $se;
   @iD = reverse list qsorti pdl @dims
     if $opt{AUTO};
-
     # $iD[0] on x axis
     # $iD[1] as separate lines
   my $nx = $self->dim($iD[2]);    # n xpanels
   my $ny = $self->dim($iD[3]);    # n ypanels
-
   my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin(
     multi=>[$nx,$ny], size=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny,'px']);
-
   my $seq0 = sequence($self->dim($iD[0]));
   for my $y (0..$ny-1) {
     for my $x (0..$nx-1) {
       my $tl = '';
       $tl =        $opt{IVNM}[$iD[2]] . " $x" if $nx > 1;
       $tl .= ' ' . $opt{IVNM}[$iD[3]] . " $y" if $ny > 1;
-
       for (0 .. $self->dim($iD[1]) - 1) {
         my $ke = $self->dim($iD[1]) > 1 ? "$opt{IVNM}[$iD[1]] $_" : '';
-
         my $ydiced = $self->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)->dice_axis($iD[1],$_)->squeeze;
         $w->plot(
           with=>'points', !$ke?():(ke=>$ke), $seq0, $ydiced,
           !defined($se)?():(with=>'errorbars', $seq0, $ydiced, $ydiced),
           { xlabel=>$opt{IVNM}[$iD[0]], ylabel=>$opt{DVNM}, title=>$tl },
         );
-
       }
     }
   }
@@ -2118,11 +2082,8 @@ sub PDL::plot_residuals {
     COLOR => 1,
   );
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
-
   my $residuals = $y - $y_pred;
-
   my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
-
   $win->plot(
     with=>'points', style=>$opt{COLOR}, $y_pred, $residuals,
     with=>'lines',  style=>$opt{COLOR}, pdl($y_pred->minmax), pdl(0,0), # 0-line
@@ -2171,14 +2132,11 @@ sub PDL::plot_scores {
     COLOR => [1,2],  # color for original and transformed scoress
   );
   if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt }
-
   my $i = pdl $opt{COMP};
   my $z = $opt{CORR} ? $self->stddz : $self->dev_m;
-
     # transformed normed values
   my $scores = sumover($eigvec( ,$i) * $z->transpose->dummy(1))->transpose;
   $z = $z( ,$i)->sever;
-
   my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
   $win->plot(
     with=>'points', style=>$opt{COLOR}[0], ke=>'original', $z( ,0;-), $z( ,1;-),
@@ -2240,16 +2198,13 @@ sub PDL::plot_screes {
   $ncomp = ($self->dim(0) < $opt{NCOMP})? $self->dim(0) : $opt{NCOMP};
   $opt{CUT}   = PDL::Stats::Kmeans::_scree_ind $self(0:$ncomp-1)
     if !defined $opt{CUT};
-
   my $win = $opt{WIN};
-
   if (!$win) {
    $win = PDL::Graphics::Simple::pgswin(SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
    $win->env(0, $ncomp-1, 0, 1,
      {XTitle=>'Component', YTitle=>'Proportion of Variance Accounted for',
      AXIS=>['BCNT', 'BCNST'], Border=>1, });
   }
-
   $win->points(sequence($ncomp), $self(0:$ncomp-1));
   $win->line( pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max->sclr+.05),
         {style=>15} )
@@ -2259,33 +2214,46 @@ sub PDL::plot_screes {
 
 =head1 SEE ALSO
 
-PDL::Fit::Linfit
+L<PDL::Fit::Linfit>
 
-PDL::Fit::LM
+L<PDL::Fit::LM>
 
 =head1 REFERENCES
 
-Cohen, J., Cohen, P., West, S.G., & Aiken, L.S. (2003). Applied Multiple Regression/correlation Analysis for the Behavioral Sciences (3rd ed.). Mahwah, NJ: Lawrence Erlbaum Associates Publishers.
+Cohen, J., Cohen, P., West, S.G., & Aiken, L.S. (2003). Applied
+Multiple Regression/correlation Analysis for the Behavioral Sciences
+(3rd ed.). Mahwah, NJ: Lawrence Erlbaum Associates Publishers.
 
-Hosmer, D.W., & Lemeshow, S. (2000). Applied Logistic Regression (2nd ed.). New York, NY: Wiley-Interscience.
+Hosmer, D.W., & Lemeshow, S. (2000). Applied Logistic Regression (2nd
+ed.). New York, NY: Wiley-Interscience.
 
-Lorch, R.F., & Myers, J.L. (1990). Regression analyses of repeated measures data in cognitive research. Journal of Experimental Psychology: Learning, Memory, & Cognition, 16, 149-157.
+Lorch, R.F., & Myers, J.L. (1990). Regression analyses of repeated
+measures data in cognitive research. Journal of Experimental Psychology:
+Learning, Memory, & Cognition, 16, 149-157.
 
-Osgood C.E., Suci, G.J., & Tannenbaum, P.H. (1957). The Measurement of Meaning. Champaign, IL: University of Illinois Press.
+Osgood C.E., Suci, G.J., & Tannenbaum, P.H. (1957). The Measurement of
+Meaning. Champaign, IL: University of Illinois Press.
 
 Rutherford, A. (2011). ANOVA and ANCOVA: A GLM Approach (2nd ed.). Wiley.
 
-Shlens, J. (2009). A Tutorial on Principal Component Analysis. Retrieved April 10, 2011 from http://citeseerx.ist.psu.edu/
+Shlens, J. (2009). A Tutorial on Principal Component Analysis. Retrieved
+April 10, 2011 from http://citeseerx.ist.psu.edu/
 
-The GLM procedure: unbalanced ANOVA for two-way design with interaction. (2008). SAS/STAT(R) 9.2 User's Guide. Retrieved June 18, 2009 from http://support.sas.com/
+The GLM procedure: unbalanced ANOVA for two-way design with
+interaction. (2008). SAS/STAT(R) 9.2 User's Guide. Retrieved June 18,
+2009 from http://support.sas.com/
 
-Van den Noortgatea, W., & Onghenaa, P. (2006). Analysing repeated measures data in cognitive research: A comment on regression coefficient analyses. European Journal of Cognitive Psychology, 18, 937-952.
+Van den Noortgatea, W., & Onghenaa, P. (2006). Analysing repeated
+measures data in cognitive research: A comment on regression coefficient
+analyses. European Journal of Cognitive Psychology, 18, 937-952.
 
 =head1 AUTHOR
 
 Copyright (C) 2009 Maggie J. Xiong <maggiexyz users.sourceforge.net>
 
-All rights reserved. There is no warranty. You are allowed to redistribute this software / documentation as described in the file COPYING in the PDL distribution.
+All rights reserved. There is no warranty. You are allowed to redistribute
+this software / documentation as described in the file COPYING in the
+PDL distribution.
 
 =cut
 
