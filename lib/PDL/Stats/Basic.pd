@@ -3,8 +3,8 @@ use warnings;
 
 my $F = [qw(F D)];
 
-pp_add_exported('', 'binomial_test', 'rtable', 'which_id',
-);
+pp_add_exported(qw(binomial_test rtable which_id code_ivs
+));
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
@@ -912,7 +912,7 @@ sub PDL::group_by {
         my $label;
         if (ref $factor eq 'ARRAY') {
             $label  = _ordered_uniq($factor);
-            $factor = _array_to_pdl($factor);
+            $factor = code_ivs($factor);
         } else {
             my $perl_factor = [$factor->list];
             $label  = _ordered_uniq($perl_factor);
@@ -935,7 +935,7 @@ sub PDL::group_by {
     my %seen;
     my @uniq_cells = grep {! $seen{$_}++ } @cells;
 
-    my $flat_factor = _array_to_pdl( \@cells );
+    my $flat_factor = code_ivs( \@cells );
 
     my $p_reshaped = _group_by_single_factor( $p, $flat_factor );
 
@@ -1046,24 +1046,15 @@ sub which_id {
   return pdl @ind_select;
 }
 
-sub _array_to_pdl {
+sub code_ivs {
   my ($var_ref) = @_;
   $var_ref = [ $var_ref->list ] if UNIVERSAL::isa($var_ref, 'PDL');
-
-  my (%level, $l);
-  $l = 0;
-  for (@$var_ref) {
-    if (defined($_) and $_ ne '' and $_ ne 'BAD') {
-      $level{$_} = $l ++
-        if !exists $level{$_};
-    }
-  }
-
-  my $pdl = pdl( map { (defined($_) and $_ ne '' and $_ ne 'BAD')?  $level{$_} : -1 } @$var_ref );
-  $pdl = $pdl->setvaltobad(-1);
+  my ($l, @filtered, %level) = (0,
+    map defined($_) && $_ ne '' && $_ ne 'BAD' ? $_ : undef, @$var_ref);
+  $level{$_} //= $l++ for grep defined, @filtered;
+  my $pdl = pdl(map defined($_) ? $level{$_} : -1, @filtered)->setvaltobad(-1);
   $pdl->check_badflag;
-
-  return wantarray? ($pdl, \%level) : $pdl;
+  wantarray ? ($pdl, \%level) : $pdl;
 }
 
 

@@ -1021,14 +1021,14 @@ sub PDL::anova_rptd {
   my @idv = @{ $opt{IVNM} };
 
   $y = $y->squeeze;
-  my @pdl_ivs_raw = map scalar PDL::Stats::Basic::_array_to_pdl($_), @ivs_raw;
+  my @pdl_ivs_raw = map scalar PDL::Stats::Basic::code_ivs($_), @ivs_raw;
   my $pdl_ivs_raw = pdl \@pdl_ivs_raw;
     # explicit set badflag because pdl() removes badflag
   $pdl_ivs_raw->badflag( scalar grep { $_->badflag } @pdl_ivs_raw );
   my $sj;
   if (defined($subj)) {
     # delete bad data listwise ie remove subj if any cell missing
-    $sj = PDL::Stats::Basic::_array_to_pdl($subj);
+    $sj = PDL::Stats::Basic::code_ivs($subj);
     my $ibad = which( $y->isbad | nbadover($pdl_ivs_raw->transpose) );
     my $sj_bad = $sj($ibad)->uniq;
     if ($sj_bad->nelem) {
@@ -1199,7 +1199,7 @@ sub _code_btwn {
   my (@grp, %grp_s);
   for my $n (0 .. $subj->nelem - 1) {
       # construct string to code group membership
-      # something not treated as BAD by _array_to_pdl to start off marking group membership
+      # something not treated as BAD by code_ivs to start off marking group membership
       # if no $btwn, everyone ends up in the same grp
     my $s = '_' . join '', map $_->($n), @$btwn;
     push @grp, $s;                 # group membership
@@ -1336,7 +1336,7 @@ pdl elements being marked as BAD).
 *effect_code = \&PDL::effect_code;
 sub PDL::effect_code {
   my ($var_ref) = @_;
-  my ($var, $map_ref) = PDL::Stats::Basic::_array_to_pdl( $var_ref );
+  my ($var, $map_ref) = PDL::Stats::Basic::code_ivs( $var_ref );
   my $var_max = $var->max;
   confess "effect_code called with only one unique value" if $var_max < 1;
   my $var_e = yvals( float, $var->nelem, $var_max ) == $var;

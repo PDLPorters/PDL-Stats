@@ -147,18 +147,18 @@ SKIP: {
 
 {
     my @a = qw(a a b b c c);
-    my $a = PDL::Stats::Basic::_array_to_pdl( \@a );
+    my $a = PDL::Stats::Basic::code_ivs( \@a );
     my $ans = pdl( 0,0,1,1,2,2 );
-    is_pdl $a, $ans, '_array_to_pdl';
+    is_pdl $a, $ans, 'code_ivs';
 
     $a[-1] = undef;
-    my $a_bad = PDL::Stats::Basic::_array_to_pdl( \@a );
+    my $a_bad = PDL::Stats::Basic::code_ivs( \@a );
     my $ans_bad = pdl '0 0 1 1 2 BAD';
-    is_pdl $a_bad, $ans_bad, '_array_to_pdl with missing value undef correctly coded';
+    is_pdl $a_bad, $ans_bad, 'code_ivs with missing value undef correctly coded';
 
     $a[-1] = 'BAD';
-    $a_bad = PDL::Stats::Basic::_array_to_pdl( \@a );
-    is_pdl $a_bad, $ans_bad, '_array_to_pdl with missing value BAD correctly coded';
+    $a_bad = PDL::Stats::Basic::code_ivs( \@a );
+    is_pdl $a_bad, $ans_bad, 'code_ivs with missing value BAD correctly coded';
 }
 
 done_testing();
