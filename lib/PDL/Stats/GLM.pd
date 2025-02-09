@@ -796,7 +796,7 @@ sub _effect_code_ivs {
 }
 
 sub _interactions {
-  my ($ivs_ref, $i_cmo_ref, $idv, $raw_ref) = @_;
+  my ($ivs_ref, $idv, $raw_ref) = @_;
   my ($dim0, @inter, @idv_inter, @inter_cm, @inter_cmo) = $ivs_ref->[0]->dim(0);
   for my $nway ( 2 .. @$ivs_ref ) {
     my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
@@ -1055,7 +1055,7 @@ sub PDL::anova_rptd {
     = _effect_code_ivs( \@pdl_ivs_raw );
 
   my ($ivs_inter_ref, $inter_cmo_ref, $idv_inter, $inter_cm_ref)
-    = _interactions( $ivs_ref, $i_cmo_ref, \@idv, \@pdl_ivs_raw );
+    = _interactions( $ivs_ref, \@idv, \@pdl_ivs_raw );
   # append inter info to main effects
   my $ivs_cm_ref = [@$ivs_ref, @$inter_cm_ref]; # before modify $ivs_ref
   $ivs_ref = [@$ivs_ref, @$ivs_inter_ref];
