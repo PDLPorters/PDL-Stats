@@ -2167,12 +2167,13 @@ Default options (case insensitive):
 Usage:
 
   # variance should be in descending order
-
-  $pca{var}->plot_screes( {ncomp=>16} );
+  $d = qsort random 10, 5;      # 10 obs on 5 variables
+  %pca = $d->pca( \%opt );
+  $pca{pct_var}->plot_screes( {ncomp=>16, win=>$win=PDL::Graphics::Simple::pgswin()} );
 
 Or, because NCOMP is used so often, it is allowed a shortcut,
 
-  $pca{var}->plot_screes( 16 );
+  $pca{pct_var}->plot_screes( 16 );
 
 =cut
 
@@ -2198,18 +2199,14 @@ sub PDL::plot_screes {
   $ncomp = ($self->dim(0) < $opt{NCOMP})? $self->dim(0) : $opt{NCOMP};
   $opt{CUT}   = PDL::Stats::Kmeans::_scree_ind $self(0:$ncomp-1)
     if !defined $opt{CUT};
-  my $win = $opt{WIN};
-  if (!$win) {
-   $win = PDL::Graphics::Simple::pgswin(SIZE=>[$opt{SIZE}, $opt{SIZE}], UNIT=>3);
-   $win->env(0, $ncomp-1, 0, 1,
-     {XTitle=>'Component', YTitle=>'Proportion of Variance Accounted for',
-     AXIS=>['BCNT', 'BCNST'], Border=>1, });
-  }
-  $win->points(sequence($ncomp), $self(0:$ncomp-1));
-  $win->line( pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max->sclr+.05),
-        {style=>15} )
-    if $opt{CUT};
-  return;
+  my $win = $opt{WIN} ||
+    PDL::Graphics::Simple::pgswin(size=>[@opt{qw(SIZE SIZE)}, 'px']);
+  $win->plot(
+    with=>'lines', ke=>'scree', sequence($ncomp), $self(0:$ncomp-1),
+    !$opt{CUT} ? () : (with=>'lines', ke=>'cut', pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max->sclr+.05)),
+    {xlabel=>'Component', ylabel=>'Proportion of Variance Accounted for',
+      xrange=>[-0.05,$ncomp-0.95], yrange=>[0,1], le=>'tr'},
+  );
 }
 
 =head1 SEE ALSO
