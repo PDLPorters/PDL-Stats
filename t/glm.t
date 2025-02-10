@@ -189,12 +189,12 @@ Snt	Sp	Wrds	New	subj	DV
 EOF
   open my $fh, '<', \$lorch_data or die "Couldn't open scalar: $!";
   my ($data, $idv, $ido) = rtable $fh, {V=>0};
-  my %r = $data( ,4)->ols_rptd( $data( ,3), $data( ,(0)), $data( ,1), $data( ,2) );
-  #print "\n$_\t$r{$_}\n" for (sort keys %r);
+  my %r = $data( ,4)->ols_rptd( $data->t->using(3,0,1,2) );
+  #print "\n$_\t$r{$_}\n" for sort keys %r;
   test_stats_cmp(\%r, {
-    ss_total =>  pdl(405.188241771429),
-    ss_residual =>  pdl(58.3754646504336),
-    ss_subject =>  pdl(51.8590337714289),
+    ss_total => pdl(405.188241771429),
+    ss_residual => pdl(58.3754646504336),
+    ss_subject => pdl(51.8590337714289),
     ss => pdl(18.450705, 73.813294, 0.57026483),
     ss_err => pdl(23.036272, 10.827623, 5.0104731),
     coeff => pdl(0.33337285, 0.45858933, 0.15162986),
