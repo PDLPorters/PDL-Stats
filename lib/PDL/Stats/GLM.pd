@@ -1088,53 +1088,35 @@ sub PDL::anova_rptd {
     EFFECT: for my $k (0 .. $#full) {
       my $e = ($k > $#$ivs_ref)?  '| err' : '';
       my $i = ($k > $#$ivs_ref)?  $k - @$ivs_ref : $k;
+      my $i_pref = $k == $#full ? undef : "| $idv[$i] |";
 
       if (!defined $full[$k]) {     # ss_residual as error
-        $ret{ "| $idv[$i] |$e ss" } = $ret{ss_residual};
+        $ret{ "$i_pref$e ss" } = $ret{ss_residual};
           # highest ord inter for purely within design, (p-1)*(q-1)*(n-1)
         my $factor = ref($full[-1]) ? $full[-1]->dim(1)
                                     : $err_ref->[$err_ref->[-1]]->dim(1);
-        my $df = $ret{ "| $idv[$i] |$e df" }
+        my $df = $ret{ "$i_pref$e df" }
           = pdl($factor, map { $_->dim(1) } @full[0 .. $#ivs_raw])->prodover;
-        $ret{ "| $idv[$i] |$e ms" }
-          = $ret{ "| $idv[$i] |$e ss" } / $df;
-      }
-      elsif (ref $full[$k]) {       # unique error term
-        my @G = grep { $_ != $k and defined $full[$_] } (0 .. $#full);
+        $ret{ "$i_pref$e ms" } = $ret{ "$i_pref$e ss" } / $df;
+      } elsif (ref $full[$k]) {       # unique error term
         next EFFECT
-          unless @G;
-
-        my $G = PDL->null->glue( 1, grep { ref $_ } @full[@G] );
-        $G = $G->glue(1, ones $G->dim(0));
+          unless my @G = grep $_ != $k && defined $full[$_], 0 .. $#full;
+        my $G = PDL::glue(1, (grep ref $_, @full[@G]), ones $y->dim(0));
         my $b_G = $y->ols_t( $G, {CONST=>0} );
-
-        $ret{$k == $#full ? 'ss_subject' : "| $idv[$i] |$e ss"}
+        my $ss = $ret{$k == $#full ? 'ss_subject' : "$i_pref$e ss"}
           = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
         if ($k != $#full) {
-          my $df = $ret{ "| $idv[$i] |$e df" } = $full[$k]->dim(1);
-          $ret{ "| $idv[$i] |$e ms" } = $ret{ "| $idv[$i] |$e ss" } / $df;
+          my $df = $ret{"$i_pref$e df"} = $full[$k]->dim(1);
+          $ret{"$i_pref$e ms"} = $ss / $df;
+        }
+      } else {                        # repeating error term
+        my $ss = $ret{$k == $#full ? 'ss_subject' : "$i_pref$e ss"}
+          = $ret{"| $idv[$full[$k]] |$e ss"};
+        if ($k != $#full) {
+          my $df = $ret{"$i_pref$e df"} = $ret{"| $idv[$full[$k]] |$e df"};
+          $ret{"$i_pref$e ms"} = $ss / $df;
         }
       }
-      else {                        # repeating error term
-        if ($k == $#full) {
-          $ret{ss_subject} = $ret{"| $idv[$full[$k]] |$e ss"};
-        }
-        else {
-          $ret{ "| $idv[$i] |$e ss" } = $ret{"| $idv[$full[$k]] |$e ss"};
-          $ret{ "| $idv[$i] |$e df" } = $ret{"| $idv[$full[$k]] |$e df"};
-          $ret{ "| $idv[$i] |$e ms" }
-            = $ret{ "| $idv[$i] |$e ss" } / $ret{ "| $idv[$i] |$e df" };
-        }
-      }
-    }
-      # have all iv, inter, and error effects. get F and F_p
-    for (0 .. $#$ivs_ref) {
-      $ret{ "| $idv[$_] | F" }
-        = $ret{ "| $idv[$_] | ms" } / $ret{ "| $idv[$_] || err ms" };
-      $ret{ "| $idv[$_] | F_p" }
-        = 1 - $ret{ "| $idv[$_] | F" }->gsl_cdf_fdist_P(
-          $ret{ "| $idv[$_] | df" }, $ret{ "| $idv[$_] || err df" } )
-        if $CDF and $ret{ "| $idv[$_] || err df" } > 0;
     }
   } else {
     $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
@@ -1146,31 +1128,24 @@ sub PDL::anova_rptd {
       if $CDF and $df1 > 0;
 
     # get IV ss from $ivs_ref instead of $ivs pdl
-
     for my $k (0 .. $#$ivs_ref) {
-      my ($G);
-      my @G = grep $_ != $k, 0 .. $#$ivs_ref;
-      if (@G) {
-        $G = PDL->null->glue( 1, @$ivs_ref[@G] );
-        $G = $G->glue(1, ones $G->dim(0));
-      }
-      else {
-        $G = ones( $y->dim(0) );
-      }
+      my $G = PDL::glue( 1, @$ivs_ref[grep $_ != $k, 0 .. $#$ivs_ref],
+        ones( $y->dim(0) ));
       my $b_G = $y->ols_t( $G, {CONST=>0} );
-
       $ret{ "| $idv[$k] | ss" }
         = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
-      $ret{ "| $idv[$k] | F_df" }
-        = pdl( my $df0 = $ivs_ref->[$k]->dim(1), $df1 )->squeeze;
-      $ret{ "| $idv[$k] | ms" }
-        = $ret{ "| $idv[$k] | ss" } / $df0;
-      $ret{ "| $idv[$k] | F" }
-        = $ret{ "| $idv[$k] | ms" } / $ret{ms_residual};
-      $ret{ "| $idv[$k] | F_p" }
-        = 1 - $ret{ "| $idv[$k] | F" }->gsl_cdf_fdist_P( $df0, $df1 )
-        if $CDF and $df1 > 0;
+      my $df0 = $ret{ "| $idv[$k] | df" } = $ivs_ref->[$k]->dim(1);
+      $ret{ "| $idv[$k] || err df" } = $df1;
+      $ret{ "| $idv[$k] | ms" } = $ret{ "| $idv[$k] | ss" } / $df0;
     }
+  }
+    # have all iv, inter, and error effects. get F and F_p
+  for (0 .. $#$ivs_ref) {
+    my $ms_residual = defined $subj ? $ret{ "| $idv[$_] || err ms" } : $ret{ms_residual};
+    my ($df0, $df1) = @ret{"| $idv[$_] | df" , "| $idv[$_] || err df"};
+    my $F = $ret{ "| $idv[$_] | F" } = $ret{ "| $idv[$_] | ms" } / $ms_residual;
+    $ret{ "| $idv[$_] | F_p" } = 1 - $F->gsl_cdf_fdist_P($df0, $df1)
+      if $CDF and $df1 > 0;
   }
 
   for (keys %ret) {ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze};
