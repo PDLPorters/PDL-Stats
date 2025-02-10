@@ -1503,7 +1503,7 @@ Repeated measures linear regression.
 Handles purely within-subject design for now.
 
 (Lorch & Myers, 1990; Van den Noortgate & Onghena, 2006).
-See F<t/ols_rptd.t> for an example using the Lorch and Myers data.
+See F<t/glm.t> for an example using the Lorch and Myers data.
 
 =for usage
 
@@ -1525,9 +1525,9 @@ Usage:
 
     print "$_\t$r{$_}\n" for (sort keys %r);
 
-    (ss_residual)   58.3754646504336
-    (ss_subject)    51.8590337714286
-    (ss_total)  405.188241771429
+    ss_residual   58.3754646504336
+    ss_subject    51.8590337714286
+    ss_total      405.188241771429
     #      SP        WORDS      NEW
     F   [  7.208473  61.354153  1.0243311]
     F_p [0.025006181 2.619081e-05 0.33792837]
@@ -1557,17 +1557,15 @@ sub PDL::ols_rptd {
 
   my %r;
 
-  $r{'(ss_total)'} = $y->ss;
+  $r{ss_total} = $y->ss;
 
   # STEP 1: subj
-
-  my $s = effect_code $subj;     # gives same results as dummy_code
+  my $s = effect_code $subj;
   my $b_s = $y->ols_t($s);
   my $pred = sumover($b_s(0:-2) * $s->transpose) + $b_s(-1);
-  $r{'(ss_subject)'} = $r{'(ss_total)'} - $y->sse( $pred );
+  $r{ss_subject} = $r{ss_total} - $y->sse( $pred );
 
   # STEP 2: add predictor variables
-
   my $iv_p = $s->glue(1, @ivs);
   my $b_p = $y->ols_t($iv_p);
 
@@ -1588,13 +1586,12 @@ sub PDL::ols_rptd {
   }
 
   # STEP 3: get predictor x subj interaction as error term
-
   my $iv_e = PDL::glue 1, map interaction_code( $s, $_ ), @ivs;
 
     # get total sse for this step. full model now.
   my $b_f = $y->ols_t( $iv_p->glue(1,$iv_e) );
   $pred = sumover($b_f(0:-2) * $iv_p->glue(1,$iv_e)->transpose) + $b_f(-1);
-  $r{'(ss_residual)'}  = $y->sse( $pred );
+  $r{ss_residual}  = $y->sse( $pred );
 
     # get predictor x subj ss by successively reducing the error term
   $r{ss_err} = zeroes scalar(@ivs);
@@ -1603,7 +1600,7 @@ sub PDL::ols_rptd {
       @ivs[grep $_ != $i, 0..$#ivs]);
     my $b  = $y->ols_t($iv);
     my $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
-    $r{ss_err}->($i) .= $y->sse($pred) - $r{'(ss_residual)'};
+    $r{ss_err}->($i) .= $y->sse($pred) - $r{ss_residual};
   }
 
   # Finally, get MS, F, etc

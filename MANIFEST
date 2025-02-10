@@ -11,5 +11,4 @@ t/00-report-prereqs.t
 t/basic.t
 t/glm.t
 t/kmeans.t
-t/ols_rptd.t
 t/ts.t
