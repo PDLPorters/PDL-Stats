@@ -790,20 +790,26 @@ sub PDL::anova {
   anova_rptd($y, undef, @args);
 }
 
-sub _effect_code_ivs {
-  my @ec = map [effect_code($_)], @{ $_[0] };
-  ([map $_->[0], @ec], [map pdl(values %{$_->[1]})->qsort, @ec]);
-}
-
 sub _interactions {
-  my ($ivs_ref, $idv, $pdl_ivs_raw) = @_;
-  my ($dim0, @inter, @idv_inter, @inter_cm, @inter_cmo) = $ivs_ref->[0]->dim(0);
+  my ($ivs_ref, $idv) = @_;
+  my (@inter, @idv_inter);
   for my $nway ( 2 .. @$ivs_ref ) {
     my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
     while ( my @v = &$iter_idv() ) {
       push @inter, interaction_code(@$ivs_ref[@v]);
       push @idv_inter, join ' ~ ', @$idv[@v];
-        # now prepare for cell mean
+    }
+  }
+  (\@inter, \@idv_inter);
+}
+
+# now prepare for cell mean
+sub _interactions_cm {
+  my ($ivs_ref, $pdl_ivs_raw) = @_;
+  my ($dim0, @inter_cm, @inter_cmo) = $ivs_ref->[0]->dim(0);
+  for my $nway ( 2 .. @$ivs_ref ) {
+    my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
+    while ( my @v = &$iter_idv() ) {
       my @i_cm;
       for my $o ( 0 .. $dim0 - 1 ) {
         push @i_cm, join '', map $_(($o)), @$pdl_ivs_raw[@v];
@@ -819,7 +825,7 @@ sub _interactions {
       push @inter_cmo, pdl @i_cmo;
     }
   }
-  (\@inter, \@inter_cmo, \@idv_inter, \@inter_cm);
+  (\@inter_cmo, \@inter_cm);
 }
 
 sub _cell_means {
@@ -1018,7 +1024,7 @@ sub PDL::anova_rptd {
   $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
   $opt{IVNM} = [ map { "IV_$_" } 0 .. $#ivs_raw ]
     if !$opt{IVNM} or !@{ $opt{IVNM} };
-  my @idv = @{ $opt{IVNM} };
+  my @idv_orig = @{ $opt{IVNM} };
 
   $y = $y->squeeze;
   my @pdl_ivs_raw = map scalar PDL::Stats::Basic::code_ivs($_), @ivs_raw;
@@ -1051,21 +1057,16 @@ sub PDL::anova_rptd {
   }
 
     # code for ivs and cell mean in diff @s: effect_code vs iv_cluster
-  my ($ivs_ref, $i_cmo_ref)
-    = _effect_code_ivs( \@pdl_ivs_raw );
+  my @ivs_ref_orig = map scalar effect_code($_), @pdl_ivs_raw;
 
-  my ($ivs_inter_ref, $inter_cmo_ref, $idv_inter, $inter_cm_ref)
-    = _interactions( $ivs_ref, \@idv, \@pdl_ivs_raw );
+  my ($ivs_inter_ref, $idv_inter) = _interactions(\@ivs_ref_orig, \@idv_orig);
   # append inter info to main effects
-  my $ivs_cm_ref = [@$ivs_ref, @$inter_cm_ref]; # before modify $ivs_ref
-  $ivs_ref = [@$ivs_ref, @$ivs_inter_ref];
-  $i_cmo_ref = [@$i_cmo_ref, @$inter_cmo_ref];
-  push @idv, @$idv_inter;
+  my $ivs_ref = [@ivs_ref_orig, @$ivs_inter_ref];
+  my @idv = (@idv_orig, @$idv_inter);
 
     # matches $ivs_ref, with an extra last pdl for subj effect
-  my $err_ref = defined($subj) ?
-    _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, $opt{BTWN} )
-    : [];
+  my $err_ref = !defined($subj) ? [] :
+    _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, $opt{BTWN} );
   for (grep defined $err_ref->[$_] && ref $err_ref->[$_], 0..$#$err_ref) {
     my ($null_row_ids, $non_null_row_ids) = $err_ref->[$_]->zcover->which_both;
     confess "got null rows $null_row_ids in error entry #$_ ($idv[$_])"
@@ -1150,12 +1151,19 @@ sub PDL::anova_rptd {
 
   for (keys %ret) {ref $ret{$_} eq 'PDL' and $ret{$_} = $ret{$_}->squeeze};
 
+  my ($inter_cmo_ref, $inter_cm_ref)
+    = _interactions_cm(\@ivs_ref_orig, \@pdl_ivs_raw);
+  # append inter info to cell means effects
+  my $ivs_cm_ref = [@ivs_ref_orig, @$inter_cm_ref];
+  my @i_cmo_ref = map pdl(values %{ (effect_code($_))[1] })->qsort, @pdl_ivs_raw;
+  push @i_cmo_ref, @$inter_cmo_ref;
+
   my $cm_ref
-    = _cell_means( $y, $ivs_cm_ref, $i_cmo_ref, \@idv, \@pdl_ivs_raw );
+    = _cell_means( $y, $ivs_cm_ref, \@i_cmo_ref, \@idv, \@pdl_ivs_raw );
   if (defined $subj) {
     my @ls = map { $_->uniq->nelem } @pdl_ivs_raw;
     $cm_ref
-      = _fix_rptd_se( $cm_ref, \%ret, $opt{'IVNM'}, \@ls, $sj->uniq->nelem );
+      = _fix_rptd_se( $cm_ref, \%ret, $opt{IVNM}, \@ls, $sj->uniq->nelem );
   }
     # integrate mean and se into %ret
   @ret{ keys %$cm_ref } = values %$cm_ref;
