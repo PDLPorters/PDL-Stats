@@ -796,7 +796,7 @@ sub _effect_code_ivs {
 }
 
 sub _interactions {
-  my ($ivs_ref, $idv, $raw_ref) = @_;
+  my ($ivs_ref, $idv, $pdl_ivs_raw) = @_;
   my ($dim0, @inter, @idv_inter, @inter_cm, @inter_cmo) = $ivs_ref->[0]->dim(0);
   for my $nway ( 2 .. @$ivs_ref ) {
     my $iter_idv = _combinations( $nway, [0..$#$ivs_ref] );
@@ -806,7 +806,7 @@ sub _interactions {
         # now prepare for cell mean
       my @i_cm;
       for my $o ( 0 .. $dim0 - 1 ) {
-        push @i_cm, join '', map $_(($o)), @$raw_ref[@v];
+        push @i_cm, join '', map $_(($o)), @$pdl_ivs_raw[@v];
       }
       my ($inter, $map) = effect_code( \@i_cm );
       push @inter_cm, $inter;
@@ -823,20 +823,20 @@ sub _interactions {
 }
 
 sub _cell_means {
-  my ($data, $ivs_ref, $i_cmo_ref, $ids, $raw_ref) = @_;
+  my ($data, $ivs_cm_ref, $i_cmo_ref, $idv, $pdl_ivs_raw) = @_;
   my %ind_id;
-  @ind_id{ @$ids } = 0..$#$ids;
+  @ind_id{ @$idv } = 0..$#$idv;
   my %cm;
   my $i = 0;
-  for (@$ivs_ref) {
-    confess "_cell_means passed empty ivs_ref ndarray at pos $i" if $_->isempty;
+  for (@$ivs_cm_ref) {
+    confess "_cell_means passed empty ivs_cm_ref ndarray at pos $i" if $_->isempty;
     my $last = zeroes $_->dim(0);
     my $i_neg = which $_( ,0) == -1;
     $last($i_neg) .= 1;
     $_->where($_ == -1) .= 0;
     $_ = $_->glue(1, $last);
-    my @v = split ' ~ ', $ids->[$i];
-    my @shape = map { $raw_ref->[$_]->uniq->nelem } @ind_id{@v};
+    my @v = split ' ~ ', $idv->[$i];
+    my @shape = map { $pdl_ivs_raw->[$_]->uniq->nelem } @ind_id{@v};
     my ($m, $ss) = $data->centroid( $_ );
     $m  = $m($i_cmo_ref->[$i])->sever;
     $ss = $ss($i_cmo_ref->[$i])->sever;
@@ -844,8 +844,8 @@ sub _cell_means {
     $m->getndims == 1 and $m = $m->dummy(1);
     my $se = sqrt( ($ss/($_->sumover - 1)) / $_->sumover )->reshape(@shape);
     $se->getndims == 1 and $se = $se->dummy(1);
-    $cm{ "# $ids->[$i] # m" }  = $m;
-    $cm{ "# $ids->[$i] # se" } = $se;
+    $cm{ "# $idv->[$i] # m" }  = $m;
+    $cm{ "# $idv->[$i] # se" } = $se;
     $i++;
   }
   \%cm;
