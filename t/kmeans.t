@@ -4,7 +4,6 @@ use Test::More;
 use PDL::Stats::Basic;
 use PDL::Stats::Kmeans;
 use PDL::LiteF;
-use PDL::NiceSlice;
 use Test::PDL qw(is_pdl eq_pdl);
 
 {

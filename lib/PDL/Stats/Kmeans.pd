@@ -11,7 +11,6 @@ use strict;
 use warnings;
 use Carp;
 use PDL::LiteF;
-use PDL::NiceSlice;
 use PDL::Stats::Basic;
 
 =head1 NAME
@@ -29,7 +28,6 @@ The terms FUNCTIONS and METHODS are arbitrarily used to refer to methods that ar
 Implement a basic k-means procedure,
 
     use PDL::LiteF;
-    use PDL::NiceSlice;
     use PDL::Stats;
 
     my ($data, $idv, $ido) = rtable( $file );
@@ -510,7 +508,7 @@ sub PDL::kmeans {
     : random_cluster($opt{NSEED}, @nclus, $opt{NTRY} )
     ;
 
-  ($centroid, $ss_cv) = $self(0:$opt{NSEED} - 1, )->centroid( $clus_this );
+  ($centroid, $ss_cv) = $self->slice([0,$opt{NSEED} - 1])->centroid( $clus_this );
     # now obs in $clus_this matches $self
   $clus_this = $self->assign( $centroid );
   ($centroid, $ss_cv) = $self->centroid( $clus_this );
@@ -555,7 +553,7 @@ sub PDL::kmeans {
   # can't believe i'm using a perl loop :P
 
   $i_best = $i_best->flat->sever;
-  my @i_best = map { $opt{NTRY} * $_ + $i_best(($_)) }
+  my @i_best = map { $opt{NTRY} * $_ + $i_best->slice("($_)") }
                0 .. $i_best->nelem - 1;
 
   my @shapes;
@@ -680,7 +678,7 @@ sub PDL::pca_cluster {
     my $comps = ($self->dim(1) > 300)? int($self->dim(1) * .1)
               :                        pdl($self->dim(1), 30)->min
               ;
-    $var = $var(0:$comps-1)->sever;
+    $var = $var->slice([0,$comps-1])->sever;
     $opt{NCOMP} = _scree_ind( $var );
   }
   $opt{PLOT} and do {
@@ -688,13 +686,13 @@ sub PDL::pca_cluster {
     $var->plot_scree( {NCOMP=>$var->dim(0), CUT=>$opt{NCOMP}} );
   };
 
-  my $c = $self->( ,0:$opt{NCOMP}-1)->transpose->abs->maximum_ind;
+  my $c = $self->slice(':',[0,$opt{NCOMP}-1])->transpose->abs->maximum_ind;
 
   if ($opt{ABS}) {
     $c = $c->iv_cluster;
   }
   else {
-    my @c = map { ($self->($_,$c($_)) >= 0)? $c($_)*2 : $c($_)*2 + 1 }
+    my @c = map { ($self->slice($_,$c->slice($_)) >= 0)? $c->slice($_)*2 : $c->slice($_)*2 + 1 }
                 ( 0 .. $c->dim(0)-1 );
     $c = iv_cluster( \@c );
   }
