@@ -2,6 +2,7 @@
 - do all plotting with PDL::Graphics::Simple
 - add Basic::code_ivs
 - all OLS and ANOVA now add the 1s column in design at pos 0 so intercepts now B_0
+- add GLM::anova_design_matrix
 
 0.853 2025-01-03
 - uses PDL 2.096+ lib/*.pd format for quicker builds
