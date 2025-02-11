@@ -885,6 +885,8 @@ anova_rptd supports bad value in the dependent and independent
 variables. It automatically removes bad data listwise, ie remove a
 subject's data if there is any cell missing for the subject.
 
+=for options
+
 Default options (case insensitive):
 
     V      => 1,    # carps if bad value in dv
@@ -893,6 +895,8 @@ Default options (case insensitive):
     PLOT   => 0,    # plots highest order effect
                     # see plot_means() for more options
     WIN    => undef,      # for plotting
+
+=for usage
 
 Usage:
 
@@ -1063,19 +1067,18 @@ sub PDL::anova_rptd {
     # matches $ivs_ref, with an extra last pdl for subj effect
   my $err_ref = !defined($subj) ? [] :
     _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, $opt{BTWN} );
-  for (grep defined $err_ref->[$_] && ref $err_ref->[$_], 0..$#$err_ref) {
+  for (grep ref $err_ref->[$_], 0..$#$err_ref) {
     my ($null_row_ids, $non_null_row_ids) = $err_ref->[$_]->zcover->which_both;
     confess "got null rows $null_row_ids in error entry #$_ ($idv[$_])"
       if !$null_row_ids->isempty;
   }
 
     # stitch together
-  my $ivs = PDL->null->glue( 1, @$ivs_ref, grep defined($_) && ref($_), @$err_ref);
-  $ivs = $ivs->glue(1, ones $ivs->dim(0));
-  my ($y_ols, $ivs_ols) = _ols_prep_inputs(1, $y, $ivs, {CONST=>0});
+  my $ivs = PDL->null->glue(1, @$ivs_ref,
+    (grep ref($_), @$err_ref), ones $y->dim(0));
   confess "anova_rptd: got singular matrix for IVs x IVs'"
-    if any +($ivs_ols x $ivs_ols->t)->det == 0;
-  my $b_full = _ols_main(1, $y_ols, $ivs_ols, {CONST=>0});
+    if any +($ivs x $ivs->t)->det == 0;
+  my $b_full = _ols_main(1, $y, $ivs, {CONST=>0});
 
   my %ret = (ss_total => $y->ss,
     ss_residual => $y->sse( sumover( $b_full * $ivs->t ) ));

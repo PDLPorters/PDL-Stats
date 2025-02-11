@@ -188,7 +188,7 @@ Snt	Sp	Wrds	New	subj	DV
 EOF
   open my $fh, '<', \$lorch_data or die "Couldn't open scalar: $!";
   my ($data, $idv, $ido) = rtable $fh, {V=>0};
-  my %r = $data->slice(',4')->ols_rptd( $data->t->using(3,0,1,2) );
+  my %r = $data->slice(',(4)')->ols_rptd( $data->t->using(3,0,1,2) );
   #print "\n$_\t$r{$_}\n" for sort keys %r;
   test_stats_cmp(\%r, {
     ss_total => pdl(405.188241771429),
