@@ -11,7 +11,6 @@ pp_addpm({At=>'Top'}, <<'EOD');
 use strict;
 use warnings;
 use PDL::LiteF;
-use PDL::NiceSlice;
 use Carp;
 
 eval { require PDL::Core; require PDL::GSL::CDF; };
@@ -30,7 +29,6 @@ Does not have mean or median function here. see SEE ALSO.
 =head1 SYNOPSIS
 
     use PDL::LiteF;
-    use PDL::NiceSlice;
     use PDL::Stats::Basic;
 
     my $stdv = $data->stdv;
@@ -798,8 +796,8 @@ sub rtable {
   $data = pdl $opt{TYPE}, @data;
   @data = ();
     # rid of last col unless there is data there
-  $data = $data(0:$data->getdim(0)-2, )->sever
-    unless ( nelem $data(-1, )->where($data(-1, ) != $opt{MISSN}) );
+  $data = $data->slice([0, $data->getdim(0)-2])->sever
+    unless ( nelem $data->slice(-1)->where($data->slice(-1) != $opt{MISSN}) );
 
   my ($idv, $ido) = ($id_r, $id_c);
     # var in columns instead of rows
@@ -1004,8 +1002,8 @@ sub _group_by_single_factor {
     my $badvalue = int($p->max + 1);
     my $p_tmp = ones($max, @p_broadcastdims, $uniq->nelem) * $badvalue;
     for (0 .. $#uniq_ns) {
-        my $i = which $factor == $uniq($_);
-        $p_tmp->dice_axis(-1,$_)->squeeze->(0:$uniq_ns[$_]-1, ) .= $p($i, );
+        my $i = which $factor == $uniq->slice($_);
+        $p_tmp->dice_axis(-1,$_)->squeeze->slice([0,$uniq_ns[$_]-1]) .= $p->slice($i);
     }
 
     $p_tmp->badflag(1);

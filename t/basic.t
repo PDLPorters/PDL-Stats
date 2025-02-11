@@ -3,7 +3,6 @@ use warnings;
 use Test::More;
 
 use PDL::LiteF;
-use PDL::NiceSlice;
 use PDL::Stats::Basic;
 use Test::PDL;
 

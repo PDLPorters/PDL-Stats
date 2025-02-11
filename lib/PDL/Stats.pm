@@ -35,8 +35,6 @@ Properly formatted documentations online at http://pdl-stats.sf.net
 =head1 SYNOPSIS
 
     use PDL::LiteF;        # loads fewer modules
-    use PDL::NiceSlice;    # preprocessor for easier pdl indexing syntax
-
     use PDL::Stats;
 
     # Is equivalent to the following:
