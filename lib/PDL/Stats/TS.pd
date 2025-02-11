@@ -22,7 +22,6 @@ respectively. Plots require L<PDL::Graphics::Simple>.
 =head1 SYNOPSIS
 
     use PDL::LiteF;
-    use PDL::NiceSlice;
     use PDL::Stats::TS;
 
     my $r = $data->acf(5);
@@ -33,7 +32,6 @@ use strict;
 use warnings;
 use Carp;
 use PDL::LiteF;
-use PDL::NiceSlice;
 use PDL::Stats::Basic;
 use PDL::Stats::Kmeans;
 
@@ -432,13 +430,13 @@ sub PDL::pred_ar {
   my $ext;
   if ($opt{CONST}) {
     my $t_ = $t - ( $x->dim(0) - $b->dim(0) + 1 );
-    PDL::_pred_ar_int($x(-$b->dim(0)+1:-1, ), $b(0:-2), $ext = PDL->null, $t_);
-    $ext($b->dim(0)-1:-1) += $b(-1);
-    return $x->append( $ext( $b->dim(0)-1 : -1 ) );
+    PDL::_pred_ar_int($x->slice([-$b->dim(0)+1,-1]), $b->slice('0:-2'), $ext = PDL->null, $t_);
+    $ext->slice([$b->dim(0)-1,-1]) += $b->slice(-1);
+    return $x->append( $ext->slice([$b->dim(0)-1,-1]) );
   } else {
     my $t_ = $t - ( $x->dim(0) - $b->dim(0) );
-    PDL::_pred_ar_int($x(-$b->dim(0):-1, ), $b, $ext = PDL->null, $t_);
-    return $x->append($ext($b->dim(0) : -1));
+    PDL::_pred_ar_int($x->slice([-$b->dim(0),-1]), $b, $ext = PDL->null, $t_);
+    return $x->append($ext->slice([$b->dim(0),-1]));
   }
 }
 EOF
@@ -513,7 +511,7 @@ sub PDL::season_m {
   $dims[0] = $n_season * $d;
   my $data = zeroes( @dims ) + $opt{MISSING};
 
-  $data($opt{START_POSITION} : $opt{START_POSITION} + $self->dim(0)-1, ) .= $self;
+  $data->slice([$opt{START_POSITION},$opt{START_POSITION} + $self->dim(0)-1]) .= $self;
   $data->badflag(1);
   $data->inplace->setvaltobad( $opt{MISSING} );
 
@@ -645,7 +643,7 @@ sub PDL::plot_acf {
   $w->plot(with=>'lines', $seq, zeroes(2)); # x axis
   $w->oplot(with=>'lines', style=>2, $seq,  $y_seq);
   $w->oplot(with=>'lines', style=>2, $seq, -$y_seq);
-  $w->oplot((map +(with=>'lines', ones(2)*$_, pdl(0, $r(($_)))), 0..$h), { xlabel=>'lag', ylabel=>'acf', });
+  $w->oplot((map +(with=>'lines', ones(2)*$_, pdl(0, $r->slice("($_)"))), 0..$h), { xlabel=>'lag', ylabel=>'acf', });
 
   return $r;
 }

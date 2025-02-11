@@ -37,11 +37,8 @@ use Test::PDL;
 
 {
   my $x = sequence 2;
-  my $b = pdl(.8, -.2, .3);
-  my $xp = $x->pred_ar($b, 7);
-  is_pdl $xp, pdl('[[0 1 1.1 0.74 0.492 0.3656 0.31408]]'), "predict autoregressive series";
-  my $xp2 = $x->pred_ar(pdl(.8, -.2), 7, {const=>0});
-  is_pdl $xp2, pdl('[[0 1 0.8 0.44 0.192 0.0656 0.01408]]'), "predict autoregressive series w/no constant last value";
+  is_pdl $x->pred_ar(pdl(.8, -.2, .3), 7), pdl('[0 1 1.1 0.74 0.492 0.3656 0.31408]'), "predict autoregressive series";
+  is_pdl $x->pred_ar(pdl(.8, -.2), 7, {const=>0}), pdl('[0 1 0.8 0.44 0.192 0.0656 0.01408]'), "predict autoregressive series w/no constant last value";
 }
 
 {
