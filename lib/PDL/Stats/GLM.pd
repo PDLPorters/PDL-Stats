@@ -71,24 +71,20 @@ pp_def('fill_m',
   GenericTypes => $F,
   HandleBad => 1,
   Code   => '
-    PDL_IF_BAD($GENERIC(b) sa = 0;
-    PDL_Indx N = 0;
-    loop (n) %{
-      if ($ISBAD($a())) continue;
-      sa += $a();
-      N++;
-    %}
-    $GENERIC(b) m = N ? sa / N : 0;,)
-    loop (n) %{
-      $b() = PDL_IF_BAD($ISBAD($a()) ? m :,) $a();
-    %}
-  ',
-  CopyBadStatusCode => '
-    /* propagate badflag if inplace AND it has changed */
-    if ( a == b && $ISPDLSTATEBAD(a) )
-      PDL->propagate_badflag( b, 0 );
-    /* always make sure the output is "good" */
-    $SETPDLSTATEGOOD(b);
+broadcastloop %{
+  PDL_IF_BAD($GENERIC(b) sa = 0;
+  PDL_Indx N = 0;
+  loop (n) %{
+    if ($ISBAD($a())) continue;
+    sa += $a();
+    N++;
+  %}
+  $GENERIC(b) m = N ? sa / N : 0;,)
+  loop (n) %{
+    $b() = PDL_IF_BAD($ISBAD($a()) ? m :,) $a();
+  %}
+%}
+$PDLSTATESETGOOD(b);
   ',
   Doc      => '
 =for ref
@@ -118,30 +114,26 @@ pp_def('fill_rand',
   Inplace   => 1,
   HandleBad => 1,
   Code   => '
-    PDL_IF_BAD($GENERIC(a) *g[ $SIZE(n) ];
-    PDL_Indx i = 0;
-    srand( time( NULL ) );
-    loop (n) %{
-      if ( $ISGOOD($a()) ) {
-        g[i++] = &$a();
-      }
-    %},)
-    loop (n) %{
-      PDL_IF_BAD(if ($ISBAD($a())) {
-        /* XXX-FIXME works on 64bit, but rand() is quite limited */
-        PDL_Indx j = (PDL_Indx) ((i-1) * (double)(rand()) / (double)(RAND_MAX) + .5);
-        $b() = *g[j];
-        continue;
-      },)
-      $b() = $a();
-    %}
-',
-  CopyBadStatusCode => '
-    /* propagate badflag if inplace AND it has changed */
-    if ( a == b && $ISPDLSTATEBAD(a) )
-      PDL->propagate_badflag( b, 0 );
-    /* always make sure the output is "good" */
-    $SETPDLSTATEGOOD(b);
+broadcastloop %{
+  PDL_IF_BAD($GENERIC(a) *g[ $SIZE(n) ];
+  PDL_Indx i = 0;
+  srand( time( NULL ) );
+  loop (n) %{
+    if ( $ISGOOD($a()) ) {
+      g[i++] = &$a();
+    }
+  %},)
+  loop (n) %{
+    PDL_IF_BAD(if ($ISBAD($a())) {
+      /* XXX-FIXME works on 64bit, but rand() is quite limited */
+      PDL_Indx j = (PDL_Indx) ((i-1) * (double)(rand()) / (double)(RAND_MAX) + .5);
+      $b() = *g[j];
+      continue;
+    },)
+    $b() = $a();
+  %}
+%}
+$PDLSTATESETGOOD(b);
 ',
   Doc      => '
 =for ref

@@ -14,13 +14,13 @@ WriteMakefile(
     MIN_PERL_VERSION => '5.016', # https://github.com/Perl/perl5/issues/11835
     LICENSE=> 'perl',
     PREREQ_PM => {
-        'PDL'  => '2.096', # deep mode
+        'PDL'  => '2.099', # badflag propagation fixed
     },
     CONFIGURE_REQUIRES => {
-        'PDL'  => '2.096',
+        'PDL'  => '2.099',
     },
     BUILD_REQUIRES => {
-        'PDL'  => '2.096',
+        'PDL'  => '2.099',
     },
     TEST_REQUIRES => {
         'Test::More' => '0.88', # done_testing
