@@ -3,7 +3,13 @@ use warnings;
 
 my $F = [qw(F D)];
 
-pp_add_exported('', 'ols_t', 'anova', 'anova_rptd', 'dummy_code', 'effect_code', 'effect_code_w', 'interaction_code', 'ols', 'ols_rptd', 'r2_change', 'logistic', 'pca', 'pca_sorti', 'plot_means', 'plot_residuals', 'plot_screes');
+pp_add_exported(qw(ols_t ols ols_rptd
+  anova anova_rptd
+  dummy_code effect_code effect_code_w interaction_code
+  r2_change logistic
+  pca pca_sorti
+  plot_means plot_residuals plot_screes
+));
 
 pp_addpm({At=>'Top'}, <<'EOD');
 
@@ -13,7 +19,6 @@ use warnings;
 use Carp;
 use PDL::LiteF;
 use PDL::MatrixOps;
-use PDL::NiceSlice;
 use PDL::Stats::Basic;
 use PDL::Stats::Kmeans;
 
@@ -35,7 +40,6 @@ P-values, where appropriate, are provided if PDL::GSL::CDF is installed.
 =head1 SYNOPSIS
 
     use PDL::LiteF;
-    use PDL::NiceSlice;
     use PDL::Stats::GLM;
 
     # do a multiple linear regression and plot the residuals
@@ -561,7 +565,7 @@ sub _ols_main {
   if (!$broadcasted) {
     my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
     $opt{CONST} and
-      $se_b(-1) .= sqrt( $ret{ss_residual} / $df1 * $C(-1,-1) );
+      $se_b->slice(-1) .= sqrt( $ret{ss_residual} / $df1 * $C->slice(-1,-1) );
       # get the se for bs by successivly regressing each iv by the rest ivs
     if ($ivs->dim(1) > 1) {
       for my $k (0 .. $n_var-1) {
@@ -569,14 +573,14 @@ sub _ols_main {
         my $G = $ivs->dice_axis(1, \@G);
         $opt{CONST} and
           $G = $G->glue( 1, ones($ivs->dim(0)) );
-        my $b_G = $ivs( ,$k)->ols( $G, {CONST=>0,PLOT=>0} );
-        my $ss_res_k = $ivs( ,$k)->squeeze->sse( sumover($b_G * $G->transpose) );
-        $se_b($k) .= sqrt( $ret{ss_residual} / $df1 / $ss_res_k );
+        my $b_G = $ivs->slice(':',$k)->ols( $G, {CONST=>0,PLOT=>0} );
+        my $ss_res_k = $ivs->slice(':',$k)->squeeze->sse( sumover($b_G * $G->transpose) );
+        $se_b->slice($k) .= sqrt( $ret{ss_residual} / $df1 / $ss_res_k );
       }
     }
     else {
-      $se_b(0)
-        .= sqrt( $ret{ss_residual} / $df1 / sum( $ivs( ,0)**2 ) );
+      $se_b->slice(0)
+        .= sqrt( $ret{ss_residual} / $df1 / sum( $ivs->slice(':',0)**2 ) );
     }
     $ret{b_se} = $se_b;
     $ret{b_t} = $coeff / $ret{b_se};
@@ -663,7 +667,7 @@ sub PDL::r2_change {
   $ret{R2_change} = $ret{model1}->{R2} - $ret{model0}->{R2};
   $ret{F_df}
     = pdl(my $df0 = $ivs1->dim(1) - $ivs0->dim(1),
-          my $df1 = $ret{model1}->{F_df}->((1)) );
+          my $df1 = $ret{model1}->{F_df}->slice('(1)') );
   $ret{F_change}
     = $ret{R2_change} * $df1
     / ( (1-$ret{model1}->{R2}) * $df0 );
@@ -812,7 +816,7 @@ sub _interactions_cm {
     while ( my @v = &$iter_idv() ) {
       my @i_cm;
       for my $o ( 0 .. $dim0 - 1 ) {
-        push @i_cm, join '', map $_(($o)), @$pdl_ivs_raw[@v];
+        push @i_cm, join '', map $_->slice("($o)"), @$pdl_ivs_raw[@v];
       }
       my ($inter, $map) = effect_code( \@i_cm );
       push @inter_cm, $inter;
@@ -837,15 +841,15 @@ sub _cell_means {
   for (@$ivs_cm_ref) {
     confess "_cell_means passed empty ivs_cm_ref ndarray at pos $i" if $_->isempty;
     my $last = zeroes $_->dim(0);
-    my $i_neg = which $_( ,0) == -1;
-    $last($i_neg) .= 1;
+    my $i_neg = which $_->slice(':',0) == -1;
+    $last->slice($i_neg) .= 1;
     $_->where($_ == -1) .= 0;
     $_ = $_->glue(1, $last);
     my @v = split ' ~ ', $idv->[$i];
     my @shape = map { $pdl_ivs_raw->[$_]->uniq->nelem } @ind_id{@v};
     my ($m, $ss) = $data->centroid( $_ );
-    $m  = $m($i_cmo_ref->[$i])->sever;
-    $ss = $ss($i_cmo_ref->[$i])->sever;
+    $m  = $m->slice($i_cmo_ref->[$i])->sever;
+    $ss = $ss->slice($i_cmo_ref->[$i])->sever;
     $m = $m->reshape(@shape);
     $m->getndims == 1 and $m = $m->dummy(1);
     my $se = sqrt( ($ss/($_->sumover - 1)) / $_->sumover )->reshape(@shape);
@@ -1036,7 +1040,7 @@ sub PDL::anova_rptd {
     # delete bad data listwise ie remove subj if any cell missing
     $sj = PDL::Stats::Basic::code_ivs($subj);
     my $ibad = which( $y->isbad | nbadover($pdl_ivs_raw->transpose) );
-    my $sj_bad = $sj($ibad)->uniq;
+    my $sj_bad = $sj->slice($ibad)->uniq;
     if ($sj_bad->nelem) {
       warn $sj_bad->nelem . " subjects with missing data removed\n"
         if $opt{V};
@@ -1044,7 +1048,7 @@ sub PDL::anova_rptd {
         for (list $sj_bad);
       my $igood = which $sj->isgood;
       for ($y, $sj, @pdl_ivs_raw) {
-        $_ = $_( $igood )->sever;
+        $_ = $_->slice( $igood )->sever;
         $_->badflag(0);
       }
     }
@@ -1184,19 +1188,19 @@ sub _code_btwn {
       # construct string to code group membership
       # something not treated as BAD by code_ivs to start off marking group membership
       # if no $btwn, everyone ends up in the same grp
-    my $s = '_' . join '', map $_->($n), @$btwn;
+    my $s = '_' . join '', map $_->slice($n), @$btwn;
     push @grp, $s;                 # group membership
-    $s .= $subj($n);               # keep track of total uniq subj
+    $s .= $subj->slice($n);        # keep track of total uniq subj
     $grp_s{$s} = 1;
   }
   my $grp = PDL::Stats::Kmeans::iv_cluster \@grp;
   my $spdl = zeroes $subj->dim(0), keys(%grp_s) - $grp->dim(1);
   my $d1 = 0;
   for my $g (0 .. $grp->dim(1)-1) {
-    my $col_inds = which $grp( ,$g);
-    my $gsub = $subj( $col_inds )->effect_code;
+    my $col_inds = which $grp->slice(':',$g);
+    my $gsub = $subj->slice( $col_inds )->effect_code;
     my ($nobs, $nsub) = $gsub->dims;
-    $spdl($col_inds, $d1:$d1+$nsub-1) .= $gsub;
+    $spdl->slice($col_inds, [$d1,$d1+$nsub-1]) .= $gsub;
     $d1 += $nsub;
   }
   $spdl;
@@ -1323,7 +1327,7 @@ sub PDL::effect_code {
   my $var_max = $var->max;
   confess "effect_code called with only one unique value" if $var_max < 1;
   my $var_e = yvals( float, $var->nelem, $var_max ) == $var;
-  $var_e(which( $var == $var_max ), ) .= -1;
+  $var_e->slice(which( $var == $var_max ), ) .= -1;
   $var_e = $var_e->setbadif( $var->isbad ) if $var->badflag;
   wantarray ? ($var_e, $map_ref) : $var_e;
 }
@@ -1356,7 +1360,7 @@ sub PDL::effect_code_w {
   my $neg = $var_e == -1;
   my $w = $pos->sumover / $neg->sumover;
   my $neg_ind = $neg->whichND;
-  $var_e->indexND($neg_ind) *= $w($neg_ind((1)));
+  $var_e->indexND($neg_ind) *= $w->slice($neg_ind->slice('(1)'));
   wantarray ? ($var_e, $map_ref) : $var_e;
 }
 
@@ -1470,8 +1474,8 @@ sub _rm_bad_value {
   my $idx;
   if ($y->check_badflag or $ivs->check_badflag) {
      $idx = which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
-     $y = $y($idx)->sever;
-     $ivs = $ivs($idx,)->sever;
+     $y = $y->slice($idx)->sever;
+     $ivs = $ivs->slice($idx)->sever;
      $ivs->badflag(0);
      $y->badflag(0);
   }
@@ -1545,7 +1549,7 @@ sub PDL::ols_rptd {
   # STEP 1: subj
   my $s = effect_code $subj;
   my $b_s = $y->ols_t($s);
-  my $pred = sumover($b_s(0:-2) * $s->transpose) + $b_s(-1);
+  my $pred = sumover($b_s->slice('0:-2') * $s->transpose) + $b_s->slice(-1);
   $r{ss_subject} = $r{ss_total} - $y->sse( $pred );
 
   # STEP 2: add predictor variables
@@ -1553,10 +1557,10 @@ sub PDL::ols_rptd {
   my $b_p = $y->ols_t($iv_p);
 
     # only care about coeff for predictor vars. no subj or const coeff
-  $r{coeff} = $b_p(-(@ivs+1) : -2)->sever;
+  $r{coeff} = $b_p->slice([-(@ivs+1),-2])->sever;
 
     # get total sse for this step
-  $pred = sumover($b_p(0:-2) * $iv_p->transpose) + $b_p(-1);
+  $pred = sumover($b_p->slice('0:-2') * $iv_p->transpose) + $b_p->slice(-1);
   my $ss_pe  = $y->sse( $pred );
 
     # get predictor ss by successively reducing the model
@@ -1564,8 +1568,8 @@ sub PDL::ols_rptd {
   for my $i (0 .. $#ivs) {
     my $iv = $s->glue(1, @ivs[ grep $_ != $i, 0..$#ivs ]);
     my $b  = $y->ols_t($iv);
-    $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
-    $r{ss}->($i) .= $y->sse($pred) - $ss_pe;
+    $pred = sumover($b->slice('0:-2') * $iv->transpose) + $b->slice(-1);
+    $r{ss}->slice($i) .= $y->sse($pred) - $ss_pe;
   }
 
   # STEP 3: get predictor x subj interaction as error term
@@ -1573,7 +1577,7 @@ sub PDL::ols_rptd {
 
     # get total sse for this step. full model now.
   my $b_f = $y->ols_t( $iv_p->glue(1,$iv_e) );
-  $pred = sumover($b_f(0:-2) * $iv_p->glue(1,$iv_e)->transpose) + $b_f(-1);
+  $pred = sumover($b_f->slice('0:-2') * $iv_p->glue(1,$iv_e)->transpose) + $b_f->slice(-1);
   $r{ss_residual}  = $y->sse( $pred );
 
     # get predictor x subj ss by successively reducing the error term
@@ -1582,8 +1586,8 @@ sub PDL::ols_rptd {
     my $iv = $iv_p->glue(1, map interaction_code($s, $_),
       @ivs[grep $_ != $i, 0..$#ivs]);
     my $b  = $y->ols_t($iv);
-    my $pred = sumover($b(0:-2) * $iv->transpose) + $b(-1);
-    $r{ss_err}->($i) .= $y->sse($pred) - $r{ss_residual};
+    my $pred = sumover($b->slice('0:-2') * $iv->transpose) + $b->slice(-1);
+    $r{ss_err}->slice($i) .= $y->sse($pred) - $r{ss_residual};
   }
 
   # Finally, get MS, F, etc
@@ -1726,17 +1730,17 @@ sub PDL::logistic {
       my $y_G
         = PDL::Fit::LM::lmfit( $G, $self, $opt{WT}, \&_logistic, $init,
         { Maxiter=>$opt{MAXIT}, Eps=>$opt{EPS} } );
-      $coeff_chisq($k) .= $self->dm( $y_G ) - $ret{Dm};
+      $coeff_chisq->slice($k) .= $self->dm( $y_G ) - $ret{Dm};
     }
   }
   else {
       # d0 is, by definition, the deviance with only intercept
-    $coeff_chisq(0) .= $ret{D0} - $ret{Dm};
+    $coeff_chisq->slice(0) .= $ret{D0} - $ret{Dm};
   }
   my $y_c
-      = PDL::Fit::LM::lmfit( $ivs, $self, $opt{WT}, \&_logistic_no_intercept, $opt{INITP}->(0:-2)->copy,
+      = PDL::Fit::LM::lmfit( $ivs, $self, $opt{WT}, \&_logistic_no_intercept, $opt{INITP}->slice('0:-2')->sever,
       { Maxiter=>$opt{MAXIT}, Eps=>$opt{EPS} } );
-  $coeff_chisq(-1) .= $self->dm( $y_c ) - $ret{Dm};
+  $coeff_chisq->slice(-1) .= $self->dm( $y_c ) - $ret{Dm};
   $ret{b} = $coeff;
   $ret{b_chisq} = $coeff_chisq;
   $ret{b_p} = 1 - $ret{b_chisq}->gsl_cdf_chisq_P( 1 )
@@ -1750,18 +1754,18 @@ sub PDL::logistic {
 sub _logistic {
   my ($x,$par,$ym,$dyda) = @_;
     # $b and $c are fit parameters slope and intercept
-  my $b = $par(0 : $x->dim(1) - 1)->sever;
-  my $c = $par(-1)->sever;
+  my $b = $par->slice([0,$x->dim(1) - 1])->sever;
+  my $c = $par->slice(-1)->sever;
     # Write function with dependent variable $ym,
     # independent variable $x, and fit parameters as specified above.
     # Use the .= (dot equals) assignment operator to express the equality
     # (not just a plain equals)
   $ym .= 1 / ( 1 + exp( -1 * (sumover($b * $x->transpose) + $c) ) );
-  my (@dy) = map {$dyda -> slice(",($_)") } (0 .. $par->dim(0)-1);
+  my @dy = map $dyda->slice(",($_)"), 0 .. $par->dim(0)-1;
     # Partial derivative of the function with respect to each slope
     # fit parameter ($b in this case). Again, note .= assignment
     # operator (not just "equals")
-  $dy[$_] .= $x( ,$_) * $ym * (1 - $ym)
+  $dy[$_] .= $x->slice(':',$_) * $ym * (1 - $ym)
     for (0 .. $b->dim(0)-1);
     # Partial derivative of the function re intercept par
   $dy[-1] .= $ym * (1 - $ym);
@@ -1769,7 +1773,7 @@ sub _logistic {
 
 sub _logistic_no_intercept {
   my ($x,$par,$ym,$dyda) = @_;
-  my $b = $par(0 : $x->dim(1) - 1)->sever;
+  my $b = $par->slice([0,$x->dim(1) - 1])->sever;
     # Write function with dependent variable $ym,
     # independent variable $x, and fit parameters as specified above.
     # Use the .= (dot equals) assignment operator to express the equality
@@ -1779,8 +1783,8 @@ sub _logistic_no_intercept {
     # Partial derivative of the function with respect to each slope
     # fit parameter ($b in this case). Again, note .= assignment
     # operator (not just "equals")
-  $dy[$_] .= $x( ,$_) * $ym * (1 - $ym)
-    for (0 .. $b->dim(0)-1);
+  $dy[$_] .= $x->slice(':',$_) * $ym * (1 - $ym)
+    for 0 .. $b->dim(0)-1;
 }
 
 =head2 pca
@@ -1853,9 +1857,9 @@ sub PDL::pca {
   my ($eigvec, $eigval) = $var_var->eigens_sym;
   $eigvec = $eigvec->transpose; # compatibility with PDL::Slatec::eigsys
     # ind is sticky point for broadcasting
-  my $ind_sorted = $eigval->qsorti->(-1:0);
-  $eigvec = $eigvec( ,$ind_sorted)->sever;
-  $eigval = $eigval($ind_sorted)->sever;
+  my $ind_sorted = $eigval->qsorti->slice('-1:0');
+  $eigvec = $eigvec->slice(':',$ind_sorted)->sever;
+  $eigval = $eigval->slice($ind_sorted)->sever;
     # var x axis
   my $var     = $eigval / $eigval->sum->sclr;
   my $loadings;
@@ -1929,13 +1933,13 @@ sub PDL::pca_sorti {
   my $icomp = $self->transpose->abs->maximum_ind;
     # sort between comp
   my $ivar_sort = $icomp->qsorti;
-  $self = $self($ivar_sort, )->sever;
+  $self = $self->slice($ivar_sort)->sever;
     # sort within comp
-  my $ic = $icomp($ivar_sort)->iv_cluster;
+  my $ic = $icomp->slice($ivar_sort)->iv_cluster;
   for my $comp (0 .. $ic->dim(1)-1) {
-    my $i = $self(which($ic( ,$comp)), ($comp))->qsorti->(-1:0);
-    $ivar_sort(which $ic( ,$comp))
-      .= $ivar_sort(which $ic( ,$comp))->($i)->sever;
+    my $i = $self->slice(which($ic->slice(':',$comp)), "($comp)")->qsorti->slice('-1:0');
+    $ivar_sort->slice(which $ic->slice(':',$comp))
+      .= $ivar_sort->slice(which $ic->slice(':',$comp))->slice($i);
   }
   wantarray ? ($ivar_sort, pdl(0 .. $ic->dim(1)-1)) : $ivar_sort;
 }
@@ -2115,12 +2119,12 @@ sub PDL::plot_scores {
   my $i = pdl $opt{COMP};
   my $z = $opt{CORR} ? $self->stddz : $self->dev_m;
     # transformed normed values
-  my $scores = sumover($eigvec( ,$i) * $z->transpose->dummy(1))->transpose;
-  $z = $z( ,$i)->sever;
+  my $scores = sumover($eigvec->slice(':',$i) * $z->transpose->dummy(1))->transpose;
+  $z = $z->slice(':',$i)->sever;
   my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
   $win->plot(
-    with=>'points', style=>$opt{COLOR}[0], ke=>'original', $z( ,0;-), $z( ,1;-),
-    with=>'points', style=>$opt{COLOR}[1], ke=>'transformed', $scores( ,0;-), $scores( ,1;-),
+    with=>'points', style=>$opt{COLOR}[0], ke=>'original', $z->slice(',(0)'), $z->slice(',(1)'),
+    with=>'points', style=>$opt{COLOR}[1], ke=>'transformed', $scores->slice(',(0)'), $scores->slice(',(1)'),
     {xlabel=>"Component $opt{COMP}[0]", ylabel=>"Component $opt{COMP}[1]"},
   );
 }
@@ -2177,12 +2181,13 @@ sub PDL::plot_screes {
     if $ncomp;
     # re-use $ncomp below
   $ncomp = ($self->dim(0) < $opt{NCOMP})? $self->dim(0) : $opt{NCOMP};
-  $opt{CUT}   = PDL::Stats::Kmeans::_scree_ind $self(0:$ncomp-1)
+  my $self_comp = $self->slice([0,$ncomp-1]);
+  $opt{CUT}   = PDL::Stats::Kmeans::_scree_ind $self_comp
     if !defined $opt{CUT};
   my $win = $opt{WIN} ||
     PDL::Graphics::Simple::pgswin(size=>[@opt{qw(SIZE SIZE)}, 'px']);
   $win->plot(
-    with=>'lines', ke=>'scree', sequence($ncomp), $self(0:$ncomp-1),
+    with=>'lines', ke=>'scree', sequence($ncomp), $self_comp,
     !$opt{CUT} ? () : (with=>'lines', ke=>'cut', pdl($opt{CUT}-.5, $opt{CUT}-.5), pdl(-.05, $self->max->sclr+.05)),
     {xlabel=>'Component', ylabel=>'Proportion of Variance Accounted for',
       xrange=>[-0.05,$ncomp-0.95], yrange=>[0,1], le=>'tr'},

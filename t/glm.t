@@ -4,7 +4,6 @@ use Test::More;
 use PDL::Stats::Basic;
 use PDL::Stats::GLM;
 use PDL::LiteF;
-use PDL::NiceSlice;
 use Test::PDL;
 
 is_pdl pdl('BAD 1 2 3 4')->fill_m, pdl('2.5 1 2 3 4'), "fill_m replaces bad values with sample mean";
@@ -189,7 +188,7 @@ Snt	Sp	Wrds	New	subj	DV
 EOF
   open my $fh, '<', \$lorch_data or die "Couldn't open scalar: $!";
   my ($data, $idv, $ido) = rtable $fh, {V=>0};
-  my %r = $data( ,4)->ols_rptd( $data->t->using(3,0,1,2) );
+  my %r = $data->slice(',4')->ols_rptd( $data->t->using(3,0,1,2) );
   #print "\n$_\t$r{$_}\n" for sort keys %r;
   test_stats_cmp(\%r, {
     ss_total => pdl(405.188241771429),
@@ -334,7 +333,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
   my $c = $d % 2;
   $d->set( 20, 10 );
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0});
-  $m{'# A ~ B ~ C # m'} = $m{'# A ~ B ~ C # m'}->(,2,)->squeeze;
+  $m{'# A ~ B ~ C # m'} = $m{'# A ~ B ~ C # m'}->slice(',(2),');
   test_stats_cmp(\%m, {
     '| A | F' => 165.252100840336,
     '| A ~ B ~ C | F' => 0.0756302521008415,
@@ -363,7 +362,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
   my $b = sequence(60) % 3;
   my $c = sequence(60) % 2;
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, v=>0});
-  $m{$_} = $m{$_}->(,1,)->squeeze for '# A ~ B ~ C # m', '# A ~ B ~ C # se';
+  $m{$_} = $m{$_}->slice(',(1)')->squeeze for '# A ~ B ~ C # m', '# A ~ B ~ C # se';
   test_stats_cmp(\%m, {
     '| A | F' => 150.00306433446,
     '| A ~ B ~ C | F' => 0.17534855325553,
@@ -382,7 +381,7 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
   $d->setbadat(62);
   $b->setbadat(61);
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, V=>0});
-  $m{$_} = $m{$_}->(,2,)->squeeze for '# A ~ B ~ C # m';
+  $m{$_} = $m{$_}->slice(',(2)')->squeeze for '# A ~ B ~ C # m';
   test_stats_cmp(\%m, {
     '| A | F' => 165.252100840336,
     '| A ~ B ~ C | F' => 0.0756302521008415,
