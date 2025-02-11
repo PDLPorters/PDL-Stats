@@ -1017,7 +1017,7 @@ sub PDL::anova_rptd {
     PLOT   => 0,    # plots highest order effect
     WIN    => undef,      # for plotting
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   $opt{IVNM} = [ map { "IV_$_" } 0 .. $#ivs_raw ]
     if !$opt{IVNM} or !@{ $opt{IVNM} };
   my @idv_orig = @{ $opt{IVNM} };
@@ -1689,7 +1689,7 @@ sub PDL::logistic {
     MAXIT => 1000,
     EPS   => 1e-7,
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (%$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
     # not using it atm
   $opt{WT} = 1;
     # Use lmfit. Fourth input argument is reference to user-defined
@@ -1843,7 +1843,7 @@ sub PDL::pca {
     PLOT  => 0,
     WIN    => undef,      # for plotting
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   my $var_var = $opt{CORR}? $self->corr_table : $self->cov_table;
     # value is axis pdl and score is var x axis
   my ($eigvec, $eigval) = $var_var->eigens_sym;
@@ -1919,7 +1919,7 @@ sub PDL::pca_sorti {
   my %opt = (
     NCOMP => 10,     # maximum number of components to consider
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   my $ncomp = pdl($opt{NCOMP}, $self->dim(1))->min;
   $self = $self->dice_axis( 1, pdl(0..$ncomp-1) );
   my $icomp = $self->transpose->abs->maximum_ind;
@@ -2057,7 +2057,7 @@ sub PDL::plot_residuals {
     SIZE  => 640,    # plot size in pixels
     COLOR => 1,
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   my $residuals = $y - $y_pred;
   my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
   $win->plot(
@@ -2168,7 +2168,7 @@ sub PDL::plot_screes {
                      # allows comparing multiple lines in same plot
     SIZE  => 640,    # plot size in pixels
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   $opt{NCOMP} = $ncomp
     if $ncomp;
     # re-use $ncomp below

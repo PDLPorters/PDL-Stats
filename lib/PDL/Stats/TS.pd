@@ -425,7 +425,7 @@ loop (t) %{
 sub PDL::pred_ar {
   my ($x, $b, $t, $opt) = @_;
   my %opt = ( CONST => 1 );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   $b = PDL->topdl($b); # allows passing simple number
   my $ext;
   if ($opt{CONST}) {
@@ -502,7 +502,7 @@ sub PDL::season_m {
     WIN   => undef,          # pass pgswin object for more plotting control
     COLOR => 1,
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
 
   my $n_season = ($self->dim(0) + $opt{START_POSITION}) / $d;
   $n_season = pdl($n_season)->ceil->sum->sclr;
@@ -565,7 +565,7 @@ sub PDL::plot_dseason {
       WIN   => undef,
       COLOR => 1,       # data point color
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   my $dsea = $self->dseason($d);
   my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
   my $seq = sequence($self->dim(0));
@@ -625,7 +625,7 @@ sub PDL::plot_acf {
     SIG => 0.05,
     WIN  => undef,
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   my $y_sig = ($opt{SIG} == 0.10)?   1.64485362695147
             : ($opt{SIG} == 0.05)?   1.95996398454005
             : ($opt{SIG} == 0.01)?   2.5758293035489

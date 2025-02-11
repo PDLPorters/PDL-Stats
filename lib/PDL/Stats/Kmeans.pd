@@ -482,7 +482,7 @@ sub PDL::kmeans {
     NSEED => 1000,      # num of initial seeds, use NSEED up to max obs
     NCLUS => 3,         # num of clusters
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   if (defined($opt{CNTRD}) and $opt{CNTRD}->nelem) {
     $opt{NTRY}  = 1;
     $opt{NSEED} = $self->dim(0);
@@ -670,7 +670,7 @@ sub PDL::pca_cluster {
                     # scree plot black magic if not specified
     PLOT  => 0,     # pca scree plot with cutoff at NCOMP
   );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
 
   my $var = sumover($self ** 2) / $self->dim(0);
   if (!$opt{NCOMP}) {

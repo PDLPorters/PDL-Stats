@@ -762,7 +762,7 @@ sub rtable {
               MISSN   => -999,
               NROW    => '',
             );
-  $opt and $opt{uc $_} = $opt->{$_} for (keys %$opt);
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   $opt{V} and print STDERR "reading $src for data and id... ";
 
   local $PDL::undefval = $opt{MISSN};
