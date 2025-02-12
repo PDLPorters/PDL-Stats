@@ -548,7 +548,7 @@ sub _ols_main {
   $ret{ss_residual} = $y->sse( $ret{y_pred} );
   $ret{ss_model} = $ret{ss_total} - $ret{ss_residual};
   $ret{R2} = $ret{ss_model} / $ret{ss_total};
-  my $n_var = $opt{CONST}? $ivs->dim(1) - 1 : $ivs->dim(1);
+  my $n_var = $opt{CONST} ? $ivs->dim(1) - 1 : $ivs->dim(1);
   $ret{F_df} = pdl( $n_var, my $df1 = $y->dim(0) - $ivs->dim(1) );
   $ret{F} = $ret{ss_model} / $n_var
     / ($ret{ss_residual} / $df1);
@@ -558,11 +558,11 @@ sub _ols_main {
     my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
     $opt{CONST} and
       $se_b->slice(-1) .= sqrt( $ret{ss_residual} / $df1 * $C->slice(-1,-1) );
-      # get the se for bs by successivly regressing each iv by the rest ivs
+      # get the se for bs by successively regressing each iv by the rest ivs
     if ($ivs->dim(1) > 1) {
-      for my $k (0 .. $n_var-1) {
-        my @G = grep { $_ != $k } (0 .. $n_var-1);
-        my $G = $ivs->dice_axis(1, \@G);
+      my @coords = 0 .. $n_var-1;
+      for my $k (@coords) {
+        my $G = $ivs->dice_axis(1, [grep $_ != $k, @coords]);
         $opt{CONST} and
           $G = $G->glue( 1, ones($ivs->dim(0)) );
         my $b_G = $ivs->slice(':',$k)->ols( $G, {CONST=>0,PLOT=>0} );
@@ -1074,7 +1074,7 @@ sub PDL::anova_rptd {
   }
 
     # stitch together
-  my $ivs = PDL->null->glue(1, @$ivs_ref,
+  my $ivs = PDL::glue(1, @$ivs_ref,
     (grep ref($_), @$err_ref), ones $y->dim(0));
   confess "anova_rptd: got singular matrix for IVs x IVs'"
     if any +($ivs x $ivs->t)->det == 0;
