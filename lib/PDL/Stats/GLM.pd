@@ -1173,7 +1173,7 @@ sub PDL::anova_design_matrix {
     if !$opt{IVNM} or !@{ $opt{IVNM} };
   my @idv_orig = @{ $opt{IVNM} };
   my @pdl_ivs_raw = map scalar PDL::Stats::Basic::code_ivs($_), @ivs_raw;
-  my $pdl_ivs = pdl \@pdl_ivs_raw;
+  my $pdl_ivs = pdl(\@pdl_ivs_raw);
     # explicit set badflag because pdl() removes badflag
   $pdl_ivs->badflag( scalar grep $_->badflag, @pdl_ivs_raw );
   my $sj;
@@ -1506,17 +1506,14 @@ sub PDL::ols {
   _ols_common(0, @_);
 }
 
+# ivs = [nobs x nivs] so can `dog` retval
 sub _rm_bad_value {
   my ($y, $ivs) = @_;
-  my $idx;
-  if ($y->check_badflag or $ivs->check_badflag) {
-     $idx = which(($y->isbad==0) & (nbadover ($ivs->transpose)==0));
-     $y = $y->slice($idx)->sever;
-     $ivs = $ivs->slice($idx)->sever;
-     $ivs->badflag(0);
-     $y->badflag(0);
-  }
-  return $y, $ivs, $idx;
+  return ($y, $ivs, undef) if !$y->check_badflag and !$ivs->check_badflag;
+  my $idx = which($y->isgood & (nbadover ($ivs->transpose)==0));
+  $_ = $_->slice($idx)->sever for $y, $ivs;
+  $_->badflag(0) for $y, $ivs;
+  ($y, $ivs, $idx);
 }
 
 =head2 ols_rptd
