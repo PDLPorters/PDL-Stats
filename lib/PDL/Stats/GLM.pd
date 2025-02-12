@@ -360,7 +360,7 @@ pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 Broadcasted version of ordinary least squares regression (B<ols>). The
 price of broadcasting was losing significance tests for coefficients
 (but see B<r2_change>). The fitting function was shamelessly copied then
-modified from PDL::Fit::Linfit. Intercept is LAST of coeff if CONST => 1.
+modified from PDL::Fit::Linfit. Intercept is FIRST of coeff if CONST => 1.
 
 ols_t does not handle bad values. consider B<fill_m> or B<fill_rand>
 if there are bad values.
@@ -513,7 +513,7 @@ sub _ols_prep_inputs {
   ($y, $ivs) = _rm_bad_value( $y, $ivs ) if !$broadcasted;
     # set up ivs and const as ivs
   $opt{CONST} and
-    $ivs = $ivs->glue( 1, ones($ivs->dim(0)) );
+    $ivs = ones($ivs->dim(0))->glue( 1, $ivs );
   ($y, $ivs);
 }
 
@@ -557,14 +557,14 @@ sub _ols_main {
   if (!$broadcasted) {
     my $se_b = ones( $coeff->dims? $coeff->dims : 1 );
     $opt{CONST} and
-      $se_b->slice(-1) .= sqrt( $ret{ss_residual} / $df1 * $C->slice(-1,-1) );
+      $se_b->slice(0) .= sqrt( $ret{ss_residual} / $df1 * $C->slice(0,0) );
       # get the se for bs by successively regressing each iv by the rest ivs
     if ($ivs->dim(1) > 1) {
-      my @coords = 0 .. $n_var-1;
+      my @coords = $opt{CONST} ? 1..$n_var : 0..$n_var-1;
+      my $ones = !$opt{CONST} ? undef : ones($ivs->dim(0));
       for my $k (@coords) {
         my $G = $ivs->dice_axis(1, [grep $_ != $k, @coords]);
-        $opt{CONST} and
-          $G = $G->glue( 1, ones($ivs->dim(0)) );
+        $G = $ones->glue( 1, $G ) if $opt{CONST};
         my $b_G = $ivs->slice(':',$k)->ols( $G, {CONST=>0,PLOT=>0} );
         my $ss_res_k = $ivs->slice(':',$k)->squeeze->sse( sumover($b_G * $G->transpose) );
         $se_b->slice($k) .= sqrt( $ret{ss_residual} / $df1 / $ss_res_k );
@@ -1074,8 +1074,7 @@ sub PDL::anova_rptd {
   }
 
     # stitch together
-  my $ivs = PDL::glue(1, @$ivs_ref,
-    (grep ref($_), @$err_ref), ones $y->dim(0));
+  my $ivs = ones($y->dim(0))->glue(1, @$ivs_ref, grep ref($_), @$err_ref);
   confess "anova_rptd: got singular matrix for IVs x IVs'"
     if any +($ivs x $ivs->t)->det == 0;
   my $b_full = _ols_main(1, $y, $ivs, {CONST=>0});
@@ -1101,7 +1100,7 @@ sub PDL::anova_rptd {
       } elsif (ref $full[$k]) {       # unique error term
         next EFFECT
           unless my @G = grep $_ != $k && defined $full[$_], 0 .. $#full;
-        my $G = PDL::glue(1, (grep ref $_, @full[@G]), ones $y->dim(0));
+        my $G = ones($y->dim(0))->glue(1, grep ref $_, @full[@G]);
         my $b_G = $y->ols_t( $G, {CONST=>0} );
         my $ss = $ret{$k == $#full ? 'ss_subject' : "$i_pref$e ss"}
           = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
@@ -1128,9 +1127,9 @@ sub PDL::anova_rptd {
       if $CDF and $df1 > 0;
 
     # get IV ss from $ivs_ref instead of $ivs pdl
+    my $ones = ones($y->dim(0));
     for my $k (0 .. $#$ivs_ref) {
-      my $G = PDL::glue( 1, @$ivs_ref[grep $_ != $k, 0 .. $#$ivs_ref],
-        ones( $y->dim(0) ));
+      my $G = $ones->glue(1, @$ivs_ref[grep $_ != $k, 0 .. $#$ivs_ref]);
       my $b_G = $y->ols_t( $G, {CONST=>0} );
       $ret{ "| $idv[$k] | ss" }
         = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
@@ -1408,7 +1407,7 @@ list-wise) and returns the full model in list context with various stats.
 
 IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply
 the constant vector in $x. Intercept is automatically added and returned
-as LAST of the coeffs if CONST=>1. Returns full model in list context
+as FIRST of the coeffs if CONST=>1. Returns full model in list context
 and coeff in scalar context.
 
 =for options
@@ -1544,7 +1543,7 @@ sub PDL::ols_rptd {
   # STEP 1: subj
   my $s = effect_code $subj;
   my $b_s = $y->ols_t($s);
-  my $pred = sumover($b_s->slice('0:-2') * $s->transpose) + $b_s->slice(-1);
+  my $pred = sumover($b_s->slice('1:-1') * $s->transpose) + $b_s->slice(0);
   $r{ss_subject} = $r{ss_total} - $y->sse( $pred );
 
   # STEP 2: add predictor variables
@@ -1552,10 +1551,10 @@ sub PDL::ols_rptd {
   my $b_p = $y->ols_t($iv_p);
 
     # only care about coeff for predictor vars. no subj or const coeff
-  $r{coeff} = $b_p->slice([-(@ivs+1),-2])->sever;
+  $r{coeff} = $b_p->slice([-@ivs,-1])->sever;
 
     # get total sse for this step
-  $pred = sumover($b_p->slice('0:-2') * $iv_p->transpose) + $b_p->slice(-1);
+  $pred = sumover($b_p->slice('1:-1') * $iv_p->transpose) + $b_p->slice(0);
   my $ss_pe  = $y->sse( $pred );
 
     # get predictor ss by successively reducing the model
@@ -1563,7 +1562,7 @@ sub PDL::ols_rptd {
   for my $i (0 .. $#ivs) {
     my $iv = $s->glue(1, @ivs[ grep $_ != $i, 0..$#ivs ]);
     my $b  = $y->ols_t($iv);
-    $pred = sumover($b->slice('0:-2') * $iv->transpose) + $b->slice(-1);
+    $pred = sumover($b->slice('1:-1') * $iv->transpose) + $b->slice(0);
     $r{ss}->slice($i) .= $y->sse($pred) - $ss_pe;
   }
 
@@ -1572,7 +1571,7 @@ sub PDL::ols_rptd {
 
     # get total sse for this step. full model now.
   my $b_f = $y->ols_t( $iv_p->glue(1,$iv_e) );
-  $pred = sumover($b_f->slice('0:-2') * $iv_p->glue(1,$iv_e)->transpose) + $b_f->slice(-1);
+  $pred = sumover($b_f->slice('1:-1') * $iv_p->glue(1,$iv_e)->transpose) + $b_f->slice(0);
   $r{ss_residual}  = $y->sse( $pred );
 
     # get predictor x subj ss by successively reducing the error term
@@ -1581,7 +1580,7 @@ sub PDL::ols_rptd {
     my $iv = $iv_p->glue(1, map interaction_code($s, $_),
       @ivs[grep $_ != $i, 0..$#ivs]);
     my $b  = $y->ols_t($iv);
-    my $pred = sumover($b->slice('0:-2') * $iv->transpose) + $b->slice(-1);
+    my $pred = sumover($b->slice('1:-1') * $iv->transpose) + $b->slice(0);
     $r{ss_err}->slice($i) .= $y->sse($pred) - $r{ss_residual};
   }
 
