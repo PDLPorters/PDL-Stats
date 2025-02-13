@@ -473,7 +473,8 @@ pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =head2 season_m
 
-Given length of season, returns seasonal mean and var for each period (returns seasonal mean only in scalar context).
+Given length of season, returns seasonal mean and variance for each period
+(returns seasonal mean only in scalar context).
 
 =for options
 
@@ -526,13 +527,11 @@ sub PDL::season_m {
     my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
     my $seq = sequence($d);
     my $errb_length = sqrt( $ms / $s->sumover )->squeeze;
-    $w->plot(
-      (map +(with=>'lines', style=>$opt{COLOR}, $seq, $_), $m->dog),
-      ($m->squeeze->ndims < 2 && ($errb_length > 0)->any) ? (
-        with=>'errorbars', style=>$opt{COLOR}, $seq, $m->squeeze, $errb_length
-      ) : (),
-      { xlabel=>'period', ylabel=>'mean' },
-    );
+    my $col = $opt{COLOR};
+    my @plots = map +(with=>'lines', ke=>"Data $col", style=>$col++, $seq, $_), $m->dog;
+    push @plots, with=>'errorbars', ke=>'Error', style=>$opt{COLOR}, $seq, $m->squeeze, $errb_length
+      if $m->squeeze->ndims < 2 && ($errb_length > 0)->any;
+    $w->plot(@plots, { xlabel=>'period', ylabel=>'mean' });
   }
 
   return wantarray? ($m, $ms) : $m;
@@ -569,11 +568,11 @@ sub PDL::plot_dseason {
   my $dsea = $self->dseason($d);
   my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
   my $seq = sequence($self->dim(0));
-  $w->plot(
-    (map +(with=>'lines', style=>$opt{COLOR}+1, $seq, $_), $dsea->dog),
-    (map +(with=>'points', style=>$opt{COLOR}, $seq, $_), $self->dog),
-    { xlabel=>'T', ylabel=>'DV' },
-  );
+  my $col = $opt{COLOR};
+  my @plots = map +(with=>'lines', ke=>"Data $col", style=>$col++, $seq, $_), $dsea->dog;
+  $col = $opt{COLOR};
+  push @plots, map +(with=>'points', ke=>"De-seasonalised $col", style=>$col++, $seq, $_), $self->dog;
+  $w->plot(@plots, { xlabel=>'T', ylabel=>'DV' });
   return $dsea; 
 }
 

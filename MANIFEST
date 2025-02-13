@@ -1,4 +1,5 @@
 Changes
+lib/PDL/Demos/Stats.pm
 lib/PDL/Stats.pm
 lib/PDL/Stats/Basic.pd
 lib/PDL/Stats/GLM.pd

@@ -4,6 +4,7 @@
 - all OLS and ANOVA now add the 1s column in design at pos 0 so intercepts now B_0
 - add GLM::anova_design_matrix
 - fix anova_design_matrix for between-subject >2 values (rest of RT#97925)
+- add demo
 
 0.853 2025-01-03
 - uses PDL 2.096+ lib/*.pd format for quicker builds
