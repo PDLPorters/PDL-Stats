@@ -1029,6 +1029,11 @@ sub PDL::anova_rptd {
 
   if (defined $subj) {
     my @full = (@$ivs_ref, @$err_ref);
+    my $has_btwn = @{ $opt{BTWN} };
+    my @is_btwn; $is_btwn[$_] = 1 for @{ $opt{BTWN} };
+    my @within_inds = 0 .. $#ivs_raw;
+    @within_inds = grep !$is_btwn[$_], @within_inds if $has_btwn;
+    my $within_df = pdl(map $_->dim(1), @full[@within_inds])->prodover->sclr;
     EFFECT: for my $k (0 .. $#full) {
       my $e = ($k > $#$ivs_ref)?  '| err' : '';
       my $i = ($k > $#$ivs_ref)?  $k - @$ivs_ref : $k;
@@ -1037,10 +1042,8 @@ sub PDL::anova_rptd {
       if (!defined $full[$k]) {     # ss_residual as error
         $ret{ "$i_pref$e ss" } = $ret{ss_residual};
           # highest ord inter for purely within design, (p-1)*(q-1)*(n-1)
-        my $factor = ref($full[-1]) ? $full[-1]->dim(1)
-                                    : $err_ref->[$err_ref->[-1]]->dim(1);
-        my $df = $ret{ "$i_pref$e df" }
-          = pdl($factor, map { $_->dim(1) } @full[0 .. $#ivs_raw])->prodover;
+        my $factor = (ref $full[-1] ? $full[-1] : $err_ref->[$full[-1]])->dim(1);
+        my $df = $ret{ "$i_pref$e df" } = $factor * $within_df;
         $ret{ "$i_pref$e ms" } = $ret{ "$i_pref$e ss" } / $df;
       } elsif (ref $full[$k]) {       # unique error term
         next EFFECT
