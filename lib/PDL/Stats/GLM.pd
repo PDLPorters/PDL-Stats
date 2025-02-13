@@ -419,7 +419,7 @@ Usage:
 
     perldl> %m = $y->ols_t( $x->dummy(2) )
 
-    perldl> p "$_\t$m{$_}\n" for (sort keys %m)
+    perldl> p "$_\t$m{$_}\n" for sort keys %m
 
     # 2 persons' ratings, each fitted with 3 "different" models
 
@@ -637,7 +637,7 @@ Usage:
 
     perldl> %c = $y->r2_change( $x1->dummy(1), cat($x1, $x2) )
 
-    perldl> p "$_\t$c{$_}\n" for (sort keys %c)
+    perldl> p "$_\t$c{$_}\n" for sort keys %c
       #              person 1   person 2
     F_change        [0.72164948 0.071283096]
       # df same for both persons
@@ -725,7 +725,7 @@ Usage:
 
     perldl> %m = $y->anova( $a, \@b, { IVNM=>['apple', 'bake'] } )
 
-    perldl> p "$_\t$m{$_}\n" for (sort keys %m)
+    perldl> p "$_\t$m{$_}\n" for sort keys %m
     # apple # m
     [
      [2.5   3 3.5]
@@ -935,7 +935,7 @@ Usage:
       # subj must be the first argument
     my %m = $dv->anova_rptd( $subj, $b, $w, {ivnm=>['Beer', 'Wings']} );
 
-    print "$_\t$m{$_}\n" for (sort keys %m);
+    print "$_\t$m{$_}\n" for sort keys %m;
 
     # Beer # m
     [
@@ -1366,7 +1366,7 @@ pdl elements being marked as BAD).
     ]
     PDL: Double D [9,2]
 
-    print "$_\t$map->{$_}\n" for (sort keys %$map)
+    print "$_\t$map->{$_}\n" for sort keys %$map
     a       0
     b       1
     c       2
@@ -1500,7 +1500,7 @@ Usage:
 
     perldl> %m = $y->ols( $x )
 
-    perldl> p "$_\t$m{$_}\n" for (sort keys %m)
+    perldl> p "$_\t$m{$_}\n" for sort keys %m
 
     F       40.4225352112676
     F_df    [2 7]
@@ -1563,7 +1563,7 @@ Usage:
 
     my %r = $rt->ols_rptd( $subj, $sp, $words, $new );
 
-    print "$_\t$r{$_}\n" for (sort keys %r);
+    print "$_\t$r{$_}\n" for sort keys %r;
 
     ss_residual   58.3754646504336
     ss_subject    51.8590337714286
@@ -1716,7 +1716,7 @@ Usage:
 
     perldl> %m = $y->logistic( $x )
 
-    perldl> p "$_\t$m{$_}\n" for (sort keys %m)
+    perldl> p "$_\t$m{$_}\n" for sort keys %m
 
     D0	13.8629436111989
     Dm	9.8627829791575

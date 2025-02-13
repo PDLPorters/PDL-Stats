@@ -49,7 +49,7 @@ Implement a basic k-means procedure,
 or, use the B<kmeans> function provided here,
 
     my %k = $data->kmeans( \%opt );
-    print "$_\t$k{$_}\n" for (sort keys %k);
+    print "$_\t$k{$_}\n" for sort keys %k;
 
 plot the clusters if there are only 2 vars in $data,
 
@@ -363,15 +363,34 @@ pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =for ref
 
-Implements classic k-means cluster analysis. Given a number of observations with values on a set of variables, kmeans puts the observations into clusters that maximizes within-cluster similarity with respect to the variables. Tries several different random seeding and clustering in parallel. Stops when cluster assignment of the observations no longer changes. Returns the best result in terms of R2 from the random-seeding trials.
+Implements classic k-means cluster analysis. Given a number of
+observations with values on a set of variables, kmeans puts the
+observations into clusters that maximizes within-cluster similarity with
+respect to the variables. Tries several different random seeding and
+clustering in parallel. Stops when cluster assignment of the observations
+no longer changes. Returns the best result in terms of R2 from the
+random-seeding trials.
 
-Instead of random seeding, kmeans also accepts manual seeding. This is done by providing a centroid to the function, in which case clustering will proceed from the centroid and there is no multiple tries.
+Instead of random seeding, kmeans also accepts manual seeding. This is
+done by providing a centroid to the function, in which case clustering
+will proceed from the centroid and there is no multiple tries.
 
-There are two distinct advantages from seeding with a centroid compared to seeding with predefined cluster membership of a subset of the observations ie "seeds",
+There are two distinct advantages from seeding with a centroid compared to
+seeding with predefined cluster membership of a subset of the observations
+ie "seeds":
 
-(1) a centroid could come from a previous study with a different set of observations;
+=over
 
-(2) a centroid could even be "fictional", or in more proper parlance, an idealized prototype with respect to the actual data. For example, if there are 10 person's ratings of 1 to 5 on 4 movies, ie a ratings pdl of dim [10 obs x 4 var], providing a centroid like 
+=item *
+
+a centroid could come from a previous study with a different set of observations;
+
+=item *
+
+a centroid could even be "fictional", or in more proper parlance,
+an idealized prototype with respect to the actual data. For example,
+if there are 10 person's ratings of 1 to 5 on 4 movies, ie a ratings
+pdl of dim [10 obs x 4 var], providing a centroid like
 
   [
    [5 0 0 0]
@@ -380,12 +399,17 @@ There are two distinct advantages from seeding with a centroid compared to seedi
    [0 0 0 5]
   ] 
 
-will produce 4 clusters of people with each cluster favoring a different one of the 4 movies. Clusters from an idealized centroid may not give the best result in terms of R2, but they sure are a lot more interpretable.
+will produce 4 clusters of people with each cluster favoring a different
+one of the 4 movies. Clusters from an idealized centroid may not give the
+best result in terms of R2, but they sure are a lot more interpretable.
 
-If clustering has to be done from predefined clusters of seeds, simply calculate the centroid using the B<centroid> function and feed it to kmeans,
+=back
+
+If clustering has to be done from predefined clusters of seeds, simply
+calculate the centroid using the B<centroid> function and feed it
+to kmeans,
 
   my ($centroid, $ss) = $rating($iseeds, )->centroid( $seeds_cluster );
-
   my %k = $rating->kmeans( { CNTRD=>$centroid } );
 
 kmeans supports bad value*.
@@ -427,7 +451,7 @@ Usage:
 
   CNTRD	=> Null
   FULL	=> 0
-  NCLUS	=> 2
+  NCLUS	=> 3
   NSEED	=> 4
   NTRY	=> 5
   V     => 1
@@ -435,7 +459,7 @@ Usage:
   iter 0 R2 [0.024390244 0.024390244 0.26829268  0.4796748  0.4796748]
   iter 1 R2 [0.46341463 0.46341463  0.4796748  0.4796748  0.4796748]
 
-  perldl> p "$_\t$k{$_}\n" for (sort keys %k)
+  perldl> p "$_\t$k{$_}\n" for sort keys %k
 
   R2      0.479674796747968
   centroid       # mean ratings for 2 group x 5 movies
@@ -446,13 +470,13 @@ Usage:
    [         3          3]
    [         4  2.6666667]
   ]
- 
+
   cluster        # 4 persons' membership in two groups
   [
    [1 0 0 0]
    [0 1 1 1]
   ]
-  
+
   n       [1 3]  # cluster size
   ss
   [
@@ -463,7 +487,17 @@ Usage:
    [         0 0.66666667]
   ]
 
-Now, for the valiant, kmeans is broadcastable. Say you gathered 10 persons' ratings on 5 movies from 2 countries, so the data is dim [10,5,2], and you want to put the 10 persons from each country into 3 clusters, just specify NCLUS => [3,1], and there you have it. The key is for NCLUS to include $data->ndims - 1 numbers. The 1 in [3,1] turns into a dummy dim, so the 3-cluster operation is repeated on both countries. Similarly, when seeding, CNTRD needs to have ndims that at least match the data ndims. Extra dims in CNTRD will lead to broadcasting (convenient if you want to try out different centroid locations, for example, but you will have to hand pick the best result). See F<t/kmeans.t> for examples w 3D and 4D data.
+Now, for the valiant, kmeans is broadcastable. Say you gathered 10
+persons' ratings on 5 movies from 2 countries, so the data is dim
+[10,5,2], and you want to put the 10 persons from each country into
+3 clusters, just specify NCLUS => [3,1], and there you have it. The
+key is for NCLUS to include $data->ndims - 1 numbers. The 1 in [3,1]
+turns into a dummy dim, so the 3-cluster operation is repeated on both
+countries. Similarly, when seeding, CNTRD needs to have ndims that at
+least match the data ndims. Extra dims in CNTRD will lead to broadcasting
+(convenient if you want to try out different centroid locations,
+for example, but you will have to hand pick the best result). See
+F<t/kmeans.t> for examples w 3D and 4D data.
 
 *With bad value, R2 is based on average of variances instead of sum squared error.
 
@@ -491,7 +525,7 @@ sub PDL::kmeans {
   else {
     $opt{NSEED} = pdl($self->dim(0), $opt{NSEED})->min->sclr;
   }
-  $opt{V} and print STDERR "$_\t=> $opt{$_}\n" for (sort keys %opt);
+  $opt{V} and print STDERR "$_\t=> $opt{$_}\n" for sort keys %opt;
  
   my $ss_ms = $self->badflag?  'ms' : 'ss';
   my $ss_total

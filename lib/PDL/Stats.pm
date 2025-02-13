@@ -75,7 +75,7 @@ The magic word that puts PDL::Stats at your disposal. pdl creates a PDL numeric 
     # do a two-way analysis of variance with y as DV and x1 x2 as IVs
 
     my %result = pdl(@y)->anova( \@x1, \@x2 );
-    print "$_\t$result{$_}\n" for (sort keys %result);
+    print "$_\t$result{$_}\n" for sort keys %result;
 
 If you have a list of list, ie array of array refs, pdl will create a multi-dimensional data object.
 
@@ -99,7 +99,7 @@ PDL::Stats puts observations in the first dimension and variables in the second 
     # you can do all kinds of fancy stuff on such a 2D pdl.
 
     my %result = $a->kmeans( {NCLUS=>2} );
-    print "$_\t$result{$_}\n" for (sort keys %result);
+    print "$_\t$result{$_}\n" for sort keys %result;
 
 Make sure the array of array refs is rectangular. If the array refs are of unequal sizes, pdl will pad it out with 0s to match the longest list.
 

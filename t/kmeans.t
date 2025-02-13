@@ -64,7 +64,7 @@ sub t_kmeans {
    ]
   ';
   my %m = $data->kmeans( {nclus=>[2,1,1], ntry=>20, v=>0} );
-#  print "$_\t$m{$_}\n" for (sort keys %m);
+#  print "$_\t$m{$_}\n" for sort keys %m;
   my %a = (
     'R2'  => pdl
 (
@@ -101,7 +101,7 @@ sub t_kmeans {
   my $centroid = pdl('[10 0; 10 0; 10 0] [20 0; 30 0; 30 0]');
     # use dummy to match centroid dims to data dims
   my %m = $data->kmeans( {cntrd=>$centroid->dummy(-1), v=>0} );
-#  print "$_\t$m{$_}\n" for (sort keys %m);
+#  print "$_\t$m{$_}\n" for sort keys %m;
   my %a = (
     R2  => pdl('0.74223245 0.97386667; 0.84172845 0.99499377'),
     ss_sum  => pdl('
@@ -126,7 +126,7 @@ sub t_kmeans_bad {
   my $data = sequence 7, 3;
   $data = $data->setbadat(4,0);
   my %m = $data->kmeans({NCLUS=>2, NTRY=>10, V=>0});
-  #print "$_\t$m{$_}\n" for (sort keys %m);
+  #print "$_\t$m{$_}\n" for sort keys %m;
   eq_pdl $m{ms}->sumover, pdl qw( 1.5  1.9166667  1.9166667 );
 }
 
@@ -136,7 +136,7 @@ sub t_kmeans_bad {
     [21 22 23 24 1 1 1; 28 29 30 31 1 1 1; 35 36 37 38 1 1 1]
   ';
   my %m = $data->kmeans( {nclus=>[2,1], ntry=>20, v=>0} );
-#  print "$_\t$m{$_}\n" for (sort keys %m);
+#  print "$_\t$m{$_}\n" for sort keys %m;
   my %a = (
     'R2'  => pdl( [ qw( 0.96879592 0.99698988 ) ] ),
     'ms'  => pdl('[2.1875 0; 2 0; 2 0] [0,1.25; 0 1.25; 0 1.25]'),
