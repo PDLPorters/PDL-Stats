@@ -1275,7 +1275,8 @@ sub _add_errors {
     elsif (!@wn and $_ > $ie_subj)                           { $ie_subj }
       # repeating error term
     elsif ($_ > $idv2indx{$err})                      { $idv2indx{$err} }
-    else                      { interaction_code($ivs_ref->[$_], $spdl) }
+    elsif (@wn)               { interaction_code($ivs_ref->[$_], $spdl) }
+    else                                                        { $spdl }
   } 0 .. $#$ivs_ref;
   push @errors, $has_btwn ? $ie_subj : $spdl;
   \@errors;
