@@ -31,29 +31,25 @@ my $CDF = 1 if !$@;
 
 PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA, linear regression, PCA, and logistic regression.
 
-=head1 DESCRIPTION
-
-The terms FUNCTIONS and METHODS are arbitrarily used to refer to
-methods that are broadcastable and methods that are NOT broadcastable,
-respectively. FUNCTIONS except B<ols_t> support bad value.
-
-P-values, where appropriate, are provided if PDL::GSL::CDF is installed.
-
 =head1 SYNOPSIS
 
     use PDL::LiteF;
     use PDL::Stats::GLM;
 
     # do a multiple linear regression and plot the residuals
-
     my $y = pdl( 8, 7, 7, 0, 2, 5, 0 );
-
     my $x = pdl( [ 0, 1, 2, 3, 4, 5, 6 ],        # linear component
                  [ 0, 1, 4, 9, 16, 25, 36 ] );   # quadratic component
-
     my %m  = $y->ols( $x, {plot=>1} );
+    print "$_\t$m{$_}\n" for sort keys %m;
 
-    print "$_\t$m{$_}\n" for (sort keys %m);
+=head1 DESCRIPTION
+
+The terms FUNCTIONS and METHODS are arbitrarily used to refer to
+methods that are broadcastable and methods that are NOT broadcastable,
+respectively. FUNCTIONS support bad values.
+
+P-values, where appropriate, are provided if PDL::GSL::CDF is installed.
 
 =cut
 
