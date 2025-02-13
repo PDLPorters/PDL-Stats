@@ -29,7 +29,7 @@ my $CDF = 1 if !$@;
 
 =head1 NAME
 
-PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA, linear regression, PCA, and logistic regression.
+PDL::Stats::GLM -- general and generalized linear modelling methods such as ANOVA, linear regression, PCA, and logistic regression.
 
 =head1 SYNOPSIS
 
@@ -44,6 +44,13 @@ PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA
     print "$_\t$m{$_}\n" for sort keys %m;
 
 =head1 DESCRIPTION
+
+For more about general linear modelling, see
+L<Wikipedia|https://en.wikipedia.org/wiki/General_linear_model>.
+For an unbelievably thorough text on experimental design
+and analysis, including linear modelling, see L<A First
+Course in Design and Analysis of Experiments, Gary
+W. Oehlert|http://users.stat.umn.edu/~gary/book/fcdae.pdf>.
 
 The terms FUNCTIONS and METHODS are arbitrarily used to refer to
 methods that are broadcastable and methods that are NOT broadcastable,
@@ -686,6 +693,8 @@ product of categories of all the IVs.
 Supports bad value (by ignoring missing or BAD values in dependent and
 independent variables list-wise).
 
+For more on ANOVA, see L<https://en.wikipedia.org/wiki/Analysis_of_variance>.
+
 =for options
 
 Default options (case insensitive):
@@ -880,6 +889,11 @@ Will only calculate p-value (C<F_p>) if there are more samples than the
 product of categories of all the IVs.
 
 Uses L</anova_design_matrix>, so supports bad values.
+
+For more on repeated measures ANOVA, see
+L<https://en.wikipedia.org/wiki/Repeated_measures_design>,
+and for mixed models, see
+L<https://en.wikipedia.org/wiki/Mixed-design_analysis_of_variance>.
 
 =for options
 
@@ -1127,7 +1141,7 @@ sub PDL::anova_rptd {
 Effect-coded design matrix for anova, including repeated-measures and
 mixed-model. The C<X> for use in linear regression i.e. C<Y = X β + ε>.
 
-Added in 0.854.
+Added in 0.854. See L<https://en.wikipedia.org/wiki/Design_matrix> for more.
 
 Supports bad value in the dependent and independent variables. It
 automatically removes bad data listwise, i.e. remove a subject's data if
@@ -1454,6 +1468,9 @@ IVs ($x) should be pdl dims $y->nelem or $y->nelem x n_iv. Do not supply
 the constant vector in $x. Intercept is automatically added and returned
 as FIRST of the coeffs if CONST=>1. Returns full model in list context
 and coeff in scalar context.
+
+For more on multiple linear regression see
+L<https://en.wikipedia.org/wiki/Multiple_linear_regression>.
 
 =for options
 
