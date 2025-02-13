@@ -25,6 +25,8 @@ use PDL::Stats::Kmeans;
 eval { require PDL::Core; require PDL::GSL::CDF; };
 my $CDF = 1 if !$@;
 
+=encoding utf8
+
 =head1 NAME
 
 PDL::Stats::GLM -- general and generalized linear modeling methods such as ANOVA, linear regression, PCA, and logistic regression.
@@ -1020,7 +1022,7 @@ sub PDL::anova_rptd {
   $opt{IVNM} = [ map { "IV_$_" } 0 .. $#ivs_raw ]
     if !$opt{IVNM} or !@{ $opt{IVNM} };
   (my ($dsgn, $idv), $y, my ($sj, $ivs_ref_filtrd, $pdl_ivs_raw, $ivs_ref, $err_ref)) = $y->anova_design_matrix($subj, @ivs_raw, \%opt);
-  confess "anova_rptd: got singular matrix for IVs x IVs'"
+  confess "anova_rptd: got singular matrix for X' x X"
     if any +($dsgn->t x $dsgn)->det == 0;
   my $b_full = _ols_main(1, $y, $dsgn->t, {CONST=>0});
 
@@ -1127,7 +1129,7 @@ sub PDL::anova_rptd {
 =for ref
 
 Effect-coded design matrix for anova, including repeated-measures and
-mixed-model.
+mixed-model. The C<X> for use in linear regression i.e. C<Y = X β + ε>.
 
 Added in 0.854.
 
@@ -1213,7 +1215,7 @@ sub PDL::anova_design_matrix {
     _add_errors( $sj, $ivs_ref, \@idv, \@pdl_ivs_raw, $opt{BTWN} );
   for (grep ref $err_ref->[$_], 0..$#$err_ref) {
     my ($null_row_ids, $non_null_row_ids) = $err_ref->[$_]->zcover->which_both;
-    confess "got null rows $null_row_ids in error entry #$_ ($idv[$_])"
+    confess "got null columns $null_row_ids in error entry #$_ ($idv[$_])"
       if !$null_row_ids->isempty;
   }
   my $dsgn = PDL::glue(1, ones($y->dim(0)), @$ivs_ref, (grep ref($_), @$err_ref))->t;
