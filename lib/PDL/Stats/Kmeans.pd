@@ -76,13 +76,12 @@ pp_addpm pp_line_numbers(__LINE__, <<'EOD' );
 
 =head2 random_cluster
 
-=for sig
-
-  Signature: (short [o]cluster(o,c); int obs=>o; int clu=>c)
-
 =for ref
 
-Creates masks for random mutually exclusive clusters. Accepts two parameters, num_obs and num_cluster. Extra parameter turns into extra dim in mask. May loop a long time if num_cluster approaches num_obs because empty cluster is not allowed.
+Creates masks for random mutually exclusive clusters. Accepts two
+parameters, num_obs and num_cluster. Extra parameter turns into extra
+dim in mask. May loop a long time if num_cluster approaches num_obs
+because empty cluster is not allowed.
 
 =for usage
 
@@ -92,32 +91,30 @@ Creates masks for random mutually exclusive clusters. Accepts two parameters, nu
 
   # can't be called on pdl
 sub random_cluster {
-  my ($obs, $clu) = @_;
+  my ($obs, $clu, @extra) = @_;
     # extra param in @_ made into extra dim
-  my $cluster = zeroes @_;
+  my $cluster = zeroes short(), @_;
   do {
-    $cluster->inplace->_random_cluster();
+    (random($obs, @extra) * $obs)->_random_cluster($cluster);
   } while (PDL::any $cluster->sumover == 0 );
-  return $cluster;
+  $cluster;
 }
 
 EOD
 
 pp_def('_random_cluster',
-  Pars  => 'a(o,c); [o]b(o,c)',
-  Inplace   => 1,
+  Pars  => 'rand_data(o); [o]b(o,c)',
   GenericTypes => ['S'],
   RedoDimsCode => 'if ($SIZE(c) > $SIZE(o)) $CROAK("more cluster than obs!");',
   Code  => '
-/* broadcasting w time only srand produces identical clusters */
-long r;
-srand( time( NULL ) + r++);
 PDL_Indx nc = $SIZE(c);
+broadcastloop %{
 loop (o) %{
-  PDL_Indx cl = rand() % nc; /* XXX-FIXME rand() is not 64bit friendly here! */
+  PDL_Indx cl = $rand_data() % nc;
   loop (c) %{
-    $b() = (c == cl)? 1 : 0;
+    $b() = (c == cl) ? 1 : 0;
   %}
+%}
 %}
   ',
   Doc   => undef,

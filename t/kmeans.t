@@ -39,17 +39,12 @@ is_pdl +(sequence(4,3) % 2)->assign(xvals(2,3)), short('1 0 1 0; 0 1 0 1');
   is_pdl $ss, $ss_a, "centroid with bad data";
 }
 
-# kmeans is undeterministic. retry to for optimal results
-ok(t_kmeans_with_retry(), 't_kmeans');
-sub t_kmeans_with_retry {
-    for my $retry (1..3) {
-        return 1 if t_kmeans();
-    }
-}
-sub t_kmeans {
+# make kmeans deterministic:
+srandom(5);
+{
   my $data = pdl '0 0 2 3 4 5 6; 7 0 9 10 11 12 13; 14 0 16 17 18 19 20';
   my %m = $data->kmeans({NCLUS=>2, NSEED=>6, NTRY=>10, V=>0});
-  eq_pdl $m{centroid}->sumover, pdl qw(3.3333333  10.333333  17.333333);
+  is_pdl $m{centroid}->sumover, pdl('3.3333333 10.333333 17.333333'), 'kmeans';
 }
 
 {
@@ -113,21 +108,12 @@ sub t_kmeans {
   is_pdl $m{ss}->sumover, $a{ss_sum}, {atol=>1e-3, test_name=>"kmeans ss with manually seeded centroid"};
 }
 
-TODO: {
-local $TODO = 'kmeans is undeterministic. retry to for optimal results';
-ok t_kmeans_bad_with_retry(), 't_kmeans_bad';
-}
-sub t_kmeans_bad_with_retry {
-    for my $retry (1..3) {
-        return 1 if t_kmeans_bad();
-    }
-}
-sub t_kmeans_bad {
+{
   my $data = sequence 7, 3;
   $data = $data->setbadat(4,0);
   my %m = $data->kmeans({NCLUS=>2, NTRY=>10, V=>0});
   #print "$_\t$m{$_}\n" for sort keys %m;
-  eq_pdl $m{ms}->sumover, pdl qw( 1.5  1.9166667  1.9166667 );
+  is_pdl $m{ms}->sumover, pdl('1.5 1.9166667 1.9166667'), 'kmeans bad';
 }
 
 {
