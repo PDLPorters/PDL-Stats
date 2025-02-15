@@ -62,5 +62,5 @@ sub init_PM {
   $self->SUPER::init_PM;
   @pd_srcs = ::pdlpp_eumm_update_deep($self);
 }
-sub postamble { ::pdlpp_postamble_int(@pd_srcs) }
+sub postamble { ::pdlpp_postamble(@pd_srcs) }
 }
