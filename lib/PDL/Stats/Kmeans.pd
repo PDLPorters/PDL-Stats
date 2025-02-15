@@ -360,13 +360,28 @@ pp_addpm pp_line_numbers(__LINE__, <<'EOD');
 
 =for ref
 
-Implements classic k-means cluster analysis. Given a number of
-observations with values on a set of variables, kmeans puts the
-observations into clusters that maximizes within-cluster similarity with
-respect to the variables. Tries several different random seeding and
-clustering in parallel. Stops when cluster assignment of the observations
-no longer changes. Returns the best result in terms of R2 from the
-random-seeding trials.
+Implements classic k-means cluster analysis.
+
+=for example
+
+  $data = grandom(200, 2); # two rows = two dimensions
+  %k = $data->kmeans; # use default of 3 clusters
+  print "$_\t$k{$_}\n" for sort keys %k;
+  $w->plot(
+    (map +(with=>'points', style=>$_+1, ke=>"Cluster ".($_+1),
+      $data->dice_axis(0,which($k{cluster}->slice(",$_")))->dog),
+      0 .. $k{cluster}->dim(1)-1),
+    (map +(with=>'circles', style=>$_+1, ke=>"Centroid ".($_+1), $k{centroid}->slice($_)->dog, 0.1),
+      0 .. $k{centroid}->dim(0)-1),
+    {le=>'tr'},
+  );
+
+Given a number of observations with values on a set of variables,
+kmeans puts the observations into clusters that maximizes within-cluster
+similarity with respect to the variables. Tries several different random
+seeding and clustering in parallel. Stops when cluster assignment of the
+observations no longer changes. Returns the best result in terms of R2
+from the random-seeding trials.
 
 Instead of random seeding, kmeans also accepts manual seeding. This is
 done by providing a centroid to the function, in which case clustering
@@ -661,7 +676,12 @@ sub PDL::iv_cluster {
 
 =head2 pca_cluster
 
-Assign variables to components ie clusters based on pca loadings or scores. One way to seed kmeans (see Ding & He, 2004, and Su & Dy, 2004 for other ways of using pca with kmeans). Variables are assigned to their most associated component. Note that some components may not have any variable that is most associated with them, so the returned number of clusters may be smaller than NCOMP.
+Assign variables to components ie clusters based on pca loadings or
+scores. One way to seed kmeans (see Ding & He, 2004, and Su & Dy, 2004
+for other ways of using pca with kmeans). Variables are assigned to
+their most associated component. Note that some components may not have
+any variable that is most associated with them, so the returned number
+of clusters may be smaller than NCOMP.
 
 Default options (case insensitive):
 
@@ -670,6 +690,7 @@ Default options (case insensitive):
   NCOMP => undef, # max number of components to consider. determined by
                   # scree plot black magic if not specified
   PLOT  => 0,     # pca scree plot with cutoff at NCOMP
+  WIN   => undef, # pass pgswin object for more plotting control
 
 Usage:
 
@@ -700,6 +721,7 @@ sub PDL::pca_cluster {
     NCOMP => undef, # max number of components to consider. determined by
                     # scree plot black magic if not specified
     PLOT  => 0,     # pca scree plot with cutoff at NCOMP
+    WIN   => undef, # pass pgswin object for more plotting control
   );
   if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
 
@@ -714,7 +736,7 @@ sub PDL::pca_cluster {
   }
   $opt{PLOT} and do {
     require PDL::Stats::GLM;
-    $var->plot_scree( {NCOMP=>$var->dim(0), CUT=>$opt{NCOMP}} );
+    $var->plot_screes({NCOMP=>$var->dim(0), CUT=>$opt{NCOMP}, WIN=>$opt{WIN}});
   };
 
   my $c = $self->slice(':',[0,$opt{NCOMP}-1])->transpose->abs->maximum_ind;

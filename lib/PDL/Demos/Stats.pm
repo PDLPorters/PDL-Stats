@@ -37,6 +37,21 @@ print "m=$m\nms=$ms";
 random(100)->plot_acf( 50, { win=>$w } );
 |],
 
+[act => q|
+# PDL::Stats::Kmeans clusters data points into "k" (a supplied number) groups
+$data = grandom(200, 2); # two rows = two dimensions
+%k = $data->kmeans; # use default of 3 clusters
+print "$_\t$k{$_}\n" for sort keys %k;
+$w->plot(
+  (map +(with=>'points', style=>$_+1, ke=>"Cluster ".($_+1),
+    $data->dice_axis(0,which($k{cluster}->slice(",$_")))->dog),
+    0 .. $k{cluster}->dim(1)-1),
+  (map +(with=>'circles', style=>$_+1, ke=>"Centroid ".($_+1), $k{centroid}->slice($_)->dog, 0.1),
+    0 .. $k{centroid}->dim(0)-1),
+  {le=>'tr'},
+);
+|],
+
 [comment => q|
 This concludes the demo.
 
