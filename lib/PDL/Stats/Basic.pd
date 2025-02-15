@@ -763,7 +763,7 @@ sub rtable {
               NROW    => '',
             );
   if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
-  $opt{V} and print STDERR "reading $src for data and id... ";
+  $opt{V} and print "reading $src for data and id... ";
 
   local $PDL::undefval = $opt{MISSN};
 
@@ -805,8 +805,8 @@ sub rtable {
     and ($data, $idv, $ido) = ($data->inplace->transpose, $id_c, $id_r);
 
   if ($opt{V}) {
-    print STDERR "OK.\ndata table as PDL dim o x v: " . $data->info . "\n";
-    $idv and print STDERR "$_\t$$idv[$_]\n" for (0..$#$idv);
+    print "OK.\ndata table as PDL dim o x v: " . $data->info . "\n";
+    $idv and print "$_\t$$idv[$_]\n" for 0..$#$idv;
   }
 
   $data = $data->setvaltobad( $opt{MISSN} );

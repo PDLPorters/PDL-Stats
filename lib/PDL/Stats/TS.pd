@@ -576,18 +576,6 @@ sub PDL::plot_dseason {
   return $dsea; 
 }
 
-*filt_exp = \&PDL::filt_exp;
-sub PDL::filt_exp {
-  print STDERR "filt_exp() deprecated since version 0.5.0. Please use filter_exp() instead\n";
-  return filter_exp( @_ );
-}
-
-*filt_ma = \&PDL::filt_ma;
-sub PDL::filt_ma {
-  print STDERR "filt_ma() deprecated since version 0.5.0. Please use filter_ma() instead\n";
-  return filter_ma( @_ );
-}
-
 =head1 METHODS
 
 =head2 plot_acf

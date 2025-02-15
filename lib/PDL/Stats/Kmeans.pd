@@ -522,12 +522,12 @@ sub PDL::kmeans {
   else {
     $opt{NSEED} = pdl($self->dim(0), $opt{NSEED})->min->sclr;
   }
-  $opt{V} and print STDERR "$_\t=> $opt{$_}\n" for sort keys %opt;
+  $opt{V} and print "$_\t=> $opt{$_}\n" for sort keys %opt;
  
   my $ss_ms = $self->badflag?  'ms' : 'ss';
   my $ss_total
     = $self->badflag?  $self->var->average : $self->ss->sumover;
-  $opt{V} and print STDERR "overall $ss_ms:\t$ss_total\n";
+  $opt{V} and print "overall $ss_ms:\t$ss_total\n";
 
   my ($centroid, $ss_cv, $R2, $clus_this, $clus_last);
 
@@ -549,7 +549,7 @@ sub PDL::kmeans {
     $R2 = $self->badflag? 1 - $ss_cv->average->average / $ss_total
         :                 1 - $ss_cv->sumover->sumover / $ss_total
         ;
-    $opt{V} and print STDERR join(' ',('iter', $iter++, 'R2', $R2)) . "\n";
+    $opt{V} and print join(' ',('iter', $iter++, 'R2', $R2)) . "\n";
 
     $clus_last = $clus_this;
    
@@ -727,7 +727,7 @@ sub PDL::pca_cluster {
                 ( 0 .. $c->dim(0)-1 );
     $c = iv_cluster( \@c );
   }
-  $opt{V} and print STDERR "cluster membership mask as " . $c->info . "\n";
+  $opt{V} and print "cluster membership mask as " . $c->info . "\n";
 
   return $c;
 }
