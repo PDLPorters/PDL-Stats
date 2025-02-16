@@ -52,6 +52,13 @@ $w->plot(
 );
 |],
 
+[act => q|
+# There's also a principal component analysis (PCA) clustering function
+$data = qsort random 10, 5;      # 10 obs on 5 variables
+%r = $data->pca( { plot=>1, win=>$w } );
+# Here we can see that very nearly all the variance is in the first component.
+|],
+
 [comment => q|
 This concludes the demo.
 
