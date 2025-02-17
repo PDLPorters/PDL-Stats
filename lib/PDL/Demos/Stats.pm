@@ -59,6 +59,12 @@ $data = qsort random 10, 5;      # 10 obs on 5 variables
 # Here we can see that very nearly all the variance is in the first component.
 |],
 
+[act => q|
+# From that PCA we can plot the original vs PCA-transformed scores
+# along the first two components
+$data->plot_scores( $r{eigenvector}, {win=>$w} );
+|],
+
 [comment => q|
 This concludes the demo.
 
