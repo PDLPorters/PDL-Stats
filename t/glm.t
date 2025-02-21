@@ -394,6 +394,15 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
 ';
 }
 
+{ # anova with too few samples for experiment (3*2*2 categories, 12 samples)
+my $y = pdl '[1 1 2 2 3 3 3 3 4 5 5 5]'; # ratings for 12 apples
+my $a = sequence(12) % 3 + 1; # IV for types of apple
+my @b = qw( y y y y y y n n n n n n ); # IV for whether we baked the apple
+my @c = qw( r g r g r g r g r g r g ); # IV for apple colour (red/green)
+eval {$y->anova( $a, \@b, \@c, { IVNM=>[qw(apple bake colour)], PLOT=>0 } )};
+like $@, qr/residual df = 0/, 'error when too few sample';
+}
+
 { # anova 1 way
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
   my $a = qsort sequence(15) % 3;

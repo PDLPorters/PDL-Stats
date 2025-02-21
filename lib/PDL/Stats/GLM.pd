@@ -1056,6 +1056,7 @@ sub PDL::anova_rptd {
           # highest ord inter for purely within design, (p-1)*(q-1)*(n-1)
         my $factor = (ref $full[-1] ? $full[-1] : $err_ref->[$full[-1]])->dim(1);
         my $df = $ret{ "$i_pref$e df" } = $factor * $within_df;
+        die "${i_pref}residual df = 0" if $df <= 0;
         $ret{ "$i_pref$e ms" } = $ret{ "$i_pref$e ss" } / $df;
       } elsif (ref $full[$k]) {       # unique error term
         next EFFECT
@@ -1066,6 +1067,7 @@ sub PDL::anova_rptd {
           = $y->sse(sumover($b_G * $G->transpose)) - $ret{ss_residual};
         if ($k != $#full) {
           my $df = $ret{"$i_pref$e df"} = $full[$k]->dim(1);
+          die "residual df = 0" if $df <= 0;
           $ret{"$i_pref$e ms"} = $ss / $df;
         }
       } else {                        # repeating error term
@@ -1073,6 +1075,7 @@ sub PDL::anova_rptd {
           = $ret{"| $idv->[$full[$k]] |$e ss"};
         if ($k != $#full) {
           my $df = $ret{"$i_pref$e df"} = $ret{"| $idv->[$full[$k]] |$e df"};
+          die "residual df = 0" if $df <= 0;
           $ret{"$i_pref$e ms"} = $ss / $df;
         }
       }
@@ -1095,6 +1098,7 @@ sub PDL::anova_rptd {
         = $y->sse( sumover($b_G * $G->transpose) ) - $ret{ss_residual};
       my $df0 = $ret{ "| $idv->[$k] | df" } = $ivs_ref->[$k]->dim(1);
       $ret{ "| $idv->[$k] || err df" } = $df1;
+      die "residual df = 0" if $df1 <= 0;
       $ret{ "| $idv->[$k] | ms" } = $ret{ "| $idv->[$k] | ss" } / $df0;
     }
   }
