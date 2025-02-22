@@ -65,6 +65,18 @@ $data = qsort random 10, 5;      # 10 obs on 5 variables
 $data->plot_scores( $r{eigenvector}, {win=>$w} );
 |],
 
+[act => q|
+# Let's try the analysis of variance (ANOVA) in PDL::Stats::GLM
+$y = pdl '[1 1 2 2 3 3 3 3 4 5 5 5]'; # suppose this is ratings for 12 apples
+$a = pdl '[1 2 3 1 2 3 1 2 3 1 2 3]'; # IV for types of apple
+@b = qw( y y y y y y n n n n n n );   # IV for whether we baked the apple
+%m = $y->anova( $a, \@b, { IVNM=>[qw(apple bake)], plot=>0, win=>$w } );
+print "$_\t$m{$_}\n" for (sort keys %m);
+# And plot the means of the interaction of all IVs
+$m{'# apple ~ bake # m'}->plot_means($m{'# apple ~ bake # se'},
+  { IVNM=>[qw(apple bake)], plot=>1, win=>$w });
+|],
+
 [comment => q|
 This concludes the demo.
 

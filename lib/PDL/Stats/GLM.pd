@@ -2068,23 +2068,32 @@ sub PDL::plot_means {
   my $ny = $self->dim($iD[3]);    # n ypanels
   my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin(
     multi=>[$nx,$ny], size=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny,'px']);
-  my $seq0 = sequence($self->dim($iD[0]));
+  my $seq0 = sequence(my $dim0 = $self->dim($iD[0]));
+  my ($pcount, @plots) = 0;
   for my $y (0..$ny-1) {
     for my $x (0..$nx-1) {
-      my $tl = '';
-      $tl =        $opt{IVNM}[$iD[2]] . " $x" if $nx > 1;
-      $tl .= ' ' . $opt{IVNM}[$iD[3]] . " $y" if $ny > 1;
+      my $key_prefix = "$opt{IVNM}[$iD[0]]|";
+      $key_prefix .= $opt{IVNM}[$iD[2]] . "=$x|" if $nx > 1;
+      $key_prefix .= $opt{IVNM}[$iD[3]] . "=$y|" if $ny > 1;
       for (0 .. $self->dim($iD[1]) - 1) {
-        my $ke = $self->dim($iD[1]) > 1 ? "$opt{IVNM}[$iD[1]] $_" : '';
+        my $ke = "$key_prefix$opt{IVNM}[$iD[1]]=$_";
         my $ydiced = $self->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)->dice_axis($iD[1],$_)->squeeze;
-        $w->plot(
-          with=>'points', !$ke?():(ke=>$ke), $seq0, $ydiced,
-          !defined($se)?():(with=>'errorbars', $seq0, $ydiced, $ydiced),
-          { xlabel=>$opt{IVNM}[$iD[0]], ylabel=>$opt{DVNM}, title=>$tl },
-        );
+        push @plots, with=>'lines', ke=>"$ke mean", style=>$pcount,
+          $seq0+$pcount*0.05, $ydiced;
+        push @plots, with=>'errorbars', ke=>"$ke error", style=>$pcount,
+          $seq0+$pcount*0.05, $ydiced,
+          $se->dice_axis($iD[3],$y)->dice_axis($iD[2],$x)
+            ->dice_axis($iD[1],$_)->squeeze
+          if defined($se);
+        $pcount++;
       }
     }
   }
+  my ($ymin, $ymax) = pdl($self, !defined $se ? () : ($self+$se, $self-$se))->minmax;
+  $w->plot(@plots,
+    { xlabel=>$opt{IVNM}[$iD[0]], ylabel=>$opt{DVNM},
+      xrange=>[-0.05,$dim0-1+$pcount*0.05], yrange=>[$ymin-0.05,$ymax+0.05] }
+  );
   $w;
 }
 
