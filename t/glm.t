@@ -323,11 +323,11 @@ is_pdl $b_bad->dvrs(ones(6) * .5), pdl( 'BAD -1.17741002251547 -1.17741002251547
   $d->set( 20, 10 );
   my @idv = qw(A B C);
   my %m = $d->anova(\@a, $b, $c, {IVNM=>\@idv, plot=>0});
-  $m{'# A ~ B ~ C # m'} = $m{'# A ~ B ~ C # m'}->slice(',(2),');
+  $m{'| A ~ B ~ C | m'} = $m{'| A ~ B ~ C | m'}->slice(',(2),');
   test_stats_cmp(\%m, {
     '| A | F' => 165.252100840336,
     '| A ~ B ~ C | F' => 0.0756302521008415,
-    '# A ~ B ~ C # m' => pdl([[qw(8 18 38 53)], [qw(8 23 38 53)]]),
+    '| A ~ B ~ C | m' => pdl([[qw(8 18 38 53)], [qw(8 23 38 53)]]),
   });
   my $dsgn = $d->anova_design_matrix(undef, \@a, $b, $c, {IVNM=>\@idv});
   is_pdl $dsgn, pdl '
@@ -407,11 +407,11 @@ like $@, qr/residual df = 0/, 'error when too few sample';
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
   my $a = qsort sequence(15) % 3;
   my %m = $d->anova($a, {plot=>0});
-  $m{$_} = $m{$_}->squeeze for '# IV_0 # m';
+  $m{$_} = $m{$_}->squeeze for '| IV_0 | m';
   test_stats_cmp(\%m, {
     F => 0.160919540229886,
     ms_model => 0.466666666666669,
-    '# IV_0 # m' => pdl(qw( 2.6 2.8 3.2 )),
+    '| IV_0 | m' => pdl(qw( 2.6 2.8 3.2 )),
   });
 }
 
@@ -424,12 +424,12 @@ like $@, qr/residual df = 0/, 'error when too few sample';
   my $b = sequence(60) % 3;
   my $c = sequence(60) % 2;
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, v=>0});
-  $m{$_} = $m{$_}->slice(',(1)')->squeeze for '# A ~ B ~ C # m', '# A ~ B ~ C # se';
+  $m{$_} = $m{$_}->slice(',(1)')->squeeze for '| A ~ B ~ C | m', '| A ~ B ~ C | se';
   test_stats_cmp(\%m, {
     '| A | F' => 150.00306433446,
     '| A ~ B ~ C | F' => 0.17534855325553,
-    '# A ~ B ~ C # m' => pdl([qw( 4 22 37 52 )], [qw( 10 22 37 52 )]),
-    '# A ~ B ~ C # se' => pdl([qw( 0 6 1.7320508 3.4641016 )], [qw( 3 3 3.4641016 1.7320508 )]),
+    '| A ~ B ~ C | m' => pdl([qw( 4 22 37 52 )], [qw( 10 22 37 52 )]),
+    '| A ~ B ~ C | se' => pdl([qw( 0 6 1.7320508 3.4641016 )], [qw( 3 3 3.4641016 1.7320508 )]),
   });
 }
 
@@ -443,11 +443,11 @@ like $@, qr/residual df = 0/, 'error when too few sample';
   $d->setbadat(62);
   $b->setbadat(61);
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, V=>0});
-  $m{$_} = $m{$_}->slice(',(2)')->squeeze for '# A ~ B ~ C # m';
+  $m{$_} = $m{$_}->slice(',(2)')->squeeze for '| A ~ B ~ C | m';
   test_stats_cmp(\%m, {
     '| A | F' => 165.252100840336,
     '| A ~ B ~ C | F' => 0.0756302521008415,
-    '# A ~ B ~ C # m' => pdl([qw(8 18 38 53)], [qw(8 23 38 53)]),
+    '| A ~ B ~ C | m' => pdl([qw(8 18 38 53)], [qw(8 23 38 53)]),
   });
 }
 
@@ -603,11 +603,11 @@ is_pdl pdl([1,1,1], [2,2,2])->stddz, zeroes(3,2), 'stddz nan vs bad';
  [1 -1 -1 -1 -1 -1 -1]
 ';
   my %m = $d->anova_rptd($s, $a, {plot=>0});
-  $m{$_} = $m{$_}->squeeze for '# IV_0 # m';
+  $m{$_} = $m{$_}->squeeze for '| IV_0 | m';
   test_stats_cmp(\%m, {
     '| IV_0 | F' => 0.145077720207254,
     '| IV_0 | ms' => 0.466666666666667,
-    '# IV_0 # m' => pdl(qw( 2.6 2.8 3.2 )),
+    '| IV_0 | m' => pdl(qw( 2.6 2.8 3.2 )),
   });
 }
 
@@ -615,7 +615,7 @@ my %anova_bad_a = (
   '| a | F' => 0.351351351351351,
   '| a | ms' => 0.722222222222222,
   '| a ~ b | F' => 5.25,
-  '# a ~ b # m' => pdl(qw( 3  1.3333333  3.3333333 3.3333333  3.6666667  2.6666667  ))->reshape(3,2),
+  '| a ~ b | m' => pdl(qw( 3  1.3333333  3.3333333 3.3333333  3.6666667  2.6666667  ))->reshape(3,2),
 );
 { # anova_rptd_2w bad dv
   my $d = pdl '[3 2 1 5 2 BAD 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';
@@ -671,8 +671,8 @@ my %anova_bad_a = (
     '| a ~ c | F' => 3.64615384615385,
     '| b ~ c || err ms' => 2.63194444444445,
     '| a ~ b ~ c | F' => 1.71299093655589,
-    '# a ~ b ~ c # m' => pdl(qw( 4 2.75 2.75 2.5 3.25 4.25 3.5 1.75 2 3.5 2.75 2.25 ))->reshape(2,2,3),
-    '# a ~ b # se' => ones(2, 2) * 0.55014729,
+    '| a ~ b ~ c | m' => pdl(qw( 4 2.75 2.75 2.5 3.25 4.25 3.5 1.75 2 3.5 2.75 2.25 ))->reshape(2,2,3),
+    '| a ~ b | se' => ones(2, 2) * 0.55014729,
   });
 }
 
@@ -879,7 +879,7 @@ my %ans_mixed = (
   '| a ~ b | F' => 1.54225352112676,
   '| b | F' => 0.738693467336681,
   '| b || err ms' => 2.76388888888889,
-  '# a ~ b # se' => ones(3,2) * 0.70217915,
+  '| a ~ b | se' => ones(3,2) * 0.70217915,
 );
 { # anova_rptd mixed
   my $d = pdl '[3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 3 4 2 1 5 4 3 2 2]';

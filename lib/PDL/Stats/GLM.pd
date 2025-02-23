@@ -725,62 +725,53 @@ Usage:
 
     perldl> %m = $y->anova( $a, \@b, { IVNM=>['apple', 'bake'] } )
 
-    perldl> p "$_\t$m{$_}\n" for sort keys %m
-    # apple # m
-    [
-     [2.5   3 3.5]
+    perldl> p "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m
+    F	2.46666666666667
+    F_df	[5 6]
+    F_p	0.151168719948632
+    ms_model	3.08333333333333
+    ms_residual	1.25
+    ss_model	15.4166666666667
+    ss_residual	7.5
+    ss_total	22.9166666666667
+    | apple | F	0.466666666666667
+    | apple | F_p	0.648078345471096
+    | apple | df	2
+    | apple | m	[
+     [2.75    3  3.5]
     ]
-
-    # apple # se
-    [
-     [0.64549722 0.91287093 0.64549722]
+    | apple | ms	0.583333333333334
+    | apple | se	[
+     [       0.85391256        0.81649658        0.64549722]
     ]
-
-    # apple ~ bake # m
-    [
-     [1.5 1.5 2.5]
-     [3.5 4.5 4.5]
+    | apple | ss	1.16666666666667
+    | apple || err df	6
+    | apple ~ bake | F	0.0666666666666671
+    | apple ~ bake | F_p	0.936190104380701
+    | apple ~ bake | df	2
+    | apple ~ bake | m	[
+     [1.5   2 2.5]
+     [  4   4 4.5]
     ]
-
-    # apple ~ bake # se
-    [
-     [0.5 0.5 0.5]
-     [0.5 0.5 0.5]
+    | apple ~ bake | ms	0.0833333333333339
+    | apple ~ bake | se	[
+     [0.5   1 0.5]
+     [  1   1 0.5]
     ]
-
-    # bake # m
-    [
-     [ 1.8333333  4.1666667]
+    | apple ~ bake | ss	0.166666666666668
+    | apple ~ bake || err df	6
+    | bake | F	11.2666666666667
+    | bake | F_p	0.015294126084452
+    | bake | df	1
+    | bake | m	[
+     [               2        4.1666667]
     ]
-
-    # bake # se
-    [
-     [0.30731815 0.30731815]
+    | bake | ms	14.0833333333333
+    | bake | se	[
+     [       0.36514837        0.40138649]
     ]
-
-    F       7.6
-    F_df    [5 6]
-    F_p     0.0141586545851857
-    ms_model        3.8
-    ms_residual     0.5
-    ss_model        19
-    ss_residual     3
-    ss_total        22
-    | apple | F     2
-    | apple | F_df  [2 6]
-    | apple | F_p   0.216
-    | apple | ms    1
-    | apple | ss    2
-    | apple ~ bake | F      0.666666666666667
-    | apple ~ bake | F_df   [2 6]
-    | apple ~ bake | F_p    0.54770848985725
-    | apple ~ bake | ms     0.333333333333334
-    | apple ~ bake | ss     0.666666666666667
-    | bake | F      32.6666666666667
-    | bake | F_df   [1 6]
-    | bake | F_p    0.00124263849516693
-    | bake | ms     16.3333333333333
-    | bake | ss     16.3333333333333
+    | bake | ss	14.0833333333333
+    | bake || err df	6
 
 This is implemented as a call to L</anova_rptd>, with an C<undef>
 subjects vector.
@@ -853,8 +844,8 @@ sub _cell_means {
     $m->getndims == 1 and $m = $m->dummy(1);
     my $se = sqrt( ($ss/($_->sumover - 1)) / $_->sumover )->reshape(@shape);
     $se->getndims == 1 and $se = $se->dummy(1);
-    $cm{ "# $idv->[$i] # m" }  = $m;
-    $cm{ "# $idv->[$i] # se" } = $se;
+    $cm{ "| $idv->[$i] | m" }  = $m;
+    $cm{ "| $idv->[$i] | se" } = $se;
     $i++;
   }
   \%cm;
@@ -935,41 +926,7 @@ Usage:
       # subj must be the first argument
     my %m = $dv->anova_rptd( $subj, $b, $w, {ivnm=>['Beer', 'Wings']} );
 
-    print "$_\t$m{$_}\n" for sort keys %m;
-
-    # Beer # m
-    [
-     [ 10.916667  8.9166667]
-    ]
-
-    # Beer # se
-    [
-     [ 0.4614791  0.4614791]
-    ]
-
-    # Beer ~ Wings # m
-    [
-     [   10     7]
-     [ 10.5  9.25]
-     [12.25  10.5]
-    ]
-
-    # Beer ~ Wings # se
-    [
-     [0.89170561 0.89170561]
-     [0.89170561 0.89170561]
-     [0.89170561 0.89170561]
-    ]
-
-    # Wings # m
-    [
-     [   8.5  9.875 11.375]
-    ]
-
-    # Wings # se
-    [
-     [0.67571978 0.67571978 0.67571978]
-    ]
+    print "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m
 
     ss_residual	19.0833333333333
     ss_subject	24.8333333333333
@@ -977,7 +934,13 @@ Usage:
     | Beer | F	9.39130434782609
     | Beer | F_p	0.0547977008378944
     | Beer | df	1
+    | Beer | m [
+     [ 10.916667  8.9166667]
+    ]
     | Beer | ms	24
+    | Beer | se [
+     [ 0.4614791  0.4614791]
+    ]
     | Beer | ss	24
     | Beer || err df	3
     | Beer || err ms	2.55555555555556
@@ -985,7 +948,17 @@ Usage:
     | Beer ~ Wings | F	0.510917030567687
     | Beer ~ Wings | F_p	0.623881438624431
     | Beer ~ Wings | df	2
+    | Beer ~ Wings | m [
+     [   10     7]
+     [ 10.5  9.25]
+     [12.25  10.5]
+    ]
     | Beer ~ Wings | ms	1.625
+    | Beer ~ Wings | se [
+     [0.89170561 0.89170561]
+     [0.89170561 0.89170561]
+     [0.89170561 0.89170561]
+    ]
     | Beer ~ Wings | ss	3.25000000000001
     | Beer ~ Wings || err df	6
     | Beer ~ Wings || err ms	3.18055555555555
@@ -993,7 +966,13 @@ Usage:
     | Wings | F	4.52851711026616
     | Wings | F_p	0.0632754786153548
     | Wings | df	2
+    | Wings | m [
+     [   8.5  9.875 11.375]
+    ]
     | Wings | ms	16.5416666666667
+    | Wings | se [
+     [0.67571978 0.67571978 0.67571978]
+    ]
     | Wings | ss	33.0833333333333
     | Wings || err df	6
     | Wings || err ms	3.65277777777778
@@ -1131,7 +1110,7 @@ sub PDL::anova_rptd {
   @ret{ keys %$cm_ref } = values %$cm_ref;
 
   my $highest = join(' ~ ', @{ $opt{IVNM} });
-  $cm_ref->{"# $highest # m"}->plot_means( $cm_ref->{"# $highest # se"},
+  $cm_ref->{"| $highest | m"}->plot_means( $cm_ref->{"| $highest | se"},
                                            { %opt, IVNM=>$idv } )
     if $opt{PLOT};
 
@@ -1300,7 +1279,7 @@ sub _fix_rptd_se {
     # if ivnm lvls_ref for within ss only this can work for mixed design
   my ($cm_ref, $ret, $ivnm, $lvls_ref, $n) = @_;
   my @se = grep /se$/, keys %$cm_ref;
-  @se = map { /^# (.+?) # se$/; $1; } @se;
+  @se = map { /^\| (.+?) \| se$/; $1; } @se;
   my @n_obs
     = map {
         my @ivs = split / ~ /, $_;
@@ -1313,7 +1292,7 @@ sub _fix_rptd_se {
         $n * $collapsed;
       } @se;
   for my $i (0 .. $#se) {
-    $cm_ref->{"# $se[$i] # se"}
+    $cm_ref->{"| $se[$i] | se"}
       .= sqrt( $ret->{"| $se[$i] || err ms"} / $n_obs[$i] );
   }
   $cm_ref;
@@ -2028,7 +2007,7 @@ Usage:
 
 Or like this:
 
-    $m{'# apple ~ bake # m'}->plot_means;
+    $m{'| apple ~ bake | m'}->plot_means;
 
 =cut
 

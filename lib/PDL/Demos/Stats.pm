@@ -41,7 +41,7 @@ random(100)->plot_acf( 50, { win=>$w } );
 # PDL::Stats::Kmeans clusters data points into "k" (a supplied number) groups
 $data = grandom(200, 2); # two rows = two dimensions
 %k = $data->kmeans; # use default of 3 clusters
-print "$_\t$k{$_}\n" for sort keys %k;
+print "$_\t@{[$k{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %k;
 $w->plot(
   (map +(with=>'points', style=>$_+1, ke=>"Cluster ".($_+1),
     $data->dice_axis(0,which($k{cluster}->slice(",$_")))->dog),
@@ -65,17 +65,17 @@ $data = qsort random 10, 5;      # 10 obs on 5 variables
 $data->plot_scores( $r{eigenvector}, {win=>$w} );
 |],
 
-[act => q|
+[act => q{
 # Let's try the analysis of variance (ANOVA) in PDL::Stats::GLM
 $y = pdl '[1 1 2 2 3 3 3 3 4 5 5 5]'; # suppose this is ratings for 12 apples
 $a = pdl '[1 2 3 1 2 3 1 2 3 1 2 3]'; # IV for types of apple
 @b = qw( y y y y y y n n n n n n );   # IV for whether we baked the apple
 %m = $y->anova( $a, \@b, { IVNM=>[qw(apple bake)], plot=>0, win=>$w } );
-print "$_\t$m{$_}\n" for (sort keys %m);
+print "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m;
 # And plot the means of the interaction of all IVs
-$m{'# apple ~ bake # m'}->plot_means($m{'# apple ~ bake # se'},
+$m{'| apple ~ bake | m'}->plot_means($m{'| apple ~ bake | se'},
   { IVNM=>[qw(apple bake)], plot=>1, win=>$w });
-|],
+}],
 
 [comment => q|
 This concludes the demo.
