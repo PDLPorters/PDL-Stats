@@ -407,7 +407,6 @@ like $@, qr/residual df = 0/, 'error when too few sample';
   my $d = pdl qw( 3 2 1 5 2 1 5 3 1 4 1 2 3 5 5 );
   my $a = qsort sequence(15) % 3;
   my %m = $d->anova($a, {plot=>0});
-  $m{$_} = $m{$_}->squeeze for '| IV_0 | m';
   test_stats_cmp(\%m, {
     F => 0.160919540229886,
     ms_model => 0.466666666666669,
@@ -424,7 +423,7 @@ like $@, qr/residual df = 0/, 'error when too few sample';
   my $b = sequence(60) % 3;
   my $c = sequence(60) % 2;
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, v=>0});
-  $m{$_} = $m{$_}->slice(',(1)')->squeeze for '| A ~ B ~ C | m', '| A ~ B ~ C | se';
+  $m{$_} = $m{$_}->slice(',(1)') for '| A ~ B ~ C | m', '| A ~ B ~ C | se';
   test_stats_cmp(\%m, {
     '| A | F' => 150.00306433446,
     '| A ~ B ~ C | F' => 0.17534855325553,
@@ -443,7 +442,7 @@ like $@, qr/residual df = 0/, 'error when too few sample';
   $d->setbadat(62);
   $b->setbadat(61);
   my %m = $d->anova(\@a, $b, $c, {IVNM=>[qw(A B C)], plot=>0, V=>0});
-  $m{$_} = $m{$_}->slice(',(2)')->squeeze for '| A ~ B ~ C | m';
+  $m{$_} = $m{$_}->slice(',(2)') for '| A ~ B ~ C | m';
   test_stats_cmp(\%m, {
     '| A | F' => 165.252100840336,
     '| A ~ B ~ C | F' => 0.0756302521008415,
@@ -603,7 +602,6 @@ is_pdl pdl([1,1,1], [2,2,2])->stddz, zeroes(3,2), 'stddz nan vs bad';
  [1 -1 -1 -1 -1 -1 -1]
 ';
   my %m = $d->anova_rptd($s, $a, {plot=>0});
-  $m{$_} = $m{$_}->squeeze for '| IV_0 | m';
   test_stats_cmp(\%m, {
     '| IV_0 | F' => 0.145077720207254,
     '| IV_0 | ms' => 0.466666666666667,

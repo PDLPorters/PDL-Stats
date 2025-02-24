@@ -737,13 +737,9 @@ Usage:
     | apple | F	0.466666666666667
     | apple | F_p	0.648078345471096
     | apple | df	2
-    | apple | m	[
-     [2.75    3  3.5]
-    ]
+    | apple | m	[2.75    3  3.5]
     | apple | ms	0.583333333333334
-    | apple | se	[
-     [       0.85391256        0.81649658        0.64549722]
-    ]
+    | apple | se	[0.85391256 0.81649658 0.64549722]
     | apple | ss	1.16666666666667
     | apple || err df	6
     | apple ~ bake | F	0.0666666666666671
@@ -763,13 +759,9 @@ Usage:
     | bake | F	11.2666666666667
     | bake | F_p	0.015294126084452
     | bake | df	1
-    | bake | m	[
-     [               2        4.1666667]
-    ]
+    | bake | m	[2 4.1666667]
     | bake | ms	14.0833333333333
-    | bake | se	[
-     [       0.36514837        0.40138649]
-    ]
+    | bake | se	[0.36514837 0.40138649]
     | bake | ss	14.0833333333333
     | bake || err df	6
 
@@ -836,14 +828,12 @@ sub _cell_means {
     $_->where($_ == -1) .= 0;
     $_ = $_->glue(1, $last);
     my @v = split ' ~ ', $idv->[$i];
-    my @shape = map { $pdl_ivs_raw->[$_]->uniq->nelem } @ind_id{@v};
+    my @shape = map $pdl_ivs_raw->[$_]->uniq->nelem, @ind_id{@v};
     my ($m, $ss) = $data->centroid( $_ );
     $m  = $m->slice($i_cmo_ref->[$i])->sever;
     $ss = $ss->slice($i_cmo_ref->[$i])->sever;
     $m = $m->reshape(@shape);
-    $m->getndims == 1 and $m = $m->dummy(1);
     my $se = sqrt( ($ss/($_->sumover - 1)) / $_->sumover )->reshape(@shape);
-    $se->getndims == 1 and $se = $se->dummy(1);
     $cm{ "| $idv->[$i] | m" }  = $m;
     $cm{ "| $idv->[$i] | se" } = $se;
     $i++;
@@ -934,13 +924,9 @@ Usage:
     | Beer | F	9.39130434782609
     | Beer | F_p	0.0547977008378944
     | Beer | df	1
-    | Beer | m [
-     [ 10.916667  8.9166667]
-    ]
+    | Beer | m [10.916667  8.9166667]
     | Beer | ms	24
-    | Beer | se [
-     [ 0.4614791  0.4614791]
-    ]
+    | Beer | se [0.4614791  0.4614791]
     | Beer | ss	24
     | Beer || err df	3
     | Beer || err ms	2.55555555555556
@@ -966,13 +952,9 @@ Usage:
     | Wings | F	4.52851711026616
     | Wings | F_p	0.0632754786153548
     | Wings | df	2
-    | Wings | m [
-     [   8.5  9.875 11.375]
-    ]
+    | Wings | m [8.5 9.875 11.375]
     | Wings | ms	16.5416666666667
-    | Wings | se [
-     [0.67571978 0.67571978 0.67571978]
-    ]
+    | Wings | se [0.67571978 0.67571978 0.67571978]
     | Wings | ss	33.0833333333333
     | Wings || err df	6
     | Wings || err ms	3.65277777777778
@@ -1278,19 +1260,17 @@ sub _add_errors {
 sub _fix_rptd_se {
     # if ivnm lvls_ref for within ss only this can work for mixed design
   my ($cm_ref, $ret, $ivnm, $lvls_ref, $n) = @_;
-  my @se = grep /se$/, keys %$cm_ref;
-  @se = map { /^\| (.+?) \| se$/; $1; } @se;
-  my @n_obs
-    = map {
-        my @ivs = split / ~ /, $_;
-        my $i_ivs = which_id $ivnm, \@ivs;
-        my $icollapsed = setops pdl(0 .. $#$ivnm), 'XOR', $i_ivs;
-        my $collapsed = $icollapsed->nelem?
-                          pdl( @$lvls_ref[(list $icollapsed)] )->prodover
-                      :   1
-                      ;
-        $n * $collapsed;
-      } @se;
+  my @se = map /^\| (.+?) \| se$/ ? $1 : (), keys %$cm_ref;
+  my @n_obs = map {
+    my @ivs = split / ~ /, $_;
+    my $i_ivs = which_id $ivnm, \@ivs;
+    my $icollapsed = setops pdl(0 .. $#$ivnm), 'XOR', $i_ivs;
+    my $collapsed = $icollapsed->nelem?
+                      pdl( @$lvls_ref[(list $icollapsed)] )->prodover
+                  :   1
+                  ;
+    $n * $collapsed;
+  } @se;
   for my $i (0 .. $#se) {
     $cm_ref->{"| $se[$i] | se"}
       .= sqrt( $ret->{"| $se[$i] || err ms"} / $n_obs[$i] );
