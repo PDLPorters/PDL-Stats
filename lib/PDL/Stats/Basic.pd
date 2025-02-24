@@ -1033,23 +1033,16 @@ Lookup specified var (obs) ids in $idv ($ido) (see B<rtable>) and return indices
 
 sub which_id {
   my ($id, $id_s) = @_;
-
-  my %ind;
-  @ind{ @$id } = ( 0 .. $#$id );
-
-  my @ind_select;
-  for (@$id_s) {
-    defined( $ind{$_} ) and push @ind_select, $ind{$_};
-  }
-  return pdl @ind_select;
+  my %ind; @ind{ @$id } = (0 .. $#$id);
+  pdl grep defined, map $ind{$_}, @$id_s;
 }
 
+my %code_bad = map +($_=>1), '', 'BAD';
 sub code_ivs {
   my ($var_ref) = @_;
   $var_ref = [ $var_ref->list ] if UNIVERSAL::isa($var_ref, 'PDL');
-  my ($l, @filtered, %level) = (0,
-    map defined($_) && $_ ne '' && $_ ne 'BAD' ? $_ : undef, @$var_ref);
-  $level{$_} //= $l++ for grep defined, @filtered;
+  my @filtered = map !defined($_) || $code_bad{$_} ? undef : $_, @$var_ref;
+  my ($l, %level) = 0; $level{$_} //= $l++ for grep defined, @filtered;
   my $pdl = pdl(map defined($_) ? $level{$_} : -1, @filtered)->setvaltobad(-1);
   $pdl->check_badflag;
   wantarray ? ($pdl, \%level) : $pdl;
