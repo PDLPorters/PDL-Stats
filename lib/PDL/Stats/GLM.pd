@@ -2026,7 +2026,7 @@ sub PDL::plot_means {
   my $nx = $self->dim($iD[2]);    # n xpanels
   my $ny = $self->dim($iD[3]);    # n ypanels
   my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin(
-    multi=>[$nx,$ny], size=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny,'px']);
+    size=>[$opt{SIZE}*$nx, $opt{SIZE}*$ny,'px']);
   my $seq0 = sequence(my $dim0 = $self->dim($iD[0]));
   my ($pcount, @plots) = 0;
   for my $y (0..$ny-1) {
@@ -2250,7 +2250,7 @@ The GLM procedure: unbalanced ANOVA for two-way design with
 interaction. (2008). SAS/STAT(R) 9.2 User's Guide. Retrieved June 18,
 2009 from http://support.sas.com/
 
-Van den Noortgatea, W., & Onghenaa, P. (2006). Analysing repeated
+Van den Noortgate, W., & Onghena, P. (2006). Analysing repeated
 measures data in cognitive research: A comment on regression coefficient
 analyses. European Journal of Cognitive Psychology, 18, 937-952.
 
