@@ -623,16 +623,16 @@ sub PDL::plot_acf {
     carp "SIG outside of recognized value. default to 0.05";
     $y_sig = 1.95996398454005;
   }
-
   my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
   my $seq = pdl(-1,$h+1);
   my $y_seq = ones(2) * $y_sig / sqrt($self->dim(0)) * -1;
-  $w->plot(with=>'lines', $seq, zeroes(2)); # x axis
-  $w->oplot(with=>'lines', style=>2, $seq,  $y_seq);
-  $w->oplot(with=>'lines', style=>2, $seq, -$y_seq);
-  $w->oplot((map +(with=>'lines', ones(2)*$_, pdl(0, $r->slice("($_)"))), 0..$h), { xlabel=>'lag', ylabel=>'acf', });
-
-  return $r;
+  $w->plot(
+    with=>'lines', $seq, zeroes(2), # x axis
+    with=>'lines', style=>2, $seq,  $y_seq,
+    with=>'lines', style=>2, $seq, -$y_seq,
+    (map +(with=>'lines', ones(2)*$_, pdl(0, $r->slice("($_)"))), 0..$h), { xlabel=>'lag', ylabel=>'acf', }
+  );
+  $r;
 }
 
 =head1 	REFERENCES
