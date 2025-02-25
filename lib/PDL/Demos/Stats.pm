@@ -66,13 +66,20 @@ $data->plot_scores( $r{eigenvector}, {win=>$w} );
 |],
 
 [act => q{
-# Let's try the analysis of variance (ANOVA) in PDL::Stats::GLM
 $y = pdl '[1 1 2 2 3 3 3 3 4 5 5 5]'; # suppose this is ratings for 12 apples
 $a = pdl '[1 2 3 1 2 3 1 2 3 1 2 3]'; # IV for types of apple
 @b = qw( y y y y y y n n n n n n );   # IV for whether we baked the apple
+# First let's look at the raw data, categorised in each independent variable:
+$y->plot_stripchart( $a, \@b, { IVNM=>[qw(apple bake)], win=>$w } );
+# Looks like there's a visible partition in the "bake" IV
+}],
+
+[act => q{
+# Let's try the analysis of variance (ANOVA) in PDL::Stats::GLM
 %m = $y->anova( $a, \@b, { IVNM=>[qw(apple bake)], plot=>0, win=>$w } );
 print "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m;
-# And plot the means of the interaction of all IVs
+# The p-value of variance explained by "bake" is ~0.015 - significant
+# Let's plot the means of the interaction of all IVs
 $m{'| apple ~ bake | m'}->plot_means($m{'| apple ~ bake | se'},
   { IVNM=>[qw(apple bake)], plot=>1, win=>$w });
 }],

@@ -2219,6 +2219,71 @@ sub PDL::plot_screes {
   );
 }
 
+=head2 plot_stripchart
+
+Stripchart plot. Plots ANOVA-style data, categorised against given IVs.
+
+=for options
+
+Default options (case insensitive):
+
+  IVNM => [],   # auto filled as ['IV_0', 'IV_1', ... ]
+  DVNM => 'DV',
+   # see PDL::Graphics::Simple for next options
+  WIN => undef,  # pgswin object. not closed here if passed
+
+=for usage
+
+Usage:
+
+  %m = $y->plot_stripchart( $a, \@b, { IVNM=>[qw(apple bake)] } );
+
+=cut
+
+my $CHART_GAP = 0.1;
+*plot_stripchart = \&PDL::plot_stripchart;
+sub PDL::plot_stripchart {
+  require PDL::Graphics::Simple;
+  my $opt = ref($_[-1]) eq 'HASH' ? pop @_ : undef;
+  my ($y, @ivs_raw) = @_;
+  my %opt = (
+    IVNM => [],   # auto filled as ['IV_0', 'IV_1', ... ]
+    DVNM => 'DV',
+    WIN => undef,  # pgswin object. not closed here if passed
+  );
+  if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
+  $opt{IVNM} = [ map { "IV_$_" } 0 .. $#ivs_raw ]
+    if !$opt{IVNM} or !@{ $opt{IVNM} };
+  my $w = $opt{WIN} || PDL::Graphics::Simple::pgswin();
+  my @codes = map [code_ivs($_)], @ivs_raw;
+  my @levels = map {
+    my $map = $_->[1];
+    [sort {$map->{$a} <=> $map->{$b}} keys %$map];
+  } @codes;
+  my $xjitter = $y->random * $CHART_GAP;
+  my ($pcount, @plots) = 0;
+  push @plots, with=>'points', ke=>"all data", $xjitter+$pcount, $y;
+  $pcount++;
+  for my $i (0..$#ivs_raw) {
+    my $levs = $levels[$i];
+    my $name = $opt{IVNM}[$i];
+    my $coded = $codes[$i][0];
+    for my $j (0..$#$levs) {
+      my $inds = which($coded == $j);
+      push @plots, with=>'points', ke=>"$name=$levs->[$j]",
+        $xjitter->slice($inds)+$pcount+$j*$CHART_GAP, $y->slice($inds);
+    }
+    $pcount++;
+  }
+  my ($ymin, $ymax) = $y->minmax;
+  my $xmax = $pcount-1 + $CHART_GAP*($#{$levels[-1]} + 2);
+  $w->plot(@plots,
+    { xlabel=>'IV', ylabel=>$opt{DVNM},
+      xrange=>[-1,$xmax], yrange=>[$ymin-$CHART_GAP,$ymax+$CHART_GAP] }
+  );
+  $w;
+}
+
 =head1 SEE ALSO
 
 L<PDL::Fit::Linfit>

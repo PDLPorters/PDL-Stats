@@ -8,6 +8,7 @@
 - remove filt_exp and filt_ma, deprecated in 2011
 - now an exception to give anova n-observations <= product of categories in IVs
 - anova cell means keys now separated by "|" not "#" to sort logically
+- add GLM::plot_stripchart
 
 0.853 2025-01-03
 - uses PDL 2.096+ lib/*.pd format for quicker builds
