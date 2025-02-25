@@ -66,6 +66,18 @@ $data->plot_scores( $r{eigenvector}, {win=>$w} );
 |],
 
 [act => q{
+# Suppose this is a person's ratings for top 10 box office movies
+# ascending sorted by box office
+$y = pdl '[1 1 2 2 2 2 4 4 5 5]';
+$x = cat sequence(10), sequence(10)**2; # IV with linear and quadratic component
+# We do an ordinary least squares (OLS), or multiple linear regression,
+# to get the underlying linear model. Here we also plot how far the real
+# data was from our calculated model.
+%m = $y->ols( $x, { plot=>1, win=>$w } );
+print "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m;
+}],
+
+[act => q{
 $y = pdl '[1 1 2 2 3 3 3 3 4 5 5 5]'; # suppose this is ratings for 12 apples
 $a = pdl '[1 2 3 1 2 3 1 2 3 1 2 3]'; # IV for types of apple
 @b = qw( y y y y y y n n n n n n );   # IV for whether we baked the apple

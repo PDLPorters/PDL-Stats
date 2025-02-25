@@ -2048,7 +2048,9 @@ Plots residuals against predicted values.
 
 Usage:
 
-    $y->plot_residuals( $y_pred, { dev=>'/png' } );
+    use PDL::Graphics::Simple;
+    $w = pgswin();
+    $y->plot_residuals( $y_pred, { win=>$w } );
 
 =for options
 
@@ -2076,7 +2078,7 @@ sub PDL::plot_residuals {
   );
   if ($opt) { $opt{uc $_} = $opt->{$_} for keys %$opt; }
   my $residuals = $y - $y_pred;
-  my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
+  my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[@opt{qw(SIZE SIZE)}, 'px']);
   $win->plot(
     with=>'points', style=>$opt{COLOR}, $y_pred, $residuals,
     with=>'lines',  style=>$opt{COLOR}, pdl($y_pred->minmax), pdl(0,0), # 0-line
@@ -2130,7 +2132,7 @@ sub PDL::plot_scores {
     # transformed normed values
   my $scores = sumover($eigvec->slice(':',$i) * $z->transpose->dummy(1))->transpose;
   $z = $z->slice(':',$i)->sever;
-  my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[$opt{SIZE}, $opt{SIZE}]);
+  my $win = $opt{WIN} || PDL::Graphics::Simple::pgswin(size=>[@opt{qw(SIZE SIZE)}, 'px']);
   $win->plot(
     with=>'points', style=>$opt{COLOR}[0], ke=>'original', $z->slice(',(0)'), $z->slice(',(1)'),
     with=>'points', style=>$opt{COLOR}[1], ke=>'transformed', $scores->slice(',(0)'), $scores->slice(',(1)'),
