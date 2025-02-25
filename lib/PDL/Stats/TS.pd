@@ -17,7 +17,7 @@ The terms FUNCTIONS and METHODS are arbitrarily used to refer to
 methods that are threadable and methods that are NOT threadable,
 respectively. Plots require L<PDL::Graphics::Simple>.
 
-***EXPERIMENTAL!*** In particular, bad value support is spotty and may be shaky. USE WITH DISCRETION! 
+***EXPERIMENTAL!*** In particular, bad value support is spotty and may be shaky. USE WITH DISCRETION!
 
 =head1 SYNOPSIS
 
@@ -94,11 +94,11 @@ acf does not process bad values.
 
 usage:
 
-    perldl> $a = sequence 10
+    pdl> $a = sequence 10
 
     # lags 0 .. 5
 
-    perldl> p $a->acf(5)
+    pdl> p $a->acf(5)
     [1 0.7 0.41212121 0.14848485 -0.078787879 -0.25757576]
 EOD
 );
@@ -149,16 +149,16 @@ acvf does not process bad values.
 
 usage:
 
-    perldl> $a = sequence 10
+    pdl> $a = sequence 10
 
     # lags 0 .. 5
 
-    perldl> p $a->acvf(5)
+    pdl> p $a->acvf(5)
     [82.5 57.75 34 12.25 -6.5 -21.25]
 
     # autocorrelation
-    
-    perldl> p $a->acvf(5) / $a->acvf(0)
+
+    pdl> p $a->acvf(5) / $a->acvf(0)
     [1 0.7 0.41212121 0.14848485 -0.078787879 -0.25757576]
 EOD
 );
@@ -383,18 +383,18 @@ Portmanteau significance test (Ljung-Box) for autocorrelations.
 
 Usage:
 
-    perldl> $a = sequence 10
+    pdl> $a = sequence 10
 
     # acf for lags 0-5
     # lag 0 excluded from portmanteau
-    
-    perldl> p $chisq = $a->acf(5)->portmanteau( $a->nelem )
+
+    pdl> p $chisq = $a->acf(5)->portmanteau( $a->nelem )
     11.1753902662994
-   
+
     # get p-value from chisq distr
 
-    perldl> use PDL::GSL::CDF
-    perldl> p 1 - gsl_cdf_chisq_P( $chisq, 5 )
+    pdl> use PDL::GSL::CDF
+    pdl> p 1 - gsl_cdf_chisq_P( $chisq, 5 )
     0.0480112934306748
   ',
 );
@@ -455,16 +455,16 @@ pred_ar does not process bad values.
 
 Usage:
 
-    perldl> $x = sequence 2
+    pdl> $x = sequence 2
 
       # last element is constant
-    perldl> $b = pdl(.8, -.2, .3)
+    pdl> $b = pdl(.8, -.2, .3)
 
-    perldl> p $x->pred_ar($b, 7)
+    pdl> p $x->pred_ar($b, 7)
     [0       1     1.1    0.74   0.492  0.3656 0.31408]
- 
+
       # no constant
-    perldl> p $x->pred_ar($b(0:1), 7, {const=>0})
+    pdl> p $x->pred_ar($b(0:1), 7, {const=>0})
     [0       1     0.8    0.44   0.192  0.0656 0.01408]
 EOD
 );
@@ -573,7 +573,7 @@ sub PDL::plot_dseason {
   $col = $opt{COLOR};
   push @plots, map +(with=>'points', ke=>"De-seasonalised $col", style=>$col++, $seq, $_), $self->dog;
   $w->plot(@plots, { xlabel=>'T', ylabel=>'DV' });
-  return $dsea; 
+  return $dsea;
 }
 
 =head1 METHODS
@@ -595,9 +595,9 @@ Default options (case insensitive):
 
 Usage:
 
-    perldl> $a = sequence 10
-    
-    perldl> p $r = $a->plot_acf(5)
+    pdl> $a = sequence 10
+
+    pdl> p $r = $a->plot_acf(5)
     [1 0.7 0.41212121 0.14848485 -0.078787879 -0.25757576]
 
 =cut

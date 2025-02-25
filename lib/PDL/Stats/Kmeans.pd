@@ -15,7 +15,7 @@ use PDL::Stats::Basic;
 
 =head1 NAME
 
-PDL::Stats::Kmeans -- classic k-means cluster analysis 
+PDL::Stats::Kmeans -- classic k-means cluster analysis
 
 =head1 DESCRIPTION
 
@@ -39,7 +39,7 @@ Implement a basic k-means procedure,
       # start out with 8 random clusters
     $cluster = random_cluster( $data->dim(0), 8 );
       # iterate to minimize total ss
-      # stop when no more changes in cluster membership 
+      # stop when no more changes in cluster membership
     do {
       $cluster_last = $cluster;
       ($centroid, $ss_centroid) = $data->centroid( $cluster );
@@ -144,14 +144,14 @@ Does not support overlapping clusters. If an obs has TRUE value for multiple clu
 Usage:
 
       # create a cluster mask dim [obs x clu]
-    perldl> p $c_mask = iv_cluster [qw(a a b b c c)]
+    pdl> p $c_mask = iv_cluster [qw(a a b b c c)]
     [
      [1 1 0 0 0 0]
      [0 0 1 1 0 0]
      [0 0 0 0 1 1]
     ]
       # get cluster membership list dim [obs]
-    perldl> p $ic = $c_mask->which_cluster                
+    pdl> p $ic = $c_mask->which_cluster
     [0 0 1 1 2 2]
 ',
 );
@@ -200,22 +200,22 @@ Takes data pdl dim [obs x var] and centroid pdl dim [cluster x var] and returns 
 
 =for usage
 
-    perldl> p $centroid = xvals 2, 3
+    pdl> p $centroid = xvals 2, 3
     [
      [0 1]
      [0 1]
      [0 1]
     ]
 
-    perldl> p $b = qsort( random 4, 3 )
+    pdl> p $b = qsort( random 4, 3 )
     [
      [0.022774068 0.032513883  0.13890034  0.30942479]
      [ 0.16943853  0.50262636  0.56251531   0.7152271]
      [ 0.23964483  0.59932745  0.60967495  0.78452117]
     ]
-      # notice that 1st 3 obs in $b are on average closer to 0 
+      # notice that 1st 3 obs in $b are on average closer to 0
       # and last obs closer to 1
-    perldl> p $b->assign( $centroid )
+    pdl> p $b->assign( $centroid )
     [
      [1 1 1 0]    # cluster 0 membership
      [0 0 0 1]    # cluster 1 membership
@@ -269,26 +269,26 @@ Takes data dim [obs x var] and mask dim [obs x cluster], returns mean and ss (ms
 =for usage
 
       # data is 10 obs x 3 var
-    perldl> p $d = sequence 10, 3
+    pdl> p $d = sequence 10, 3
     [
      [ 0  1  2  3  4  5  6  7  8  9]
      [10 11 12 13 14 15 16 17 18 19]
      [20 21 22 23 24 25 26 27 28 29]
     ]
       # create two clusters by value on 1st var
-    perldl> p $a = $d( ,(0)) <= 5
+    pdl> p $a = $d( ,(0)) <= 5
     [1 1 1 1 1 1 0 0 0 0]
- 
-    perldl> p $b = $d( ,(0)) > 5
+
+    pdl> p $b = $d( ,(0)) > 5
     [0 0 0 0 0 0 1 1 1 1]
 
-    perldl> p $c = cat $a, $b
+    pdl> p $c = cat $a, $b
     [
      [1 1 1 1 1 1 0 0 0 0]
      [0 0 0 0 0 0 1 1 1 1]
     ]
 
-    perldl> p $d->centroid($c)
+    pdl> p $d->centroid($c)
       # mean for 2 cluster x 3 var
     [
      [ 2.5  7.5]
@@ -409,7 +409,7 @@ pdl of dim [10 obs x 4 var], providing a centroid like
    [0 5 0 0]
    [0 0 5 0]
    [0 0 0 5]
-  ] 
+  ]
 
 will produce 4 clusters of people with each cluster favoring a different
 one of the 4 movies. Clusters from an idealized centroid may not give the
@@ -445,7 +445,7 @@ Usage:
 
   # suppose we have 4 person's ratings on 5 movies
 
-  perldl> p $rating = ceil( random(4, 5) * 5 ) 
+  pdl> p $rating = ceil( random(4, 5) * 5 )
   [
    [3 2 2 3]
    [2 4 5 4]
@@ -456,7 +456,7 @@ Usage:
 
   # we want to put the 4 persons into 2 groups
 
-  perldl> %k = $rating->kmeans( {NCLUS=>2} )
+  pdl> %k = $rating->kmeans( {NCLUS=>2} )
 
   # by default prints back options used
   # as well as info for all tries and iterations
@@ -471,7 +471,7 @@ Usage:
   iter 0 R2 [0.024390244 0.024390244 0.26829268  0.4796748  0.4796748]
   iter 1 R2 [0.46341463 0.46341463  0.4796748  0.4796748  0.4796748]
 
-  perldl> p "$_\t$k{$_}\n" for sort keys %k
+  pdl> p "$_\t$k{$_}\n" for sort keys %k
 
   R2      0.479674796747968
   centroid       # mean ratings for 2 group x 5 movies
@@ -521,9 +521,9 @@ sub PDL::kmeans {
   my %opt = (
     V     => 1,         # prints simple status
     FULL  => 0,         # returns results for all seeding trials
-  
+
     CNTRD => PDL->null, # optional. pdl [clu x var]. disables next 3 opts
-  
+
     NTRY  => 5,         # num of random seeding trials
     NSEED => 1000,      # num of initial seeds, use NSEED up to max obs
     NCLUS => 3,         # num of clusters
@@ -538,7 +538,7 @@ sub PDL::kmeans {
     $opt{NSEED} = pdl($self->dim(0), $opt{NSEED})->min->sclr;
   }
   $opt{V} and print "$_\t=> $opt{$_}\n" for sort keys %opt;
- 
+
   my $ss_ms = $self->badflag?  'ms' : 'ss';
   my $ss_total
     = $self->badflag?  $self->var->average : $self->ss->sumover;
@@ -567,18 +567,18 @@ sub PDL::kmeans {
     $opt{V} and print join(' ',('iter', $iter++, 'R2', $R2)) . "\n";
 
     $clus_last = $clus_this;
-   
+
     $clus_this = $self->assign( $centroid );
     ($centroid, $ss_cv) = $self->centroid( $clus_this );
   }
   while ( any long(abs($clus_this - $clus_last))->sumover->sumover > 0 );
 
-  $opt{FULL} and 
+  $opt{FULL} and
     return (
       centroid => PDL::squeeze( $centroid ),
       cluster  => PDL::squeeze( $clus_this ),
       n        => PDL::squeeze( $clus_this )->sumover,
-      R2       => PDL::squeeze( $R2 ), 
+      R2       => PDL::squeeze( $R2 ),
       $ss_ms   => PDL::squeeze( $ss_cv ),
     );
 
@@ -590,7 +590,7 @@ sub PDL::kmeans {
       centroid => $centroid->dice_axis(-1,$i_best)->sever->squeeze,
       cluster  => $clus_this->dice_axis(-1,$i_best)->sever->squeeze,
       n        => $clus_this->dice_axis(-1,$i_best)->sever->squeeze->sumover,
-      R2       => $R2->dice_axis(-1,$i_best)->sever->squeeze, 
+      R2       => $R2->dice_axis(-1,$i_best)->sever->squeeze,
       $ss_ms   => $ss_cv->dice_axis(-1,$i_best)->sever->squeeze,
     );
 
@@ -621,9 +621,9 @@ $centroid->mv(-1,2)->clump(2..$centroid->ndims-1)->dice_axis(2,\@i_best)->sever-
     R2       =>
 $R2->mv(-1,0)->clump(0..$R2->ndims-1)->dice_axis(0,\@i_best)->sever->reshape( @{ $shapes[2] } )->sever,
 
-    $ss_ms   => 
+    $ss_ms   =>
 $ss_cv->mv(-1,2)->clump(2..$ss_cv->ndims-1)->dice_axis(2,\@i_best)->sever->reshape( @{ $shapes[0] } )->sever,
-  ); 
+  );
 }
 
 =head1 METHODS
@@ -640,20 +640,20 @@ This is the method used for mean and var in anova. The difference between iv_clu
 
 Usage:
 
-    perldl> @bake = qw( y y y n n n )
-   
+    pdl> @bake = qw( y y y n n n )
+
     # accepts @ ref or 1d pdl
 
-    perldl> p $bake = iv_cluster( \@bake )
+    pdl> p $bake = iv_cluster( \@bake )
     [
      [1 1 1 0 0 0]
      [0 0 0 1 1 1]
     ]
-    
-    perldl> p $rating = sequence 6
+
+    pdl> p $rating = sequence 6
     [0 1 2 3 4 5]
 
-    perldl> p $rating->centroid( $bake )
+    pdl> p $rating->centroid( $bake )
     # mean for each iv level
     [
      [1 4]
@@ -698,16 +698,16 @@ Usage:
     # $data is pdl dim [word x doc]
   ($data, $idd, $idw) = get_data 'doc_word_info.txt';
 
-  perldl> %p = $data->pca;
+  pdl> %p = $data->pca;
     # $cluster is pdl mask dim [doc x ncomp]
-  perldl> $cluster  = $p{loading}->pca_cluster;
+  pdl> $cluster  = $p{loading}->pca_cluster;
 
     # pca clusters var while kmeans clusters obs. hence transpose
-  perldl> ($m, $ss) = $data->transpose->centroid( $cluster );
-  perldl> %k = $data->transpose->kmeans( { cntrd=>$m } );
+  pdl> ($m, $ss) = $data->transpose->centroid( $cluster );
+  pdl> %k = $data->transpose->kmeans( { cntrd=>$m } );
 
     # take a look at cluster 0 doc ids
-  perldl> p join("\n", @$idd[ list which $k{cluster}->( ,0) ]);
+  pdl> p join("\n", @$idd[ list which $k{cluster}->( ,0) ]);
 
 =cut
 

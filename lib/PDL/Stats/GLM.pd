@@ -99,13 +99,13 @@ bad.
 
 =for usage
 
-     perldl> p $data
+     pdl> p $data
      [
       [  5 BAD   2 BAD]
       [  7   3   7 BAD]
      ]
 
-     perldl> p $data->fill_m
+     pdl> p $data->fill_m
      [
       [      5     3.5       2     3.5]
       [      7       3       7 5.66667]
@@ -148,13 +148,13 @@ observations from the same variable.
 
 =for usage
 
-    perldl> p $data
+    pdl> p $data
     [
      [  5 BAD   2 BAD]
      [  7   3   7 BAD]
     ]
 
-    perldl> p $data->fill_rand
+    pdl> p $data->fill_rand
 
     [
      [5 2 2 5]
@@ -383,20 +383,16 @@ Usage:
     # DV, 2 person's ratings for top-10 box office movies
     # ascending sorted by box office numbers
 
-    perldl> p $y = qsort ceil( random(10, 2)*5 )
-    [
-     [1 1 2 4 4 4 4 5 5 5]
-     [1 2 2 2 3 3 3 3 5 5]
-    ]
+    pdl> p $y = pdl '1 1 2 4 4 4 4 5 5 5; 1 2 2 2 3 3 3 3 5 5'
 
     # model with 2 IVs, a linear and a quadratic trend component
 
-    perldl> $x = cat sequence(10), sequence(10)**2
+    pdl> $x = cat sequence(10), sequence(10)**2
 
     # suppose our novice modeler thinks this creates 3 different models
     # for predicting movie ratings
 
-    perldl> p $x = cat $x, $x * 2, $x * 3
+    pdl> p $x = cat $x, $x * 2, $x * 3
     [
      [
       [ 0  1  2  3  4  5  6  7  8  9]
@@ -412,14 +408,14 @@ Usage:
      ]
     ]
 
-    perldl> p $x->info
+    pdl> p $x->info
     PDL: Double D [10,2,3]
 
     # insert a dummy dim between IV and the dim (model) to be broadcasted
 
-    perldl> %m = $y->ols_t( $x->dummy(2) )
+    pdl> %m = $y->ols_t( $x->dummy(2) )
 
-    perldl> p "$_\t$m{$_}\n" for sort keys %m
+    pdl> p "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m
 
     # 2 persons' ratings, each fitted with 3 "different" models
 
@@ -613,7 +609,7 @@ Usage:
     # suppose these are two persons' ratings for top 10 box office movies
     # ascending sorted by box office
 
-    perldl> p $y = qsort ceil(random(10, 2) * 5)
+    pdl> p $y = qsort ceil(random(10, 2) * 5)
     [
      [1 1 2 2 2 3 4 4 4 4]
      [1 2 2 3 3 3 4 4 5 5]
@@ -621,12 +617,12 @@ Usage:
 
     # first IV is a simple linear trend
 
-    perldl> p $x1 = sequence 10
+    pdl> p $x1 = sequence 10
     [0 1 2 3 4 5 6 7 8 9]
 
     # the modeler wonders if adding a quadratic trend improves the fit
 
-    perldl> p $x2 = sequence(10) ** 2
+    pdl> p $x2 = sequence(10) ** 2
     [0 1 4 9 16 25 36 49 64 81]
 
     # two difference models are given in two pdls
@@ -635,9 +631,9 @@ Usage:
     # the 2nd model includes linear and quadratic trends
     # when necessary use dummy dim so both models have the same ndims
 
-    perldl> %c = $y->r2_change( $x1->dummy(1), cat($x1, $x2) )
+    pdl> %c = $y->r2_change( $x1->dummy(1), cat($x1, $x2) )
 
-    perldl> p "$_\t$c{$_}\n" for sort keys %c
+    pdl> p "$_\t$c{$_}\n" for sort keys %c
       #              person 1   person 2
     F_change        [0.72164948 0.071283096]
       # df same for both persons
@@ -711,21 +707,21 @@ Usage:
 
     # suppose this is ratings for 12 apples
 
-    perldl> p $y = qsort ceil( random(12)*5 )
+    pdl> p $y = qsort ceil( random(12)*5 )
     [1 1 2 2 2 3 3 4 4 4 5 5]
 
     # IV for types of apple
 
-    perldl> p $a = sequence(12) % 3 + 1
+    pdl> p $a = sequence(12) % 3 + 1
     [1 2 3 1 2 3 1 2 3 1 2 3]
 
     # IV for whether we baked the apple
 
-    perldl> @b = qw( y y y y y y n n n n n n )
+    pdl> @b = qw( y y y y y y n n n n n n )
 
-    perldl> %m = $y->anova( $a, \@b, { IVNM=>['apple', 'bake'] } )
+    pdl> %m = $y->anova( $a, \@b, { IVNM=>['apple', 'bake'] } )
 
-    perldl> p "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m
+    pdl> p "$_\t@{[$m{$_} =~ /^\n*(.*?)\n*\z/s]}\n" for sort keys %m
     F	2.46666666666667
     F_df	[5 6]
     F_p	0.151168719948632
@@ -1288,8 +1284,8 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 
 =for usage
 
-    perldl> @a = qw(a a a b b b c c c)
-    perldl> p $a = dummy_code(\@a)
+    pdl> @a = qw(a a a b b b c c c)
+    pdl> p $a = dummy_code(\@a)
     [
      [1 1 1 0 0 0 0 0 0]
      [0 0 0 1 1 1 0 0 0]
@@ -1358,8 +1354,8 @@ Supports BAD value (missing or 'BAD' values result in the corresponding pdl elem
 
 =for usage
 
-    perldl> @a = qw( a a b b b c c )
-    perldl> p $a = effect_code_w(\@a)
+    pdl> @a = qw( a a b b b c c )
+    pdl> p $a = effect_code_w(\@a)
     [
      [   1    1    0    0    0   -1   -1]
      [   0    0    1    1    1 -1.5 -1.5]
@@ -1389,20 +1385,20 @@ pdl elements being marked as BAD).
 
 =for usage
 
-    perldl> $a = sequence(6) > 2
-    perldl> p $a = $a->effect_code
+    pdl> $a = sequence(6) > 2
+    pdl> p $a = $a->effect_code
     [
      [ 1  1  1 -1 -1 -1]
     ]
 
-    perldl> $b = pdl( qw( 0 1 2 0 1 2 ) )
-    perldl> p $b = $b->effect_code
+    pdl> $b = pdl( qw( 0 1 2 0 1 2 ) )
+    pdl> p $b = $b->effect_code
     [
      [ 1  0 -1  1  0 -1]
      [ 0  1 -1  0  1 -1]
     ]
 
-    perldl> p $ab = interaction_code( $a, $b )
+    pdl> p $ab = interaction_code( $a, $b )
     [
      [ 1  0 -1 -1 -0  1]
      [ 0  1 -1 -0 -1  1]
@@ -1450,20 +1446,20 @@ Usage:
     # suppose this is a person's ratings for top 10 box office movies
     # ascending sorted by box office
 
-    perldl> p $y = qsort ceil( random(10) * 5 )
+    pdl> p $y = qsort ceil( random(10) * 5 )
     [1 1 2 2 2 2 4 4 5 5]
 
     # construct IV with linear and quadratic component
 
-    perldl> p $x = cat sequence(10), sequence(10)**2
+    pdl> p $x = cat sequence(10), sequence(10)**2
     [
      [ 0  1  2  3  4  5  6  7  8  9]
      [ 0  1  4  9 16 25 36 49 64 81]
     ]
 
-    perldl> %m = $y->ols( $x )
+    pdl> %m = $y->ols( $x )
 
-    perldl> p "$_\t$m{$_}\n" for sort keys %m
+    pdl> p "$_\t$m{$_}\n" for sort keys %m
 
     F       40.4225352112676
     F_df    [2 7]
@@ -1656,30 +1652,30 @@ Usage:
 
     # suppose this is whether a person had rented 10 movies
 
-    perldl> p $y = ushort( random(10)*2 )
+    pdl> p $y = ushort( random(10)*2 )
     [0 0 0 1 1 0 0 1 1 1]
 
     # IV 1 is box office ranking
 
-    perldl> p $x1 = sequence(10)
+    pdl> p $x1 = sequence(10)
     [0 1 2 3 4 5 6 7 8 9]
 
     # IV 2 is whether the movie is action- or chick-flick
 
-    perldl> p $x2 = sequence(10) % 2
+    pdl> p $x2 = sequence(10) % 2
     [0 1 0 1 0 1 0 1 0 1]
 
     # concatenate the IVs together
 
-    perldl> p $x = cat $x1, $x2
+    pdl> p $x = cat $x1, $x2
     [
      [0 1 2 3 4 5 6 7 8 9]
      [0 1 0 1 0 1 0 1 0 1]
     ]
 
-    perldl> %m = $y->logistic( $x )
+    pdl> %m = $y->logistic( $x )
 
-    perldl> p "$_\t$m{$_}\n" for sort keys %m
+    pdl> p "$_\t$m{$_}\n" for sort keys %m
 
     D0	13.8629436111989
     Dm	9.8627829791575
@@ -1694,8 +1690,8 @@ Usage:
     y_pred	[0.10715577 0.23683909 ... 0.76316091 0.89284423]
 
     # to get the covariance out, supply a true value for the COV option:
-    perldl> %m = $y->logistic( $x, {COV=>1} )
-    perldl> p $m{cov};
+    pdl> %m = $y->logistic( $x, {COV=>1} )
+    pdl> p $m{cov};
 
 =cut
 
@@ -1909,18 +1905,18 @@ Default options (case insensitive):
 Usage:
 
       # let's see if we replicated the Osgood et al. (1957) study
-    perldl> ($data, $idv, $ido) = rtable 'osgood_exp.csv', {v=>0}
+    pdl> ($data, $idv, $ido) = rtable 'osgood_exp.csv', {v=>0}
 
       # select a subset of var to do pca
-    perldl> $ind = which_id $idv, [qw( ACTIVE BASS BRIGHT CALM FAST GOOD HAPPY HARD LARGE HEAVY )]
-    perldl> $data = $data( ,$ind)->sever
-    perldl> @$idv = @$idv[list $ind]
+    pdl> $ind = which_id $idv, [qw( ACTIVE BASS BRIGHT CALM FAST GOOD HAPPY HARD LARGE HEAVY )]
+    pdl> $data = $data( ,$ind)->sever
+    pdl> @$idv = @$idv[list $ind]
 
-    perldl> %m = $data->pca
+    pdl> %m = $data->pca
 
-    perldl> ($iv, $ic) = $m{loadings}->pca_sorti()
+    pdl> ($iv, $ic) = $m{loadings}->pca_sorti()
 
-    perldl> p "$idv->[$_]\t" . $m{loadings}->($_,$ic)->flat . "\n" for (list $iv)
+    pdl> p "$idv->[$_]\t" . $m{loadings}->($_,$ic)->flat . "\n" for (list $iv)
 
              #   COMP0     COMP1    COMP2    COMP3
     HAPPY	[0.860191 0.364911 0.174372 -0.10484]
