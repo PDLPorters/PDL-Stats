@@ -58,4 +58,25 @@ use Test::PDL;
   is_pdl $ms, $ans_ms, 'season_m ms';
 }
 
+subtest 'acf and acvf with lags' => sub {
+  my $a = sequence 10;
+  my $m = sequence 10,2;
+  my $acvf = pdl '[82.5 57.75 34 12.25 -6.5 -21.25 -31 -34.75 -31.5 -20.25]';
+  my $acf  = $acvf / $acvf->at(0);
+
+  is_pdl $a->acvf(), $acvf, "calculate autocovariance with no arguments on $a";
+
+  is_pdl $a->acvf(4), $acvf->slice('0:4'), "calculate autocovariance with 4 lags on $a";
+  is_pdl $a->acvf(0), $acvf->slice('0:0'), "calculate autocovariance with 0 lag on $a";
+  is_pdl $a->acvf(5) / $a->acvf(0), $a->acf(5), "calculate autocorrelation from autocovariance on $a";
+  is_pdl $a->acvf(14), $acvf->append([0,0,0,0,0]), "autocovariance called with more lags than values";
+
+  is_pdl $a->acf(), $acf, "calculate autocorrelation with no arguments on $a";
+  is_pdl $a->acf(0), pdl('[1]'), 'first value of the autocorrelation function is always 1';
+  is_pdl $a->acf(5), $acf->slice('0:5'), 'autocorrelation function with 5 lags';
+
+  # autocorrelation on higher order pdls is a collection of 1D arrays
+  is_pdl $m->acvf(4), $acvf->slice('0:4')->dummy(1,2), "acvf is the same for both rows of sequence(10,2)";
+};
+
 done_testing;

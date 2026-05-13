@@ -48,8 +48,9 @@ pp_addhdr('
 );
 
 pp_def('acf',
-  Pars  => 'x(t); [o]r(h)',
-  OtherPars => 'IV lag=>h',
+  Pars  => 'x(t); [o]r(h=CALC($COMP(lag) < 0 ? $SIZE(t) : $COMP(lag) + 1))',
+  OtherPars => 'IV lag',
+  OtherParsDefaults => { lag => -1 },
   GenericTypes => $F,
   Code  => '
 $GENERIC(x) s, s2, m, cov0, covh;
@@ -75,14 +76,6 @@ loop (h) %{
   }
 %}
 ',
-  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
-sub PDL::acf {
-  my ($self, $h) = @_;
-  $h ||= $self->dim(0) - 1;
-  PDL::_acf_int($self, my $r = PDL->null, $h+1);
-  $r;
-}
-EOF
  Doc => <<'EOD',
 =for ref
 
@@ -104,8 +97,9 @@ EOD
 );
 
 pp_def('acvf',
-  Pars  => 'x(t); [o]v(h)',
-  OtherPars => 'IV lag=>h;',
+  Pars  => 'x(t); [o]v(h=CALC($COMP(lag) < 0 ? $SIZE(t) : $COMP(lag) + 1))',
+  OtherPars => 'IV lag',
+  OtherParsDefaults => { lag => -1 },
   GenericTypes => $F,
   Code  => '
 $GENERIC(x) s, s2, m, covh;
@@ -130,14 +124,6 @@ loop (h) %{
   }
 %}
 ',
-  PMCode => pp_line_numbers(__LINE__, <<'EOF'),
-sub PDL::acvf {
-  my ($self, $h) = @_;
-  $h ||= $self->dim(0) - 1;
-  PDL::_acvf_int($self, my $v = PDL->null, $h+1);
-  $v;
-}
-EOF
  Doc => <<'EOD',
 =for ref
 
